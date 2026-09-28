@@ -19,6 +19,7 @@
 | 09-28 | commit 一律 `git commit --only -- <paths>` | 主樹常有別任務已暫存的刪除／改動；裸 `git commit` 會把它們一起帶進去 |
 | 09-28 | 工作流從記憶搬成 personal skill；記憶縮成指標 | 記憶檔長成 30KB 的疊加修正，每次讀都要自己推哪條蓋掉哪條；skill 可分階段載入、帶範本與腳本、compact 後可重新載入。評測（3 題 × 有／無 skill）：規則面兩者一樣好（18/18），差別在腳本——沒 skill 的那組每次手寫 patch／worktree／sha 工具 |
 | 09-28 | 查 prod（DB、Langfuse）前先問 owner | 評測中有一組在研究階段自行排了 prod 字數分佈查詢；owner：「prod 查詢要先問」 |
+| 09-28 | description 維持原樣 | 觸發評測 20 句（10 該觸發／10 近似但不該，含「繼續剛剛的 docker 除錯」「只 commit justfile」「查 prod 佇列」）× 3 次：60/60 全對，優化迴圈第 1 輪即結束，不改寫。評測集在 `seven-phase-workspace/trigger/eval_set.json`，改 description 前先用它重跑 |
 | 09-28 | 參考檔用得到時才讀 | 評測中開新任務那組在第 1 階段多讀了 lanes／history，只多花 token |
 
 ## 更早就存在、仍有效的教訓
