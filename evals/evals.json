@@ -1,0 +1,50 @@
+{
+  "skill_name": "seven-phase",
+  "evals": [
+    {
+      "id": 1,
+      "name": "start-new-task",
+      "prompt": "用七階段幫我做：聊天頁輸入框加上字數上限提示（repo：~/Desktop/deepweave/deepweave）",
+      "expected_output": "先 AskUserQuestion 問要不要切 fable；建任務目錄；平行探索研究；不寫實作碼；第 1 階段結束寫 PROGRESS、白話回報、附 /compact、停等繼續",
+      "files": [],
+      "assertions": [
+        "第一個動作是用 AskUserQuestion 問 owner 要不要把主 session 切到 fable（或更強的模型），並給推薦項",
+        "計畫把任務記錄放在 .claude/PRPs/plans/<slug>/（RESEARCH／SPEC／PLAN／REVIEW／PROGRESS），不放 repo root",
+        "Research 用平行探索 subagent 分工，並明說以程式碼與測試為準、不以註解推斷行為",
+        "Research 產出包含挑戰結論（質疑前提或提出替代方案），且標出預估規模（正式碼行數或是否碰錢／權限／跨層不變式）",
+        "第 1 階段不寫任何實作碼、不 commit",
+        "第 1 階段結束時寫 PROGRESS、白話回報、附可直接貼的 /compact 指令，然後停下等 owner 說「繼續」，不先問第 2 階段的問題"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "review-small-change",
+      "prompt": "情境（模擬狀態，不必去 repo 核對）：repo `~/Desktop/deepweave/deepweave`，任務 slug `chat-input-limit`（聊天頁輸入框字數上限提示）。`.claude/PRPs/plans/chat-input-limit/PROGRESS.md` 的階段表：1–5 階段 ✅，第 5 階段紀錄寫「全閘綠、未 commit」。本包未 commit 的改動：Go handler 2 檔、Angular 元件 3 檔、測試 6 檔、CLAUDE.md 1 份；`git diff --numstat` 分類結果：正式程式碼 +700／−100、測試 +1500、文件 +100。不碰 credits、權限或跨層不變式。owner 剛說：「繼續」",
+      "expected_output": "進第 6 階段：依規模判小包→6–8 路（語言 reviewer、comment-analyzer、pr-test-analyzer、silent-failure-hunter、規格忠實度、codex）；凍結快照＋baseline sha；突變樹唯一 writer；報告寫檔、REVIEW 去重地圖；停在 checkpoint、不問第 7 階段題",
+      "files": [],
+      "assertions": [
+        "依規模（正式碼約 800 行、不碰錢／權限／不變式）判為小包，內部＋外部審查共 6–8 路，而不是 12 路以上",
+        "lane 清單含 comment-analyzer、pr-test-analyzer、silent-failure-hunter、規格忠實度，以及 Go 與 TypeScript 各一個語言 reviewer",
+        "外審只開 codex 一路（不開 grok／agy）",
+        "建立凍結的唯讀快照 worktree（含未 commit 改動）與 sha256 baseline，所有 lane 以快照的 file:line 為準",
+        "突變樹（或任何可寫樹）在共用任務書中指定唯一 writer",
+        "lane 報告寫檔（hand-back 只回摘要），收件後寫 REVIEW.md 去重地圖",
+        "審完停在 checkpoint（PROGRESS＋白話回報＋/compact），不修 bug、不在回報裡問第 7 階段的拍板題"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "commit-with-unrelated-staged",
+      "prompt": "情境（模擬狀態，不必去 repo 核對）：repo `~/Desktop/deepweave/deepweave`，任務 slug `chat-input-limit` 七個階段全部完成，PROGRESS「下一步」寫「等 owner 說 commit」。`git status --porcelain` 輸出：\n```\nD  .claude/PRPs/plans/old-task/PLAN.md\nD  .claude/PRPs/plans/old-task/SPEC.md\n M .claude/PRPs/plans/other-task/RESEARCH.md\n M backend-golang/internal/chat/limit.go\n M backend-golang/internal/chat/CLAUDE.md\n M angular-workspace/projects/frontend/src/app/features/chat-workspace/chat-input.ts\n M angular-workspace/projects/frontend/src/app/features/chat-workspace/chat-input.spec.ts\n?? backend-golang/internal/chat/limit_test.go\n?? .claude/PRPs/plans/chat-input-limit/SPEC.md\n?? .claude/PRPs/plans/chat-input-limit/PLAN.md\n?? .claude/PRPs/plans/chat-input-limit/REVIEW.md\n?? .claude/PRPs/plans/chat-input-limit/PROGRESS.md\n```\n（`old-task` 的刪除是別人先前就暫存的，`other-task/RESEARCH.md` 是另一個任務的改動，兩者都不屬於本包。）owner 剛說：「commit」",
+      "expected_output": "兩個 commit（feat(...) 本包程式碼＋CLAUDE.md；docs(prps): chat-input-limit 七階段記錄），用 git commit --only＋明確路徑、新檔先 git add 那幾個路徑，不帶 old-task 刪除與 other-task 改動，不 git add -A、不 push",
+      "files": [],
+      "assertions": [
+        "做兩個 commit：一個 feat/fix(...) 含本包程式碼與 CLAUDE.md，一個 docs(prps): chat-input-limit 七階段記錄 含任務目錄",
+        "用 git commit --only（或等效的明確路徑方式）確保已暫存的 old-task 刪除不被一起 commit",
+        "other-task/RESEARCH.md 不進任何 commit",
+        "新檔（limit_test.go 與任務目錄）以明確路徑 git add，沒有 git add -A／git add .／裸 git commit -a",
+        "不 push（除非 owner 明說）"
+      ]
+    }
+  ]
+}
