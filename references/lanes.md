@@ -1,8 +1,8 @@
 # 審查與驗證的路數
 
 ## 為什麼要三軸
-- **關注面 lane**（general-purpose＋自寫 prompt：規格忠實度、影響範圍、時間與順序…）打的是你指得到的方向。
-- **語言／領域專門 agent**（go-reviewer、python-reviewer、typescript-reviewer、security-reviewer、silent-failure-hunter、pr-test-analyzer、comment-analyzer）帶內建清單，會去查你沒想到的 stdlib 邊界——不能用 general-purpose＋好 prompt 取代；給它們 invariants 當前置閱讀，不覆蓋它們的方法論。
+- **關注面 lane**（`lane-reviewer`＋自寫 prompt：規格忠實度、影響範圍、時間與順序…）打的是你指得到的方向。
+- **語言／領域專門 agent**（go-reviewer、python-reviewer、typescript-reviewer、security-reviewer、silent-failure-hunter、pr-test-analyzer、comment-analyzer）帶內建清單，會去查你沒想到的 stdlib 邊界——不能用 lane-reviewer／general-purpose＋好 prompt 取代；給它們 invariants 當前置閱讀，不覆蓋它們的方法論。
 - **異源外審**（codex、grok、agy）的價值在於**不知道**你的設計意圖；codex 常抓到多個 Claude reviewer 一起漏的東西。
 - 同源模型會一起瞎，但瞎的軸不同——所以內審路數不因「有外審」而省，反之亦然。
 
@@ -19,24 +19,32 @@
 | 註解正確性 | comment-analyzer（沒有 Write／Bash：主落檔） | 必開 |
 | 測試品質＋突變 | pr-test-analyzer（突變樹唯一 writer） | 必開 |
 | 靜默失敗 | silent-failure-hunter | 必開 |
-| 規格忠實度＋case walk | general-purpose | 必開 |
+| 規格忠實度＋case walk | lane-reviewer | 必開 |
 | 異源外審 | codex（gpt-6-sol xhigh） | 必開 |
 | 安全／隱私 | security-reviewer | 碰使用者輸入、log／錯誤外洩、權限時 |
-| UI/UX | general-purpose＋瀏覽器截圖 | 涉 UI 時；驗不了的標「需人工目視」 |
+| UI/UX | lane-reviewer＋瀏覽器截圖（沒寫 `tools:`，繼承全部工具含瀏覽器 MCP） | 涉 UI 時；驗不了的標「需人工目視」 |
 
 ## 大包或高風險包：完整路數
 小包清單全開，再加：security-reviewer（必開）、影響範圍 lane（所有 caller／呼叫點實讀第三方碼）、時間與順序 lane（預算鏈、取消語義、視窗邊界、混版時序）、grok、agy；註解 lane 可拆成程式碼註解與文件兩路。任一路跑不了就換一個不同鏡頭替補。
 
 ## 收斂驗證
 - 只驗「有爭議／HIGH 以上／需 owner 拍板」的條目：小包 1 路、大包依條目量 2 路起（同層的條目放同一路，例：偵測面、追蹤、單一服務、時間預算）。
-- agent：general-purpose（xhigh，需要 Write 寫報告）。
+- agent：`converge-verifier`（xhigh，有 Write 寫報告）。
 - 其餘條目由修復者邊修邊確認。
 
 ## 實作與修復
-- 切片實作：tdd-guide（xhigh），每片一棵私有樹。
-- 文件片：general-purpose（有判斷時）或 doc-updater（機械改寫，high）。
-- 探索／定位：code-explorer（high）；判斷性探索用 general-purpose／Explore。
-- 組材料包、批次文字改寫：quick-task（high）。
+- 切片實作（每片一棵私有樹）：
+  - `tdd-guide`（xhigh）：碰錢／credits、權限、跨層不變式、owner 拍板語義，或任務包留有設計選擇沒定的片。
+  - `tdd-impl`（high，試行）：主已給測試設計清單、檔案範圍明確、沒有待決設計的一般片。拿不準就用 tdd-guide。
+- 文件片：`doc-slice`（high，每句先回程式碼確認）；codemap／README 生成才用 doc-updater。
+- 探索／定位：code-explorer（high）；判斷性探索用 general-purpose／Explore（effort 跟主 session）。
+- 組材料包、批次文字改寫、graphify 抽取：quick-task（high）。
+
+## tdd-impl 試行（2026-10-02 起；結果寫進 `history.md` 後刪掉本節）
+- 為什麼：21 天實測 tdd-guide 占 subagent 花費 30%（217 顆、中位 76 回合）；一般片的判斷（測試設計、範圍）派工前主 session 已做完，閘與突變抽查也由主 session 親跑。
+- 下一個有兩片以上一般片的包：第一波挑**同層、規模相近**的兩片，一片 tdd-guide、一片 tdd-impl（探針規則照舊，兩片都算探針）。
+- 比：`scripts/agentcost.py --agents <id1>,<id2>` 的花費與回合數；主審紅時「紅的原因不對」的支數；被否決的偏離數；主 session 親跑閘的新紅數；抽突變是否紅。
+- 判準：tdd-impl 品質四項不比 tdd-guide 差、花費明顯較低 → 一般片預設 tdd-impl；任一品質項變差 → 退回全部 tdd-guide。結果與數字寫進 `history.md`。
 
 ## 派工前檢查
 - agent 的工具集（有沒有 Write／Bash）。

@@ -3,7 +3,7 @@
 目標：搞清楚現況，並拿研究發現挑戰任務前提。產出 `RESEARCH.md`（現況摘要＋挑戰結論＋註解與行為不符清單）。
 
 1. **盤點**專案配置的 subagents／skills／MCP，讀各 agent 的職責定義與工具集，供全流程對號起用。
-2. **fan-out 平行探索**（職責相符的專案探索 agent 優先；code-explorer 是 high、判斷性探索用 general-purpose／Explore）分工：
+2. **fan-out 平行探索**（職責相符的專案探索 agent 優先；code-explorer 是 high、判斷性探索用 general-purpose／Explore，後兩者 effort 跟主 session）分工：
    - graphify 查詢（定義處、引用點、資料流、依賴）——從 repo 根跑 `graphify query "<domain>"`，圖不含新符號、行號會漂，結論回原始碼確認；
    - 關聯測試與環境設定盤點；可沿用的既有模式；
    - 需要時一路上網佐證：**學術論文／官方文件／規範／權威文章優先**，引用附連結＋一句「它如何支撐設計決策」；找不到可靠來源就明說，不得杜撰。

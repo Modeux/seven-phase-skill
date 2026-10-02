@@ -4,7 +4,7 @@
 
 ## 真相源
 - 去重地圖：`<repo>/.claude/PRPs/plans/<slug>/REVIEW.md`
-- lane 原文（每條的完整證據）：`<review 目錄>/lane-*.md`
+- 你負責條目的 lane 原文段落：已逐字附在派工訊息。需要時再讀：`<review 目錄>/lane-*.md` 全文
 - SPEC／PLAN／RESEARCH：同任務目錄。研究期原始筆記（含 prod 實測數字，**不要**重新查 prod）：<路徑>
 
 ## 查證對象

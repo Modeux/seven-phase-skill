@@ -13,10 +13,11 @@
 
 ## 3. 共用任務書
 從 `assets/review-brief.md` 填：這包在做什麼（白話）、真相源、審查對象與新檔清單、環境規則（唯讀、禁在 host 跑會重建共用環境的指令、測試配方、禁連 prod 與量測 API）、證據規則（註解與文件不是證據、任務書裡的事實是待否證的假設）、**已知既存紅**（不要報）、owner 指定的重點面 F1…、報告格式與「已查證無問題」一節。
+任務書本身加必讀材料照 SKILL.md「任務包瘦身」控制在約 90KB 內（審查對象的 diff 與程式碼不算）：SPEC／PLAN 只逐字摘與本包相關的節，全文路徑列「需要時再讀」；規格忠實度 lane 例外，可讀 SPEC 全文。
 任務書裡每條 invariant 都標出處（SPEC 條號或參照實作的 file:symbol）並先回查——它同時是第 7 階段的裁決依據，寫錯會把正確實作判成違規。「某功能只在使用者觸發時才跑」「某欄位有讀者」這類要 grep 到實際呼叫點才寫。
 
 ## 4. 派工
-- 一則訊息同時起所有內部 lane（背景跑），每路給報告檔路徑 `tmp/<slug>/review/lane-<名>.md`；沒有 Write 的 agent（comment-analyzer）由主 session 依 hand-back 落檔，並註明「主 session 落檔、內容未改」。
+- 一則訊息同時起所有內部 lane（背景跑；關注面 lane 用 `lane-reviewer`，不用 general-purpose），每路給報告檔路徑 `tmp/<slug>/review/lane-<名>.md`；沒有 Write 的 agent（comment-analyzer）由主 session 依 hand-back 落檔，並註明「主 session 落檔、內容未改」。
 - 外審三路照 `references/external-review.md`：先 `git -C` 確認在 repo 根、`wc -c` 材料、agy 材料要自含且 ≤170KB；全部背景跑，大包前 8 分鐘 0 輸出屬正常。
 - lane 死掉或外審跑不了：記清楚是「沒跑」還是「空跑」，**換一個不同鏡頭替補**，不同質重跑（常被漏的鏡頭見 `references/lanes.md`）；跑不了的原因（例如缺金鑰）屬 owner 的設定，主 session 不改 owner 的 CLI 設定、也不去讀它的憑證。
 - 規格忠實度 lane 要主動列「本節沒處理的 3 個情境」——fan-out 抓錯誤行為，case walk-through 才抓缺少的行為。

@@ -21,6 +21,7 @@
 | 09-28 | 查 prod（DB、Langfuse）前先問 owner | 評測中有一組在研究階段自行排了 prod 字數分佈查詢；owner：「prod 查詢要先問」 |
 | 09-28 | description 維持原樣 | 觸發評測 20 句（10 該觸發／10 近似但不該，含「繼續剛剛的 docker 除錯」「只 commit justfile」「查 prod 佇列」）× 3 次：60/60 全對，優化迴圈第 1 輪即結束，不改寫。評測集在 `seven-phase-workspace/trigger/eval_set.json`，改 description 前先用它重跑 |
 | 09-28 | 參考檔用得到時才讀 | 評測中開新任務那組在第 1 階段多讀了 lanes／history，只多花 token |
+| 10-02 | 固定用途改派專用 agent（`lane-reviewer`／`converge-verifier` xhigh、`doc-slice` high、graphify 抽取改 quick-task）；`tdd-impl`（high）試行；任務包瘦身（必讀逐字摘錄 ≤ 約 90KB、全文列「需要時再讀」）；新增 `scripts/agentcost.py` | 21 天 935 顆 subagent 實測（API 價換算）：subagent 約主 session 3.5 倍；73% cache 讀、25% cache 寫、2% 輸出——花在累積上下文，不在思考；general-purpose 36%、tdd-guide 30%、專門 reviewer 合計約 25%。舊文字「general-purpose 跑 xhigh」與行為不符：內建 agent 沒有 frontmatter，effort 跟主 session（260 回合跑 max、99 回合跑 medium）。去重地圖顯示每路 reviewer 都有獨家發現，故 reviewer 不降檔。owner：「1、2、3 都做，4 和 5 先不動」 |
 
 ## 更早就存在、仍有效的教訓
 - **審查數量 vs 收斂**（04-28，owner）：「reviewer 多是可以的，有些 bug 會因為角度不同才會浮現；真正要關心的是如何收斂，less is more」→ 槓桿在 intake gate：只有嚴重技術債或潛在 bug 風險才進地圖。09-28 的分級只縮小包的路數，不取消多角度。

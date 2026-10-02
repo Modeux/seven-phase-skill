@@ -52,10 +52,15 @@ owner 吃過「一路衝到底、末端才發現前提錯」的虧，也要自�
 
 ## 模型與 agent
 - 主 session：簡報、訪談、規劃、委派協調、**親跑測試與閘**、一切最終裁決。subagent 只回結論與證據，**不代表 owner 做任何決定**。
-- subagent 一律 opus-5.5，**effort 只能由 agent frontmatter 決定**（`~/.claude/agents/*.md` 的 `model:`／`effort:`；prompt 寫 effort 是安慰劑；Agent 工具的 `model` 參數勿傳）。判斷類 xhigh：planner、tdd-guide、所有 reviewer、silent-failure-hunter、pr-test-analyzer、收斂驗證、規格忠實度、general-purpose；機械類 high：code-explorer、doc-updater、quick-task。改了 frontmatter 要新進程才生效；驗證看 `~/.claude/projects/<proj>/<sid>/subagents/*.jsonl` 的 `"model"`。內建 agent 的模型靠 `~/.claude/settings.json` 的 `CLAUDE_CODE_SUBAGENT_MODEL`；`fork` 永遠跑主 session 的模型。
+- subagent 一律 opus-5.5，**effort 只能由 agent frontmatter 決定**（`~/.claude/agents/*.md` 的 `model:`／`effort:`；prompt 寫 effort 是安慰劑；Agent 工具的 `model` 參數勿傳）。
+  - **xhigh（要判斷）**：planner、tdd-guide、所有語言／領域 reviewer、silent-failure-hunter、pr-test-analyzer、comment-analyzer、`lane-reviewer`（關注面 lane）、`converge-verifier`（收斂驗證）。
+  - **high（範圍已定）**：`tdd-impl`（試行，見 `references/lanes.md`）、`doc-slice`（文件片）、doc-updater（codemap／README）、code-explorer、quick-task（含 graphify 抽取）。
+  - **內建 agent（general-purpose、Explore、Plan）沒有 frontmatter，effort 跟著主 session 走**：主 session 開 max 它就跑 max，開 medium 就跑 medium。有固定用途的工作一律派上面的專用 agent，general-purpose 只留給不屬於任何一類的雜務。
+  - 改了 frontmatter 要新進程才生效；驗證看 `~/.claude/projects/<proj>/<sid>/subagents/*.jsonl` 的 `"model"` 與 `"effort"`。內建 agent 的模型靠 `~/.claude/settings.json` 的 `CLAUDE_CODE_SUBAGENT_MODEL`；`fork` 永遠跑主 session 的模型與 effort。花費用 `scripts/agentcost.py` 量。
 - **派工前確認 agent 的工具集**：comment-analyzer／planner 等沒有 Write（交付要主 session 落檔或改用有 Write 的 agent）；沒 Bash 的跑不了測試。
 - 專案專用 agent 優先於通用 agent；語言專門 reviewer 不能用 general-purpose＋好 prompt 取代（內建清單打的是別的方向）。
 - 委派：自足任務包（目標、輸入路徑、環境規則、交付格式）；**長交付一律寫檔**，hand-back 只要 ≤12 行摘要＋檔案路徑；並行 agent 的中間檔／交付檔名帶片號或 lane 名（共用 scratchpad 會互截）。
+- **任務包瘦身**：派工訊息分「必讀」與「需要時再讀」兩欄。必讀只放這片用得到的段落，從原文**逐字摘錄**進 `<片號>-brief.md` 並附出處路徑，不改寫成摘要（摘要會引入錯誤，也不是證據）；全文路徑一律留在「需要時再讀」。必讀合計 ≤ 約 90KB（`wc -c`，約 3 萬 token），超過要在派工訊息寫理由。不算在內的：審查對象本身（diff、程式碼）、agent 自己決定去讀的程式碼。為什麼：subagent 的花費七成以上是每一回合重讀累積的上下文，前面多讀一段，後面每一回合都再付一次；逐字摘錄加上保留全文路徑，品質不會因此下降。
 - **>5 顆 agent 共用一份沒實測過的處方 → 先派一顆探針**。
 
 ## 腳本（`python3 ~/.claude/skills/seven-phase/scripts/<name>.py --help`）
