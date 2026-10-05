@@ -35,7 +35,7 @@ owner 吃過「一路衝到底、末端才發現前提錯」的虧，也要自�
 
 ## 全程規則
 - **禁 git commit／push**，直到 owner 明說（owner 要在進歷史之前看過整包結果）。commit 形狀＝兩個：`feat(x): ...`（程式碼＋CLAUDE.md＋契約）與 `docs(prps): <slug> 七階段記錄`（任務目錄）。工作樹常有別人／別任務的已暫存改動：**一律 `git commit --only -F <msg> -- <明確路徑>`**（新檔先 `git add` 那幾個路徑），絕不用裸 `git commit` 或 `git add -A`。push 前 `git fetch` 並確認 ahead-only。
-- **真相源**＝`.claude/PRPs/plans/<slug>/{RESEARCH,SPEC,PLAN,REVIEW,PROGRESS}.md`（不放 repo root，會被當暫存清掉）。耐久結論另外搬進最近的子目錄 `CLAUDE.md`——任務文件會被刪。
+- **真相源**＝`.claude/PRPs/plans/<slug>/{RESEARCH,SPEC,PLAN,REVIEW,PROGRESS}.md`（不放 repo root，會被當暫存清掉）。耐久結論另外搬進最近的子目錄 `CLAUDE.md`——任務文件會被刪。寫成 pattern：規則＋一句理由＋落點（路徑／符號／slug），不帶任務代號、日期、commit、測試名清單與實驗經過；同主題就合併改寫既有段落，不往後追加。為什麼：子目錄 CLAUDE.md 讀到就整份載入、之後每回合重讀，逐次追加的沉積曾把 worker 那份堆到 277KB（10-05 全面瘦身成約一半）。
 - **主 session 讀得窄**：主 session 是整個流程裡開最久的 context，讀進的每一行到下次 compact／`/clear` 前每一回合都再付一次。讀程式碼帶行號範圍、搜尋先用 `grep -l`／`-c`／`-m` 量大小；大範圍探索派 code-explorer；agent 報告先讀 hand-back 摘要，要裁決的條目才開全文；真瀏覽器操作派 `ui-lane-reviewer`。親跑閘照舊（輸出寫檔再 grep）。
 - **註解不可信**：任何階段不得用註解、CLAUDE.md、SPEC、記憶推斷程式行為；只信執行＞程式碼。註解與行為不符＝必修 issue，誤導性註解嚴重度視同邏輯 bug。新文字不得以任務代號（「包 A」「R8」「REVIEW §x」）當唯一說明；可寫 slug。
 - **owner 溝通**：先講人話再附技術細節；技術縮寫首次出現附一句白話。拍板題一律 AskUserQuestion（推薦項排第一標 Recommended、選項寫「選了會發生什麼」、關鍵對比用文字圖 preview），一次一件事。
