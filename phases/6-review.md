@@ -23,13 +23,14 @@
 - 規格忠實度 lane 要主動列「本節沒處理的 3 個情境」——fan-out 抓錯誤行為，case walk-through 才抓缺少的行為。
 - 註解 lane 分「該刪（複述程式碼）／該補（非直覺處沒寫）／該修（與行為不符或過時）」。
 - 測試 lane 用突變驗證 PLAN 記的閘指令（`-run` regex、`--include`）真的跑得到本包測試——否則 PROGRESS 的「全綠」可能是空集合全綠。
-- 涉 UI 的 UI/UX lane 以 SPEC 的 UI/UX 條目驗收：design system 一致性、無障礙（語意標籤、鍵盤、焦點）、loading／empty／error 狀態、響應式；用瀏覽器實際渲染、截圖為證，每次量測附 DOM 指紋證明量的是本包。驗不了的標「需人工目視」交 owner。
+- 涉 UI 的 UI/UX lane（`ui-lane-reviewer`）以 SPEC 的 UI/UX 條目驗收：design system 一致性、無障礙（語意標籤、鍵盤、焦點）、loading／empty／error 狀態、響應式；用瀏覽器實際渲染、截圖為證，每次量測附 DOM 指紋證明量的是本包。驗不了的標「需人工目視」交 owner。
 - 突變只在突變樹做；主 session 在審查期間起的 dev server／`go run` 記下啟動時間——「檔案已還原」不等於「跑著的程序已還原」。
 
 ## 5. 收件與去重
 - 每份報告先 `grep -i truncated`；審完對 `baseline.sha256` 驗主 checkout 一次（沒有 lane 寫到主樹）。
 - lane 回報與任務書的 invariant 衝突時，先驗 invariant 再驗 finding；invariant 的勘誤寫進 REVIEW.md（只在對話裡說，compact 後第 7 階段會沿用錯版本）。
-- 合併進 REVIEW.md：lane 配置表、執行結果、重點面結論表（每個 F 一列＋主要證據 lane）、**去重地圖**（R1…＝MEDIUM 以上、L1…＝LOW；每條：宣稱嚴重度、一句話、位置、來源 lane）、重複度（幾路同報）。
+- **合成交給 `doc-slice`**（owner 10-05 定）：任務包給各 lane 報告路徑、本節格式與 intake gate。它寫 REVIEW.md 的 lane 配置表、執行結果、重點面結論表（每個 F 一列＋主要證據 lane）、**去重地圖**（R1…＝MEDIUM 以上、L1…＝LOW；每條：宣稱嚴重度、一句話、位置、來源——來源寫條目編號 `<lane>#<n>`，n＝該 lane 報告裡第 n 個 `### [SEVERITY]` 標題，最後附幾路同報），intake gate 擋下的條目列進「未收錄」一節、各附一句理由。
+- **主 session 核對而不逐份重讀**：`scripts/reviewcov.py tmp/<slug>/review <REVIEW.md>` 要 exit 0（每條 lane 發現都在地圖或未收錄節）；沒照標題格式的報告（常是外審）主 session 親讀；再讀全部 CRITICAL／HIGH 原文、隨機抽 3 條 MEDIUM 原文對地圖。合錯（兩條不同的被併成一條）就拆開並在地圖註明。
 - intake gate：只有「嚴重技術債」或「潛在 bug 風險」（含跨層漂移、誤導性註解）才進地圖；審美、風格偏好、PLAN「不做清單」裡的東西不進（除非證明本包讓它變糟）。
 - 收件後 lane 報告原文留在 `tmp/`，REVIEW.md 只留地圖與結論。
 

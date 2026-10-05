@@ -25,6 +25,7 @@ REVIEW.md 加「第 N 階段收斂裁決」表：每條一列（裁決、依據�
 
 ## 5. 全閘與收尾
 - 主 session 親跑 PLAN 的全閘，輸出存 `tmp/<slug>/converge/gate/`，逐項對既存紅基線（判準「零新增」；lint／ruff 這類要逐條比對，不只比數字）。
+- 涉 UI：修復後的真瀏覽器走一趟派 `ui-lane-reviewer`（同第 5 階段）。
 - 確認改動檔集合＝原本的檔＋收斂新增的檔（用 `baseline.sha256` 對），沒有多出無關檔。
 - 突變紀錄等證據先歸檔到 `tmp/`，再 `git worktree remove --force` 清掉所有審查／修復樹。
 - PROGRESS 寫第 7 階段紀錄與「下一步」（commit 範圍、主樹上不屬於本包的改動、部署後驗收、backlog）。

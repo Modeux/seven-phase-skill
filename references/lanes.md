@@ -22,7 +22,7 @@
 | 規格忠實度＋case walk | lane-reviewer | 必開 |
 | 異源外審 | codex（gpt-6-sol xhigh） | 必開 |
 | 安全／隱私 | security-reviewer | 碰使用者輸入、log／錯誤外洩、權限時 |
-| UI/UX | lane-reviewer＋瀏覽器截圖（沒寫 `tools:`，繼承全部工具含瀏覽器 MCP） | 涉 UI 時；驗不了的標「需人工目視」 |
+| UI/UX | `ui-lane-reviewer`＋瀏覽器截圖（繼承全部工具含瀏覽器 MCP；lane-reviewer 已限縮工具、開不了瀏覽器） | 涉 UI 時；驗不了的標「需人工目視」 |
 
 ## 大包或高風險包：完整路數
 小包清單全開，再加：security-reviewer（必開）、影響範圍 lane（所有 caller／呼叫點實讀第三方碼）、時間與順序 lane（預算鏈、取消語義、視窗邊界、混版時序）、grok、agy；註解 lane 可拆成程式碼註解與文件兩路。任一路跑不了就換一個不同鏡頭替補。
@@ -39,6 +39,8 @@
 - 文件片：`doc-slice`（high，每句先回程式碼確認）；codemap／README 生成才用 doc-updater。
 - 探索／定位：code-explorer（high）；判斷性探索用 general-purpose／Explore（effort 跟主 session）。
 - 組材料包、批次文字改寫、graphify 抽取：quick-task（high）。
+- 真瀏覽器走一趟（第 5／7 階段末）：`ui-lane-reviewer`（xhigh）。
+- 盲評（模型／提示詞探針）：`blind-judge`（xhigh、不載 CLAUDE.md、只有 Read／Write／Glob）；位置由主 session 隨機化後才交給它。
 
 ## tdd-impl 試行（2026-10-02 起；結果寫進 `history.md` 後刪掉本節）
 - 為什麼：21 天實測 tdd-guide 占 subagent 花費 30%（217 顆、中位 76 回合）；一般片的判斷（測試設計、範圍）派工前主 session 已做完，閘與突變抽查也由主 session 親跑。
@@ -47,10 +49,13 @@
 - 判準：tdd-impl 品質四項不比 tdd-guide 差、花費明顯較低 → 一般片預設 tdd-impl；任一品質項變差 → 退回全部 tdd-guide。結果與數字寫進 `history.md`。
 
 ## 派工前檢查
-- agent 的工具集（有沒有 Write／Bash）。
+- agent 的工具集（有沒有 Write／Bash；lane-reviewer、quick-task 沒有瀏覽器與 MCP）。
 - 共用任務書已寫明每棵可寫樹的唯一 writer。
 - 並行 agent 的交付檔名帶 lane／片號。
 - 共用一份沒實測過的處方且 >5 顆 → 先一顆探針。
 
-## 成本參考（2026-09-28，正式碼約 1000 行的一包）
+## 成本參考
+調路數前先跑 `scripts/laneyield.py <slug>…`（每一路的獨家發現、確認數與花費）與 `scripts/taskcost.py --slug <slug>`（各階段目錄花費）。
+
+### 2026-09-28，正式碼約 1000 行的一包
 13 路審查＋5 路收斂驗證（每路 24–30 萬 token）＋4 片修復（約 100 萬）。13 條 MEDIUM 有 7 條是註解／文件——這是依規模分級的由來。

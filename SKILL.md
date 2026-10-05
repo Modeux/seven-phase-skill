@@ -8,7 +8,7 @@ description: owner 的七階段開發工作流（research → 討論 → intervi
 owner 是產品負責人不是工程師。這套流程把方向控制權與 token 用量留在 owner 手上：每階段停下來回報、等「繼續」。流程規則以本 skill 為準；記憶只放 owner 偏好與進行中任務的狀態。規則看起來多餘時，先讀 `references/history.md` 看它在防什麼。
 
 ## 開工第一步
-1. **問模型**：新任務開工前用 AskUserQuestion 問 owner 要不要 `/model` 切到 fable（或當時更強的模型）當主 session，推薦項依任務難度給。owner 選維持就用當前模型（預設 opus-5.5），**中途不切換**。續接既有任務不必再問。
+1. **問模型**：新任務開工前用 AskUserQuestion 問 owner 要不要 `/model` 切到 fable（或當時更強的模型）當主 session，**問句附成本與判準**：fable 輸入／輸出單價約 opus-5.5 的 2.5 倍，主 session 的輸出大半是思考，換模型會直接放大這筆；官方說 fable 適合目標模糊、找根因、架構決策、長時間自主工作，範圍明確的實作與收斂用 opus-5.5。推薦項依任務類型給。owner 選維持就用當前模型（預設 opus-5.5），**中途不切換**（換模型的下一回合整段重讀、沒有快取）。續接既有任務不必再問。
 2. 找現況：`.claude/PRPs/plans/<slug>/PROGRESS.md` 存在就讀它的階段表與「下一步」，從那裡接。
 3. 讀當前階段的檔案：`phases/<n>-*.md`（只讀當前這一份，別一次全讀）。
 
@@ -36,6 +36,7 @@ owner 吃過「一路衝到底、末端才發現前提錯」的虧，也要自�
 ## 全程規則
 - **禁 git commit／push**，直到 owner 明說（owner 要在進歷史之前看過整包結果）。commit 形狀＝兩個：`feat(x): ...`（程式碼＋CLAUDE.md＋契約）與 `docs(prps): <slug> 七階段記錄`（任務目錄）。工作樹常有別人／別任務的已暫存改動：**一律 `git commit --only -F <msg> -- <明確路徑>`**（新檔先 `git add` 那幾個路徑），絕不用裸 `git commit` 或 `git add -A`。push 前 `git fetch` 並確認 ahead-only。
 - **真相源**＝`.claude/PRPs/plans/<slug>/{RESEARCH,SPEC,PLAN,REVIEW,PROGRESS}.md`（不放 repo root，會被當暫存清掉）。耐久結論另外搬進最近的子目錄 `CLAUDE.md`——任務文件會被刪。
+- **主 session 讀得窄**：主 session 是整個流程裡開最久的 context，讀進的每一行到下次 compact／`/clear` 前每一回合都再付一次。讀程式碼帶行號範圍、搜尋先用 `grep -l`／`-c`／`-m` 量大小；大範圍探索派 code-explorer；agent 報告先讀 hand-back 摘要，要裁決的條目才開全文；真瀏覽器操作派 `ui-lane-reviewer`。親跑閘照舊（輸出寫檔再 grep）。
 - **註解不可信**：任何階段不得用註解、CLAUDE.md、SPEC、記憶推斷程式行為；只信執行＞程式碼。註解與行為不符＝必修 issue，誤導性註解嚴重度視同邏輯 bug。新文字不得以任務代號（「包 A」「R8」「REVIEW §x」）當唯一說明；可寫 slug。
 - **owner 溝通**：先講人話再附技術細節；技術縮寫首次出現附一句白話。拍板題一律 AskUserQuestion（推薦項排第一標 Recommended、選項寫「選了會發生什麼」、關鍵對比用文字圖 preview），一次一件事。
 - **挑戰 owner**：有證據的立場要堅持並攤開證據、被說服才改；owner 新資訊推翻結論要坦白更新。發現更好的做法要反向挑戰並附理由。
@@ -53,14 +54,14 @@ owner 吃過「一路衝到底、末端才發現前提錯」的虧，也要自�
 ## 模型與 agent
 - 主 session：簡報、訪談、規劃、委派協調、**親跑測試與閘**、一切最終裁決。subagent 只回結論與證據，**不代表 owner 做任何決定**。
 - subagent 一律 opus-5.5，**effort 只能由 agent frontmatter 決定**（`~/.claude/agents/*.md` 的 `model:`／`effort:`；prompt 寫 effort 是安慰劑；Agent 工具的 `model` 參數勿傳）。
-  - **xhigh（要判斷）**：planner、tdd-guide、所有語言／領域 reviewer、silent-failure-hunter、pr-test-analyzer、comment-analyzer、`lane-reviewer`（關注面 lane）、`converge-verifier`（收斂驗證）。
+  - **xhigh（要判斷）**：planner、tdd-guide、所有語言／領域 reviewer、silent-failure-hunter、pr-test-analyzer、comment-analyzer、`lane-reviewer`（關注面 lane）、`ui-lane-reviewer`（真瀏覽器的 UI lane 與走一趟）、`converge-verifier`（收斂驗證）、`blind-judge`（盲評，不載 CLAUDE.md）。
   - **high（範圍已定）**：`tdd-impl`（試行，見 `references/lanes.md`）、`doc-slice`（文件片）、doc-updater（codemap／README）、code-explorer、quick-task（含 graphify 抽取）。
   - **內建 agent（general-purpose、Explore、Plan）沒有 frontmatter，effort 跟著主 session 走**：主 session 開 max 它就跑 max，開 medium 就跑 medium。有固定用途的工作一律派上面的專用 agent，general-purpose 只留給不屬於任何一類的雜務。
   - 改了 frontmatter 要新進程才生效；驗證看 `~/.claude/projects/<proj>/<sid>/subagents/*.jsonl` 的 `"model"` 與 `"effort"`。內建 agent 的模型靠 `~/.claude/settings.json` 的 `CLAUDE_CODE_SUBAGENT_MODEL`；`fork` 永遠跑主 session 的模型與 effort。花費用 `scripts/agentcost.py` 量。
-- **派工前確認 agent 的工具集**：comment-analyzer／planner 等沒有 Write（交付要主 session 落檔或改用有 Write 的 agent）；沒 Bash 的跑不了測試。
+- **派工前確認 agent 的工具集**：comment-analyzer／planner 等沒有 Write（交付要主 session 落檔或改用有 Write 的 agent）；沒 Bash 的跑不了測試；lane-reviewer、quick-task 只有 Read／Write／Bash／Grep／Glob（少背約 15k token 的工具定義），要瀏覽器的派 `ui-lane-reviewer`。
 - 專案專用 agent 優先於通用 agent；語言專門 reviewer 不能用 general-purpose＋好 prompt 取代（內建清單打的是別的方向）。
 - 委派：自足任務包（目標、輸入路徑、環境規則、交付格式）；**長交付一律寫檔**，hand-back 只要 ≤12 行摘要＋檔案路徑；並行 agent 的中間檔／交付檔名帶片號或 lane 名（共用 scratchpad 會互截）。
-- **任務包瘦身**：派工訊息分「必讀」與「需要時再讀」兩欄。必讀只放這片用得到的段落，從原文**逐字摘錄**進 `<片號>-brief.md` 並附出處路徑，不改寫成摘要（摘要會引入錯誤，也不是證據）；全文路徑一律留在「需要時再讀」。必讀合計 ≤ 約 90KB（`wc -c`，約 3 萬 token），超過要在派工訊息寫理由。不算在內的：審查對象本身（diff、程式碼）、agent 自己決定去讀的程式碼。為什麼：subagent 的花費七成以上是每一回合重讀累積的上下文，前面多讀一段，後面每一回合都再付一次；逐字摘錄加上保留全文路徑，品質不會因此下降。
+- **任務包瘦身**：派工訊息分「必讀」與「需要時再讀」兩欄。必讀只放這片用得到的段落，從原文**逐字摘錄**進 `<片號>-brief.md` 並附出處路徑（用 `scripts/extract.py`，不手抄、不每次現寫摘錄腳本），不改寫成摘要（摘要會引入錯誤，也不是證據）；全文路徑一律留在「需要時再讀」。必讀合計 ≤ 約 90KB（`wc -c`，約 3 萬 token），超過要在派工訊息寫理由。不算在內的：審查對象本身（diff、程式碼）、agent 自己決定去讀的程式碼。為什麼：subagent 的花費七成以上是每一回合重讀累積的上下文，前面多讀一段，後面每一回合都再付一次；逐字摘錄加上保留全文路徑，品質不會因此下降。
 - **>5 顆 agent 共用一份沒實測過的處方 → 先派一顆探針**。
 
 ## 腳本（`python3 ~/.claude/skills/seven-phase/scripts/<name>.py --help`）
@@ -70,4 +71,7 @@ owner 吃過「一路衝到底、末端才發現前提錯」的虧，也要自�
 - `checktree.py`：對 baseline 驗一棵或多棵樹（含主 checkout）的 sha。
 - `merge_back.py`：把工作樹相對快照改過的檔複製回主 checkout（先確認主樹那些檔仍等於快照、片與片之間零重疊）。
 - `run_external.py`：跑 codex／grok／agy 外審（背景跑，見 `references/external-review.md`）。
+- `extract.py`：markdown 依標題或行號逐字切段、附出處（組任務包）。
+- `reviewcov.py`：核對 REVIEW.md 去重地圖涵蓋每份 lane 報告的每一條（第 6 階段收件）。
+- `taskcost.py`／`laneyield.py`：每個任務、每個階段目錄的花費；每一路審查的獨家發現與花費（調路數、檢討流程前先跑）。
 Bash 一律絕對路徑或 `git -C`／`go test -C`，**不要 `cd`**（工作目錄會殘留，下一個 bridge 或 pathspec 會跑錯樹）。

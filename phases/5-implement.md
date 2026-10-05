@@ -11,7 +11,7 @@
 
 ## 併發派工（2026-09-23）
 - PLAN 的 wave 內、檔案集合互斥的片**同時派**多個實作 agent（一則訊息裡同時起）。
-- **每片一份 `<片號>-brief.md`**：PLAN 裡歸這片的段落、測試設計清單、相關 invariant，逐字摘錄並附出處；SPEC／PLAN 全文列「需要時再讀」（SKILL.md「任務包瘦身」）。
+- **每片一份 `<片號>-brief.md`**：PLAN 裡歸這片的段落（含矩陣那片的符號／行號欄）、測試設計清單、相關 invariant，用 `scripts/extract.py` 逐字摘錄並附出處；SPEC／PLAN 全文列「需要時再讀」（SKILL.md「任務包瘦身」）。
 - **隔離**：每片一棵私有 worktree。工作樹有未 commit 的改動時，`isolation: "worktree"` 起在預設分支、看不到這些改動——改用 `scripts/mkworktree.py`（detach 到本 HEAD＋套 `mkpatch.py` 產的 patch＋驗 sha）自己建樹，派工訊息寫明樹的絕對路徑。
 - **交回**：agent 在私有樹改完，主用 `scripts/merge_back.py` 對快照算出改過的檔，確認主樹那些檔仍等於快照、片間零重疊後複製回主樹（不靠 agent 產 patch；`git apply` 從子目錄跑會靜默略過目錄外 hunk）。同波兩片打到同檔＝矩陣寫錯，回 Plan 修，不硬合。
 - **共用資源**：testcontainers 並行會吃 Docker 位址池，每波結束清殘留網路、同波跑整合的片數設上限；sqlc 等 Docker 生成器一次一片；Python 共用 venv 只准唯讀掛載進一次性容器。
@@ -22,6 +22,7 @@
 - **主親跑閘**：每片跑「受影響包」的 build／vet／單元＋該片具名整合；**不採信 subagent 自報**（已知失敗模式：只跑窄範圍 `-run` 就報綠，漏掉命名不同的連帶紅）。輸出重導向到檔案再 grep（接 `tail` 會藏掉前面的包並把 exit code 歸零）。
 - diff 生產碼對快照，確認只動該片範圍；go-fix 類 hook 會改整個套件，改完一律 `git status --porcelain`（不帶 pathspec）對帳。
 - 全閘（整合全包、lint、audit、前端整包＋production build、契約 lint）只在本階段末跑一次，判準是「對既存紅基線零新增」。
+- 涉 UI 的包，階段末的真瀏覽器走一趟派 `ui-lane-reviewer`（步驟、樹與 dev server、證據目錄寫在任務包）；主 session 讀結論、開它點名的一兩張截圖。為什麼：瀏覽器輸出很大，留在主 session 會讓之後每一回合都重付（owner 10-05 定）。
 
 ## 加速
 - 同一層、各自預估 <20 分鐘的小片合成一片、一個 agent、一次記錄。
