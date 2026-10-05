@@ -41,6 +41,7 @@ owner 吃過「一路衝到底、末端才發現前提錯」的虧，也要自�
 - **owner 溝通**：先講人話再附技術細節；技術縮寫首次出現附一句白話。拍板題一律 AskUserQuestion（推薦項排第一標 Recommended、選項寫「選了會發生什麼」、關鍵對比用文字圖 preview），一次一件事。
 - **挑戰 owner**：有證據的立場要堅持並攤開證據、被說服才改；owner 新資訊推翻結論要坦白更新。發現更好的做法要反向挑戰並附理由。
 - **規模閥門**：任務明顯很小可提議合併／跳過部分階段（含主 session 直接做）；明顯太大可提議 ROADMAP.md 拆子任務。兩者都要 owner 同意。
+  - 直接做的小修**仍照第 6 階段派該派的 reviewer，含外審**（owner 10-05：「最後審查該送出的 reviewer 還是要送，外部審查很重要」）；省的是任務目錄與 checkpoint，不是審查。
 - **graphify 只准查詢**，改完 docs／sql／openapi 只提醒圖過期，沒 owner 指示不跑 `--update`。
 - **prod**：**任何 prod 查詢（DB、Langfuse 等量測 API）都先用 AskUserQuestion 問 owner**，附確切查詢、它要回答什麼、答案會怎麼改變決定；只看聚合數字也一樣要問（owner 09-28 定）。核准後由主 session 跑，subagent 一律禁打。DB 只下 SELECT；Langfuse 額度與 prod 警報輪詢器共用。不讀使用者對話內容、不印任何金鑰。
 
