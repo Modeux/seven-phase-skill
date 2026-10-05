@@ -73,5 +73,6 @@ owner 吃過「一路衝到底、末端才發現前提錯」的虧，也要自�
 - `run_external.py`：跑 codex／grok／agy 外審（背景跑，見 `references/external-review.md`）。
 - `extract.py`：markdown 依標題或行號逐字切段、附出處（組任務包）。
 - `reviewcov.py`：核對 REVIEW.md 去重地圖涵蓋每份 lane 報告的每一條（第 6 階段收件）。
+- `claudemdcost.py`：子目錄 CLAUDE.md 與限定範圍規則（讀到才載入）的花費，依檔案彙總、worktree 副本併回原路徑。
 - `taskcost.py`／`laneyield.py`：每個任務、每個階段目錄的花費；每一路審查的獨家發現與花費（調路數、檢討流程前先跑）。
 Bash 一律絕對路徑或 `git -C`／`go test -C`，**不要 `cd`**（工作目錄會殘留，下一個 bridge 或 pathspec 會跑錯樹）。
