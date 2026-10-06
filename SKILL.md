@@ -5,12 +5,13 @@ description: owner 的七階段開發工作流（research → 討論 → intervi
 
 # 七階段工作流
 
-owner 是產品負責人不是工程師。這套流程把方向控制權與 token 用量留在 owner 手上：每階段停下來回報、等「繼續」。流程規則以本 skill 為準；記憶只放 owner 偏好與進行中任務的狀態。規則看起來多餘時，先讀 `references/history.md` 看它在防什麼。
+owner 是產品負責人不是工程師。這套流程把方向控制權與 token 用量留在 owner 手上：每階段停下來回報、等「繼續」；需求簡單的走精簡路，只在交付時停（見「分流」）。流程規則以本 skill 為準；記憶只放 owner 偏好與進行中任務的狀態。規則看起來多餘時，先讀 `references/history.md` 看它在防什麼。
 
 ## 開工第一步
 1. **問模型**：新任務開工前用 AskUserQuestion 問 owner 要不要 `/model` 切到 fable（或當時更強的模型）當主 session，**問句附成本與判準**：fable 輸入／輸出單價約 opus-5.5 的 2.5 倍，主 session 的輸出大半是思考，換模型會直接放大這筆；官方說 fable 適合目標模糊、找根因、架構決策、長時間自主工作，範圍明確的實作與收斂用 opus-5.5。推薦項依任務類型給。owner 選維持就用當前模型（預設 opus-5.5），**中途不切換**（換模型的下一回合整段重讀、沒有快取）。續接既有任務不必再問。
-2. 找現況：`.claude/PRPs/plans/<slug>/PROGRESS.md` 存在就讀它的階段表與「下一步」，從那裡接。
-3. 讀當前階段的檔案：`phases/<n>-*.md`（只讀當前這一份，別一次全讀）。
+   - 同一則 AskUserQuestion 第二題問**分流**（精簡路／完整七階段，推薦項第一＋一句理由，判準見「分流」）。
+2. 找現況：`.claude/PRPs/plans/<slug>/PROGRESS.md` 存在就讀它開頭的分流、階段表與「下一步」，從那裡接。
+3. 讀當前階段的檔案：`phases/<n>-*.md`；精簡路讀 `phases/lean.md`（只讀當前這一份，別一次全讀）。
 
 | 階段 | 檔案 | 產出 |
 |---|---|---|
@@ -21,11 +22,21 @@ owner 是產品負責人不是工程師。這套流程把方向控制權與 toke
 | 5 TDD 實作 | `phases/5-implement.md` | 程式碼＋PROGRESS 切片紀錄 |
 | 6 多方審查 | `phases/6-review.md` | REVIEW.md 去重地圖 |
 | 7 收斂 | `phases/7-converge.md` | 裁決表、修復、全閘、總結 |
+| 精簡路 | `phases/lean.md` | 一份 PROGRESS.md（計畫、審查地圖、結果） |
 
 參考檔**用得到時才讀**，開工時不要全讀（評測時多讀兩份參考檔，除了多花 token 沒有好處）：`references/lanes.md`（第 4 階段定路數、第 6／7 階段派工時）、`references/external-review.md`（第 6 階段派外審時）、`references/history.md`（想推翻或放寬某條規則時）、`references/project-deepweave.md`（在 deepweave repo 要跑測試、閘或碰 prod 時）。
 範本：`assets/`（審查任務書、收斂驗證任務書、修復任務包、checkpoint 回報）。腳本：`scripts/`（見下）。
 
-## Checkpoint 協定（每階段結束，硬規則）
+## 分流：精簡路或完整七階段
+開工判一次，寫進 PROGRESS.md 開頭。**審查不分流**：兩條路都照「依規模分級」派該派的 reviewer，含外審（owner 10-05、10-06：「唯獨 review 不能省」）。
+- **精簡路**——三條都成立才走：
+  1. **需求明確**：修法已定或只有一種合理做法，不需要 owner 做設計／文案取捨（backlog 寫好修法的條目、根因已定位的 bug、補測試、一行級 UI 修正）。
+  2. **不碰重要面**：credits、權限、18+／未成年、跨層不變式、prod 資料、全站可用性（斷路器、retry、逾時預算）。
+  3. **小**：正式碼約 300 行內。
+- **完整七階段**：其餘一律。重要功能、要 owner 定方向的使用者有感功能，正是討論與訪談存在的理由——把方向錯誤提前到寫程式之前。
+- 拿不準走完整。精簡路途中撞到上面任一條 → 依 `phases/lean.md`「升級」停下改走完整。
+
+## Checkpoint 協定（完整路每階段結束，硬規則；精簡路只在交付時停，見 `phases/lean.md`）
 owner 吃過「一路衝到底、末端才發現前提錯」的虧，也要自己決定何時 compact——所以每階段都停。
 1. 結論與下一步寫進 PROGRESS.md（階段表那一列＋「## 下一步」＋「## 第 N 階段紀錄」五行：做了什麼／關鍵裁決／紅→綠或證據／閘結果／殘留）。
 2. **完全停止**，白話回報：做了什麼、發現什麼、為什麼這樣決定、接下來幹嘛。
@@ -40,8 +51,8 @@ owner 吃過「一路衝到底、末端才發現前提錯」的虧，也要自�
 - **註解不可信**：任何階段不得用註解、CLAUDE.md、SPEC、記憶推斷程式行為；只信執行＞程式碼。註解與行為不符＝必修 issue，誤導性註解嚴重度視同邏輯 bug。新文字不得以任務代號（「包 A」「R8」「REVIEW §x」）當唯一說明；可寫 slug。
 - **owner 溝通**：先講人話再附技術細節；技術縮寫首次出現附一句白話。拍板題一律 AskUserQuestion（推薦項排第一標 Recommended、選項寫「選了會發生什麼」、關鍵對比用文字圖 preview），一次一件事。
 - **挑戰 owner**：有證據的立場要堅持並攤開證據、被說服才改；owner 新資訊推翻結論要坦白更新。發現更好的做法要反向挑戰並附理由。
-- **規模閥門**：任務明顯很小可提議合併／跳過部分階段（含主 session 直接做）；明顯太大可提議 ROADMAP.md 拆子任務。兩者都要 owner 同意。
-  - 直接做的小修**仍照第 6 階段派該派的 reviewer，含外審**（owner 10-05：「最後審查該送出的 reviewer 還是要送，外部審查很重要」）；省的是任務目錄與 checkpoint，不是審查。
+- **規模閥門**：小而明確的走精簡路（見「分流」）；明顯太大可提議 ROADMAP.md 拆子任務（owner 同意）。
+- **排序**：backlog、後續小包與 ROADMAP 依「重要（錢、權限、未成年、全站可用性、資料遺失）＞使用者有感＞其餘」排；其餘合成一包走精簡路（owner 10-06：「優先重要功能跟使用者有感功能，其餘收斂」）。
 - **graphify 只准查詢**，改完 docs／sql／openapi 只提醒圖過期，沒 owner 指示不跑 `--update`。
 - **prod**：**任何 prod 查詢（DB、Langfuse 等量測 API）都先用 AskUserQuestion 問 owner**，附確切查詢、它要回答什麼、答案會怎麼改變決定；只看聚合數字也一樣要問（owner 09-28 定）。核准後由主 session 跑，subagent 一律禁打。DB 只下 SELECT；Langfuse 額度與 prod 警報輪詢器共用。不讀使用者對話內容、不印任何金鑰。
 
