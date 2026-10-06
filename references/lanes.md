@@ -12,11 +12,16 @@
 - 分工審查會系統性漏掉接縫（每條 lane 都在自己的邊界內看到「這一半是對的」）→ 一定留一路**沒有分派邊界**的視角（通常是 codex），升級嚴重度的依據是它多追的那一步事實，不是語氣。
 - agent 名字描述專長不是能力：寫完 lane prompt 回頭問「這份任務書要求的動作，那個 agent type 做得到嗎」（a11y-architect 沒有 Bash、跑不了瀏覽器）。
 
+## effort
+- comment-analyzer、go-reviewer、silent-failure-hunter＝high；其餘 reviewer 仍 xhigh。由來：10-06 重放 A/B，已確認條目零漏、花費 −44%（`history.md`）。
+- 擴大判準：接下來兩個包跑完第 6 階段，用 `laneyield.py` 比這三路的獨家發現與確認數有沒有比 10-06 前少。沒少 → typescript-／database-／python-reviewer 也改 high；少了 → 三路退回 xhigh。推理型（lane-reviewer、converge-verifier）、碰錢權限（security-reviewer）、突變（pr-test-analyzer）、真瀏覽器（ui-lane-reviewer）不在擴大範圍。
+- 再做 effort A/B：另建 `ab-<名>-high.md`（本體逐字相同，只改 name／effort），新檔要到下一回合才載入；不改原檔，並行 session 會在不知情的情況下中招。重放材料＝凍結快照＋原任務書；任務書刪了可以從任一 lane transcript 的 Read 結果逐字還原。xhigh 自己重跑一次當雜訊基準：嚴重度本來就會浮動，比的是有沒有抓到。
+
 ## 小包（正式碼 ≤1500 行，且不碰 credits／權限／跨層不變式）：6–8 路
 | lane | agent | 何時 |
 |---|---|---|
 | 每個碰到的層一個語言 reviewer | go-／python-／typescript-reviewer | 必開 |
-| 註解正確性 | comment-analyzer（沒有 Write／Bash：主落檔） | 必開 |
+| 註解正確性 | comment-analyzer（沒有 Write／Bash：主落檔）；小包程式註解＋文件合一路，範圍＝帶 `WHY:`／`INVARIANT:` 前綴的行＋本包改到的 CLAUDE.md／`.claude/rules/`／openapi／SPEC | 必開 |
 | 測試品質＋突變 | pr-test-analyzer（突變樹唯一 writer） | 必開 |
 | 靜默失敗 | silent-failure-hunter | 必開 |
 | 規格忠實度＋case walk | lane-reviewer | 必開 |
@@ -55,7 +60,7 @@
 - 共用一份沒實測過的處方且 >5 顆 → 先一顆探針。
 
 ## 成本參考
-調路數前先跑 `scripts/laneyield.py <slug>…`（每一路的獨家發現、確認數與花費）與 `scripts/taskcost.py --slug <slug>`（各階段目錄花費）。
+調路數前先跑 `scripts/laneyield.py <slug>…`（每一路的獨家發現、確認數與花費）與 `scripts/taskcost.py --slug <slug>`（各階段目錄花費）。transcript 多數訊息只記串流開頭的 `output_tokens`（少算 5–10 倍、thinking 又遮蔽），腳本的 output 金額不可信；比較時看回合數與 cache 讀寫。
 
 ### 2026-09-28，正式碼約 1000 行的一包
 13 路審查＋5 路收斂驗證（每路 24–30 萬 token）＋4 片修復（約 100 萬）。13 條 MEDIUM 有 7 條是註解／文件——這是依規模分級的由來。
