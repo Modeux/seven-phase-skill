@@ -20,7 +20,7 @@
 ## 主 session 的驗收（不放寬）
 - 偏離裁決：agent 自報的每條偏離逐條接受／否決，否決的寫成第二輪紅丟回同一 agent。
 - **主親跑閘**：每片跑「受影響包」的 build／vet／單元＋該片具名整合；**不採信 subagent 自報**（已知失敗模式：只跑窄範圍 `-run` 就報綠，漏掉命名不同的連帶紅）。輸出重導向到檔案再 grep（接 `tail` 會藏掉前面的包並把 exit code 歸零）。
-- diff 生產碼對快照，確認只動該片範圍；go-fix 類 hook 會改整個套件，改完一律 `git status --porcelain`（不帶 pathspec）對帳。
+- diff 生產碼對快照，確認只動該片範圍；改完一律 `git status --porcelain`（不帶 pathspec）對帳。
 - 全閘（整合全包、lint、audit、前端整包＋production build、契約 lint）只在本階段末跑一次，判準是「對既存紅基線零新增」。
 - 涉 UI 的包，階段末的真瀏覽器走一趟派 `ui-lane-reviewer`（步驟、樹與 dev server、證據目錄寫在任務包）；主 session 讀結論、開它點名的一兩張截圖。為什麼：瀏覽器輸出很大，留在主 session 會讓之後每一回合都重付（owner 10-05 定）。
 

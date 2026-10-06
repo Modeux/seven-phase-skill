@@ -26,6 +26,7 @@
 | 10-05 | 切片依要讀的檔案合併；不拿做完的 agent 接下一片 | 21 天實測：同一任務裡 tdd agent 的 Read 輸出 29% 落在別顆也讀過的檔案；每顆新 agent 固定重付初始 context 16%＋子目錄 CLAUDE.md 24%；但 tdd-guide 做完時 context 約 42 萬、subagent 快取 5 分鐘，重用接下一片每回合約貴一倍且失去並行。owner：「加進去」 |
 | 10-05 | 耐久結論以 pattern 形式寫進子目錄 CLAUDE.md、合併改寫不追加 | 實測子目錄 CLAUDE.md 載入 21 天約 $1,200、tdd-guide 重讀 context 的 24%；24 份共 1.35MB，內容多是逐次任務追加的實驗經過、任務代號、日期、測試名清單。官方準則：每行問「刪掉它 Claude 會犯錯嗎」。owner：「全部的 claude.md 都有類似的問題 需要瘦身 可以直接來」 |
 | 10-05 | 主 session 直接做的小修仍照第 6 階段派審查（含外審），只省任務目錄與 checkpoint | director-image-url（導演附圖 400 小修，正式碼約 150 行）：owner 准「修正很小可以直接修」後補一句「最後審查該送出的 reviewer 還是要送，外部審查很重要」 |
+| 10-06 | 收尾閘加 `just fix-go-changed`（改到的 Go 行零舊式寫法）；go-fix hook 改成只回報改到的行、經 additionalContext 給模型 | 舊 hook 只寫 stderr＋exit 0：468 次觸發、送進模型的 content 全是空字串，Go 1.27 升級一個月累積 99 檔待現代化，幾乎都是新寫的測試檔。owner：「三段都做」（寫的當下回報、收尾閘、分支合完再全庫掃） |
 
 ## 更早就存在、仍有效的教訓
 - **審查數量 vs 收斂**（04-28，owner）：「reviewer 多是可以的，有些 bug 會因為角度不同才會浮現；真正要關心的是如何收斂，less is more」→ 槓桿在 intake gate：只有嚴重技術債或潛在 bug 風險才進地圖。09-28 的分級只縮小包的路數，不取消多角度。
