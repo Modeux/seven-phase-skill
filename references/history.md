@@ -27,6 +27,7 @@
 | 10-05 | 耐久結論以 pattern 形式寫進子目錄 CLAUDE.md、合併改寫不追加 | 實測子目錄 CLAUDE.md 載入 21 天約 $1,200、tdd-guide 重讀 context 的 24%；24 份共 1.35MB，內容多是逐次任務追加的實驗經過、任務代號、日期、測試名清單。官方準則：每行問「刪掉它 Claude 會犯錯嗎」。owner：「全部的 claude.md 都有類似的問題 需要瘦身 可以直接來」 |
 | 10-05 | 主 session 直接做的小修仍照第 6 階段派審查（含外審），只省任務目錄與 checkpoint | director-image-url（導演附圖 400 小修，正式碼約 150 行）：owner 准「修正很小可以直接修」後補一句「最後審查該送出的 reviewer 還是要送，外部審查很重要」 |
 | 10-06 | 收尾閘加 `just fix-go-changed`（改到的 Go 行零舊式寫法）；go-fix hook 改成只回報改到的行、經 additionalContext 給模型 | 舊 hook 只寫 stderr＋exit 0：468 次觸發、送進模型的 content 全是空字串，Go 1.27 升級一個月累積 99 檔待現代化，幾乎都是新寫的測試檔。owner：「三段都做」（寫的當下回報、收尾閘、分支合完再全庫掃） |
+| 10-06 | 耐久結論的落點：母檔有「主題規則」索引時寫進 `.claude/rules/<area>/*.md`、不寫回母檔；新主題新建規則檔（錨定 glob、不加 `**/`）＋母檔索引一行 | repo `f5fea15c` 依官方建議（<200 行、局部規則改 path-scoped rules）把 worker／backend-golang／angular-workspace 拆到 147→14、68→24、52→17KB；skill 仍寫「搬進最近的子目錄 CLAUDE.md」會讓之後的文件片寫回母檔、無聲重新長胖。glob 錨定形式經實測三種情境（主 checkout、`tmp/` 手動 worktree、隔離 worktree 子代理）都正確匹配，`**/` 會在 tmp worktree 重複載入。owner：「seven-phase skill 要改」 |
 
 ## 更早就存在、仍有效的教訓
 - **審查數量 vs 收斂**（04-28，owner）：「reviewer 多是可以的，有些 bug 會因為角度不同才會浮現；真正要關心的是如何收斂，less is more」→ 槓桿在 intake gate：只有嚴重技術債或潛在 bug 風險才進地圖。09-28 的分級只縮小包的路數，不取消多角度。
