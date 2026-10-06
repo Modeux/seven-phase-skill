@@ -3,7 +3,7 @@
 嚴格 red → green → refactor。為什麼：紅測試是把 owner 決策與規格釘成可執行斷言的唯一方式；「一寫就綠」的測試什麼都沒證明。
 
 ## 紅由誰寫（2026-09-23 放寬）
-- **一般切片／修復包**：一個 agent 一包寫紅＋綠——`tdd-impl`（high，試行）或 `tdd-guide`（xhigh），選法見 `references/lanes.md`「實作與修復」。主給**測試設計清單**（每支測什麼、期望紅的原因），不給測試碼。agent 必交 `<片號>-red-run.out`（每支紅的失敗訊息逐字）；**紅跑存檔後不准再改那些測試**（用測試檔 sha 或 mtime 對 red-run.out 核）。
+- **一般切片／修復包**：一個 agent 一包寫紅＋綠——`tdd-guide`（high），見 `references/lanes.md`「實作與修復」。主給**測試設計清單**（每支測什麼、期望紅的原因），不給測試碼。agent 必交 `<片號>-red-run.out`（每支紅的失敗訊息逐字）；**紅跑存檔後不准再改那些測試**（用測試檔 sha 或 mtime 對 red-run.out 核）。
 - **主審紅，不寫紅**：讀 red-run.out 判「紅的原因對不對」——編譯紅、fixture 紅、import 錯、跑錯 include 都不算紅；再抽 2–3 支做一次突變（把修法 revert 或用 `go test -overlay`／scratch 副本），該支必須紅，擋「測試跟著實作寫」。
 - **仍由主寫紅**：碰 owner 拍板語義、錢、跨層不變式（credits、白名單、配額、告別 anchor 這類）。理由：agent 能寫對測試，但不知道哪些語義是 owner 拍板過的。主寫的紅測試在派工訊息裡點名「不准改」，收件時比對那段的 sha。
 - **守衛測試**（對已正確的行為補釘）寫完就是綠的：改交**突變證明** `<片號>-mutation-run.out`（施加最小突變→該支紅→還原）。

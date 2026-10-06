@@ -55,8 +55,8 @@ owner 吃過「一路衝到底、末端才發現前提錯」的虧，也要自�
 ## 模型與 agent
 - 主 session：簡報、訪談、規劃、委派協調、**親跑測試與閘**、一切最終裁決。subagent 只回結論與證據，**不代表 owner 做任何決定**。
 - subagent 一律 opus-5.5，**effort 只能由 agent frontmatter 決定**（`~/.claude/agents/*.md` 的 `model:`／`effort:`；prompt 寫 effort 是安慰劑；Agent 工具的 `model` 參數勿傳）。
-  - **xhigh（要判斷）**：planner、tdd-guide、所有語言／領域 reviewer、silent-failure-hunter、pr-test-analyzer、comment-analyzer、`lane-reviewer`（關注面 lane）、`ui-lane-reviewer`（真瀏覽器的 UI lane 與走一趟）、`converge-verifier`（收斂驗證）、`blind-judge`（盲評，不載 CLAUDE.md）。
-  - **high（範圍已定）**：`tdd-impl`（試行，見 `references/lanes.md`）、`doc-slice`（文件片）、doc-updater（codemap／README）、code-explorer、quick-task（含 graphify 抽取）。
+  - **xhigh（要判斷）**：planner、其餘語言／領域 reviewer（typescript-／database-／python-／security-reviewer 等）、pr-test-analyzer、`lane-reviewer`（關注面 lane）、`ui-lane-reviewer`（真瀏覽器的 UI lane 與走一趟）、`converge-verifier`（收斂驗證）、`blind-judge`（盲評，不載 CLAUDE.md）。
+  - **high（範圍已定，或 10-06 A/B 證實不掉品質）**：tdd-guide、comment-analyzer、go-reviewer、silent-failure-hunter（見 `references/lanes.md` §effort）、`doc-slice`（文件片）、doc-updater（codemap／README）、code-explorer、quick-task（含 graphify 抽取）。
   - **內建 agent（general-purpose、Explore、Plan）沒有 frontmatter，effort 跟著主 session 走**：主 session 開 max 它就跑 max，開 medium 就跑 medium。有固定用途的工作一律派上面的專用 agent，general-purpose 只留給不屬於任何一類的雜務。
   - 改了 frontmatter 要新進程才生效（10-05 前開的 session 找不到 `ui-lane-reviewer`／`blind-judge` 時，改派 `lane-reviewer`／general-purpose——舊進程裡的 lane-reviewer 仍有全部工具）；驗證看 `~/.claude/projects/<proj>/<sid>/subagents/*.jsonl` 的 `"model"` 與 `"effort"`。內建 agent 的模型靠 `~/.claude/settings.json` 的 `CLAUDE_CODE_SUBAGENT_MODEL`；`fork` 永遠跑主 session 的模型與 effort。花費用 `scripts/agentcost.py` 量。
 - **派工前確認 agent 的工具集**：comment-analyzer／planner 等沒有 Write（交付要主 session 落檔或改用有 Write 的 agent）；沒 Bash 的跑不了測試；lane-reviewer、quick-task 只有 Read／Write／Bash／Grep／Glob（少背約 15k token 的工具定義），要瀏覽器的派 `ui-lane-reviewer`。

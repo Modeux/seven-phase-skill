@@ -16,7 +16,7 @@ REVIEW.md 加「第 N 階段收斂裁決」表：每條一列（裁決、依據�
 
 ## 4. 修復
 - 依檔案範圍切片（每個檔只屬於一片），`assets/fixplan.md` 當共用任務包：背景、owner 拍板、環境規則、紅的歸屬、交付格式。每片另寫一份 `<片號>-brief.md`：從裁決表與驗證報告**逐字**摘出歸這片的條目（含建議新文字、測試設計、探針原文），不要叫每片去讀全部驗證報告。
-- agent：程式碼片照 `references/lanes.md`「實作與修復」選 `tdd-impl`／`tdd-guide`（碰拍板語義的片一律 tdd-guide）；文件片用 `doc-slice`。註解類條目在任務包寫明「先回程式碼確認宣稱成立再改，不成立就在報告標 false positive」。
+- agent：程式碼片用 `tdd-guide`（`references/lanes.md`「實作與修復」）；文件片用 `doc-slice`。註解類條目在任務包寫明「先回程式碼確認宣稱成立再改，不成立就在報告標 false positive」。
 - 碰拍板語義的紅由**主 session 先寫好、紅跑存檔**，再派實作；派工訊息點名主寫的測試不准改。
 - 小修（1–3 檔、內容已確定，例如 SPEC／PLAN／openapi 描述、幾行註解）主 session 直接改；同一層、各自預估 <20 分鐘的修復片合成一片。
 - 成因不明的難纏 bug 先套 `mattpocock-skills:diagnosing-bugs`（重現→最小化→假設→驗證）定位再修。

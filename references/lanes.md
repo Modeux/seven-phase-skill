@@ -13,7 +13,8 @@
 - agent 名字描述專長不是能力：寫完 lane prompt 回頭問「這份任務書要求的動作，那個 agent type 做得到嗎」（a11y-architect 沒有 Bash、跑不了瀏覽器）。
 
 ## effort
-- comment-analyzer、go-reviewer、silent-failure-hunter＝high；其餘 reviewer 仍 xhigh。由來：10-06 重放 A/B，已確認條目零漏、花費 −44%（`history.md`）。
+- comment-analyzer、go-reviewer、silent-failure-hunter、tdd-guide＝high；其餘 reviewer 仍 xhigh。由來：10-06 重放 A/B——三路 reviewer 已確認條目零漏、花費 −44%；tdd-guide 兩片（跨層、碰錢＋權限）突變殺傷相同、花費 −37%（`history.md`）。
+- tdd-guide 降檔後唯一看到的退步：照抄任務書的錯前提寫成 INVARIANT。第 6 階段註解 lane 是這類錯的防線，不因小包而省。
 - 擴大判準：接下來兩個包跑完第 6 階段，用 `laneyield.py` 比這三路的獨家發現與確認數有沒有比 10-06 前少。沒少 → typescript-／database-／python-reviewer 也改 high；少了 → 三路退回 xhigh。推理型（lane-reviewer、converge-verifier）、碰錢權限（security-reviewer）、突變（pr-test-analyzer）、真瀏覽器（ui-lane-reviewer）不在擴大範圍。
 - 再做 effort A/B：另建 `ab-<名>-high.md`（本體逐字相同，只改 name／effort），新檔要到下一回合才載入；不改原檔，並行 session 會在不知情的情況下中招。重放材料＝凍結快照＋原任務書；任務書刪了可以從任一 lane transcript 的 Read 結果逐字還原。xhigh 自己重跑一次當雜訊基準：嚴重度本來就會浮動，比的是有沒有抓到。
 
@@ -39,19 +40,12 @@
 
 ## 實作與修復
 - 切片實作（每片一棵私有樹）：
-  - `tdd-guide`（xhigh）：碰錢／credits、權限、跨層不變式、owner 拍板語義，或任務包留有設計選擇沒定的片。
-  - `tdd-impl`（high，試行）：主已給測試設計清單、檔案範圍明確、沒有待決設計的一般片。拿不準就用 tdd-guide。
+  - `tdd-guide`（high）：所有實作片與修復片。碰錢、權限、owner 拍板語義的紅照舊由主 session 先寫。
 - 文件片：`doc-slice`（high，每句先回程式碼確認）；codemap／README 生成才用 doc-updater。
 - 探索／定位：code-explorer（high）；判斷性探索用 general-purpose／Explore（effort 跟主 session）。
 - 組材料包、批次文字改寫、graphify 抽取：quick-task（high）。
 - 真瀏覽器走一趟（第 5／7 階段末）：`ui-lane-reviewer`（xhigh）。
 - 盲評（模型／提示詞探針）：`blind-judge`（xhigh、不載 CLAUDE.md、只有 Read／Write／Glob）；位置由主 session 隨機化後才交給它。
-
-## tdd-impl 試行（2026-10-02 起；結果寫進 `history.md` 後刪掉本節）
-- 為什麼：21 天實測 tdd-guide 占 subagent 花費 30%（217 顆、中位 76 回合）；一般片的判斷（測試設計、範圍）派工前主 session 已做完，閘與突變抽查也由主 session 親跑。
-- 下一個有兩片以上一般片的包：第一波挑**同層、規模相近**的兩片，一片 tdd-guide、一片 tdd-impl（探針規則照舊，兩片都算探針）。
-- 比：`scripts/agentcost.py --agents <id1>,<id2>` 的花費與回合數；主審紅時「紅的原因不對」的支數；被否決的偏離數；主 session 親跑閘的新紅數；抽突變是否紅。
-- 判準：tdd-impl 品質四項不比 tdd-guide 差、花費明顯較低 → 一般片預設 tdd-impl；任一品質項變差 → 退回全部 tdd-guide。結果與數字寫進 `history.md`。
 
 ## 派工前檢查
 - agent 的工具集（有沒有 Write／Bash；lane-reviewer、quick-task 沒有瀏覽器與 MCP）。
