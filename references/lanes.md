@@ -28,7 +28,7 @@
 | 規格忠實度＋case walk | lane-reviewer | 必開 |
 | 異源外審 | codex（gpt-6-sol xhigh） | 必開 |
 | 安全／隱私 | security-reviewer | 碰使用者輸入、log／錯誤外洩、權限時 |
-| UI/UX | `ui-lane-reviewer`＋瀏覽器截圖（繼承全部工具含瀏覽器 MCP；lane-reviewer 已限縮工具、開不了瀏覽器） | 涉 UI 時；驗不了的標「需人工目視」 |
+| UI/UX | `ui-lane-reviewer`＋瀏覽器截圖（繼承全部工具、自帶 Playwright server（`--codegen=none`）取代 plugin 那套；lane-reviewer 已限縮工具、開不了瀏覽器） | 涉 UI 時；驗不了的標「需人工目視」 |
 
 ## 大包或高風險包：完整路數
 小包清單全開，再加：security-reviewer（必開）、影響範圍 lane（所有 caller／呼叫點實讀第三方碼）、時間與順序 lane（預算鏈、取消語義、視窗邊界、混版時序）、grok、agy；註解 lane 可拆成程式碼註解與文件兩路。任一路跑不了就換一個不同鏡頭替補。
