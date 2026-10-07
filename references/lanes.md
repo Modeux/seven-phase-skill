@@ -36,11 +36,13 @@
 ## 收斂驗證
 - 只驗「有爭議／HIGH 以上／需 owner 拍板」的條目：小包 1 路、大包依條目量 2 路起（同層的條目放同一路，例：偵測面、追蹤、單一服務、時間預算）。
 - agent：`converge-verifier`（xhigh，有 Write 寫報告）。
+- 驗證員 ≥2 顆時用 `Workflow` 扇出（owner 已同意的用法；先載 `workflow-authoring`）：`agent(prompt, {agentType: 'converge-verifier', schema})`，frontmatter 的 effort 會保留（實測 xhigh）。**Workflow 內的 subagent 被 harness 擋寫報告檔**（「Subagents should return findings as text」，探針檔照寫）——schema 放 `report_markdown` 全文欄位，主 session 從結果落檔，任務書不要求寫報告檔。
 - 其餘條目由修復者邊修邊確認。
 
 ## 實作與修復
 - 切片實作（每片一棵私有樹）：
   - `tdd-guide`（high）：所有實作片與修復片。碰錢、權限、owner 拍板語義的紅照舊由主 session 先寫。
+  - `ab-tdd-guide-v2`／`ab-security-reviewer-v2` 只在 owner 指定 A/B 的包跑兩臂。現況：tdd v2 兩次都便宜約 3 成、但都漏了「同一行為在多個呼叫點」的守衛（交叉突變 6／7→5／7、14／14→12／14），10-07 加了「每個呼叫點各一支」那句後待下一個指定包再比；security v2 便宜 3 成、在沒有安全缺陷的包上分不出偵測力，待碰錢／權限的包再比。合併前一律由主 session 跑交叉突變（同一語義突變、各臂自己的程式碼、`go test -overlay`），不信兩臂自報。
 - 文件片：`doc-slice`（high，每句先回程式碼確認）；codemap／README 生成才用 doc-updater。
 - 探索／定位：code-explorer（high）；判斷性探索用 general-purpose／Explore（effort 跟主 session）。
 - 組材料包、批次文字改寫、graphify 抽取：quick-task（high）。

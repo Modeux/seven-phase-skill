@@ -40,7 +40,8 @@ def lanes_of(cell):
     cell = _PAREN.sub("", cell)
     out = []
     for part in re.split(r"[、；;,，/]|\s+", cell):
-        m = _LANE.fullmatch(part.strip().strip("*"))
+        # WHY: phases/6-review.md has sources written as <lane>#<n> (reviewcov ids) or <lane>:U1; credit the lane.
+        m = _LANE.fullmatch(re.sub(r"(?:#\d+|:[A-Za-z]*\d+)$", "", part.strip().strip("*")))
         if m and m.group(0) not in out and m.group(0) not in _STOP:
             out.append(m.group(0))
     return out
