@@ -16,7 +16,7 @@
 ## 環境坑
 - repo 有 24 份 `CLAUDE.md`：確認工作樹狀態用不帶 pathspec 的 `git status --porcelain`。
 - go-fix hook 只 `gofmt` 剛改的檔，並把該檔「改到的行」上的 go fix 改寫塞進 context（不寫檔）；看到 `[go-fix hook]` 就在同一片裡改掉，別留到收尾。
-- worktree 守衛會擋 shell 變數與命令替換：改寫成 `python3 <script>.py`。
+- worktree 守衛會擋 shell 變數與命令替換：CLI 橋接／材料包組裝改寫成 `python3 <script>.py`；改既有檔一律 Edit／Write（`.claude/hooks/py-edit-guard.py` 會擋 Python 改檔，Edit 做不到時加 `# allow-py-edit: <理由>`）。
 - `rm -rf` 會被權限系統擋：清樹用 `git worktree remove --force`，暫存檔換新名字而不是刪。
 - 改完 `db/queries` 立刻起 sqlc 容器會讀到截斷檔：腳本內 `sync`＋`sleep 3`。
 
