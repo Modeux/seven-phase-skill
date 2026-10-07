@@ -10,7 +10,7 @@ owner 是產品負責人不是工程師。這套流程把方向控制權與 toke
 ## 開工第一步
 1. **問模型**：新任務開工前用 AskUserQuestion 問 owner 要不要 `/model` 切到 fable（或當時更強的模型）當主 session，**問句附成本與判準**：fable 輸入／輸出單價約 opus-5.5 的 2.5 倍，主 session 的輸出大半是思考，換模型會直接放大這筆；官方說 fable 適合目標模糊、找根因、架構決策、長時間自主工作，範圍明確的實作與收斂用 opus-5.5。推薦項依任務類型給。owner 選維持就用當前模型（預設 opus-5.5），**中途不切換**（換模型的下一回合整段重讀、沒有快取）。續接既有任務不必再問。
    - 同一則 AskUserQuestion 第二題問**分流**（精簡路／完整七階段，推薦項第一＋一句理由，判準見「分流」）。
-2. 找現況：`.claude/PRPs/plans/<slug>/PROGRESS.md` 存在就讀它開頭的分流、階段表與「下一步」，從那裡接。
+2. 找現況：`.claude/PRPs/plans/<slug>/PROGRESS.md` 存在就讀它開頭的分流、階段表與「下一步」，從那裡接。不知道是哪個任務、或 owner 問「進度」：看 SessionStart 注入的進度看板，沒有就跑 `scripts/board.py`。
 3. 讀當前階段的檔案：`phases/<n>-*.md`；精簡路讀 `phases/lean.md`（只讀當前這一份，別一次全讀）。
 
 | 階段 | 檔案 | 產出 |
@@ -38,7 +38,7 @@ owner 是產品負責人不是工程師。這套流程把方向控制權與 toke
 
 ## Checkpoint 協定（完整路每階段結束，硬規則；精簡路只在交付時停，見 `phases/lean.md`）
 owner 吃過「一路衝到底、末端才發現前提錯」的虧，也要自己決定何時 compact——所以每階段都停。
-1. 結論與下一步寫進 PROGRESS.md（階段表那一列＋「## 下一步」＋「## 第 N 階段紀錄」五行：做了什麼／關鍵裁決／紅→綠或證據／閘結果／殘留）。
+1. 結論與下一步寫進 PROGRESS.md（階段表那一列＋「## 下一步」＋「## 第 N 階段紀錄」五行：做了什麼／關鍵裁決／紅→綠或證據／閘結果／殘留），**同時改檔頭 frontmatter**：`status`（`owner` 等 owner 拍板／說繼續／commit／push、`doing` 做到一半被打斷、`blocked` 等外部、`deploy` 已 commit 剩部署驗收、`done`）＋`next`（一句話：下一步是什麼、誰要動）；任務住在 worktree 加 `worktree: <名稱>`，多包任務或階段表推不出來時加 `phase:`（如 `第三包 5/7`）。改完跑 `python3 ~/.claude/skills/seven-phase/scripts/board.py` 重算看板。精簡路在建檔與交付時各改一次；owner 說 commit 並 commit 完，改成 `status: deploy`、`next` 寫部署要點。
 2. **完全停止**，白話回報：做了什麼、發現什麼、為什麼這樣決定、接下來幹嘛。
 3. 附一段可直接貼的 `/compact <摘要>`（位置、真相源檔、下一步、全程規則），用 `assets/checkpoint.md` 的形狀。
 4. **等 owner 說「繼續」**才進下一階段。不得順勢往下做，也不得在回報裡先問下一階段的問題。
@@ -88,5 +88,6 @@ owner 吃過「一路衝到底、末端才發現前提錯」的虧，也要自�
 - `extract.py`：markdown 依標題或行號逐字切段、附出處（組任務包）。
 - `reviewcov.py`：核對 REVIEW.md 去重地圖涵蓋每份 lane 報告的每一條（第 6 階段收件）。
 - `claudemdcost.py`：子目錄 CLAUDE.md 與限定範圍規則（讀到才載入）的花費，依檔案彙總、worktree 副本併回原路徑。
+- `board.py`：跨任務進度看板——掃主 checkout 與所有掛分支的 worktree 的 PROGRESS.md，讀 frontmatter、git 狀態當場算，寫 `<主 checkout>/tmp/progress/board.html` 並印摘要；`~/.claude/settings.json` 的 SessionStart hook（startup／clear／compact）以 `--hook session-start` 跑它，把摘要注入 context。
 - `taskcost.py`／`laneyield.py`：每個任務、每個階段目錄的花費；每一路審查的獨家發現與花費（調路數、檢討流程前先跑）。
 Bash 一律絕對路徑或 `git -C`／`go test -C`，**不要 `cd`**（工作目錄會殘留，下一個 bridge 或 pathspec 會跑錯樹）。

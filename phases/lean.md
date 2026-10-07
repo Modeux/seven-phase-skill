@@ -5,6 +5,7 @@
 ## 1. 定位與前提
 - 讀窄找到要改的檔與符號（大範圍派 code-explorer）。backlog 條目或 bug 報告寫的根因與修法是**待否證的假設**：回程式碼核對它還成立（行號會漂、別的包可能已修）。
 - 寫 `.claude/PRPs/plans/<slug>/PROGRESS.md`（唯一的任務檔，續接靠它）：
+  - 檔頭 frontmatter `status: doing`＋`next`（格式見 SKILL.md「Checkpoint 協定」第 1 條），交付時改成 `status: owner`。
   - 開頭一行「分流：精簡路」＋三條理由各一句。
   - `## 計畫` ≤15 行：改哪些檔／符號、紅測試（測什麼行為、為什麼現在會紅）、閘指令、審查 lane 清單（`references/lanes.md`）、不做清單。
 - 完成判準：每條前提都有程式碼出處。任一條不成立、或發現要 owner 取捨 → 走「升級」。
