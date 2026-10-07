@@ -357,7 +357,11 @@ def render_text(b, out):
         lines.append(f"■ {GONE_LABEL} {len(b['gone'])}：" + "、".join(g["slug"] for g in b["gone"]))
     if b["backlog"]:
         lines.append(f"■ Backlog（{BACKLOG}）：" + "・".join(f"{g} {len(b['backlog'][g])}" for g, _ in BACKLOG_GROUPS))
-        lines += [f"  - [重要] {it['title']}｜{it['status']}" for it in b["backlog"]["重要"]]
+        # WHY: injected into every session; the top of 重要 (owner-ranked first) is enough to steer, the rest is in the HTML.
+        top = b["backlog"]["重要"]
+        lines += [f"  - [重要] {it['title']}｜{clip(it['status'], 30)}" for it in top[:8]]
+        if len(top) > 8:
+            lines.append(f"  - …重要另 {len(top) - 8} 條見 HTML／{BACKLOG}")
     return "\n".join(lines)
 
 
