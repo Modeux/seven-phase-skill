@@ -43,6 +43,7 @@ owner 吃過「一路衝到底、末端才發現前提錯」的虧，也要自�
 3. 附一段可直接貼的 `/compact <摘要>`（位置、真相源檔、下一步、全程規則），用 `assets/checkpoint.md` 的形狀。
 4. **等 owner 說「繼續」**才進下一階段。不得順勢往下做，也不得在回報裡先問下一階段的問題。
 5. 背景 subagent 在 checkpoint 之後才交件：併進記錄，下一則回覆一句話告知，並給更新版 `/compact`。
+6. **compact 要趁暖、要早**：`/compact` 在 owner 離開**之前**貼（快取 5 分鐘就冷，用量額度時段主對話只有 5m TTL；冷的 compact 會把整段歷史按未快取價重讀），目標 compact 時 context ≤ 200k（10-07 實測中位 358k＝太晚）。回來發現冷了（`/usage` 的 `Prompt cache (main)` 顯示 cold）而且下一階段不需要延續對話 → `/clear` 再讀 PROGRESS，不要 compact；要放棄一條路用 `/rewind`（回到已快取的前綴，比 compact 便宜）。
 
 ## 全程規則
 - **禁 git commit／push**，直到 owner 明說（owner 要在進歷史之前看過整包結果）。commit 形狀＝兩個：`feat(x): ...`（程式碼＋CLAUDE.md／`.claude/rules/`＋契約）與 `docs(prps): <slug> 七階段記錄`（任務目錄）。工作樹常有別人／別任務的已暫存改動：**一律 `git commit --only -F <msg> -- <明確路徑>`**（新檔先 `git add` 那幾個路徑），絕不用裸 `git commit` 或 `git add -A`。push 前 `git fetch` 並確認 ahead-only。
@@ -70,7 +71,8 @@ owner 吃過「一路衝到底、末端才發現前提錯」的虧，也要自�
   - **high（範圍已定，或 10-06 A/B 證實不掉品質）**：tdd-guide、comment-analyzer、go-reviewer、silent-failure-hunter（見 `references/lanes.md` §effort）、`doc-slice`（文件片）、doc-updater（codemap／README）、code-explorer、quick-task（含 graphify 抽取）。
   - **內建 agent（general-purpose、Explore、Plan）沒有 frontmatter，effort 跟著主 session 走**：主 session 開 max 它就跑 max，開 medium 就跑 medium。有固定用途的工作一律派上面的專用 agent，general-purpose 只留給不屬於任何一類的雜務。
   - agent 檔改動不必重啟：改既有檔的 frontmatter，下一次派工就生效；新建或刪除的檔，下一個使用者回合才出現在可用清單（同回合派會 not found）；已在跑的那顆維持舊設定跑完。驗證看 `~/.claude/projects/<proj>/<sid>/subagents/*.jsonl` 的 `"model"` 與 `"effort"`。內建 agent 的模型靠 `~/.claude/settings.json` 的 `CLAUDE_CODE_SUBAGENT_MODEL`；`fork` 永遠跑主 session 的模型與 effort。花費用 `scripts/agentcost.py` 量。
-- **派工前確認 agent 的工具集**：comment-analyzer／planner 等沒有 Write（交付要主 session 落檔或改用有 Write 的 agent）；沒 Bash 的跑不了測試；lane-reviewer、quick-task 只有 Read／Write／Bash／Grep／Glob（少背約 15k token 的工具定義），要瀏覽器的派 `ui-lane-reviewer`。
+- **派工前確認 agent 的工具集**：comment-analyzer／planner 等沒有 Write（交付要主 session 落檔或改用有 Write 的 agent）；沒 Bash 的跑不了測試；lane-reviewer、quick-task 只有 Read／Write／Bash／Grep／Glob（少背約 15k token 的工具定義），要瀏覽器的派 `ui-lane-reviewer`。有 `tools:` 白名單的 agent 只拿得到列出的工具——10-07 起 reviewer／tdd-guide／code-explorer 都列了 `LSP`（符號導航先用它、grep 只找字串；10-07 前 subagent 的 LSP 呼叫是 0）；每顆都有 `maxTurns`（約 1.3–1.5 × 實測最大回合數，失控保險，到頂會硬停、hand-back 可能不完整）。
+- **主 session 的模型與等待**：Fable 每次呼叫約 Opus 5.5 的 3 倍，閒置失效在 700–800k context 一次 $7–10；派出一批要等 10 分鐘以上的 subagent 之前先縮 context（checkpoint ＋ `/compact` 或 `/clear`）；切模型只在 `/clear` 之後（切了就是全量重寫）；effort 在 Fable／Opus 5.5 切換不打斷快取，派工／收件／寫記錄階段可降 `high`。
 - 專案專用 agent 優先於通用 agent；語言專門 reviewer 不能用 general-purpose＋好 prompt 取代（內建清單打的是別的方向）。
 - 委派：自足任務包（目標、輸入路徑、環境規則、交付格式）；**長交付一律寫檔**，hand-back 只要 ≤12 行摘要＋檔案路徑；並行 agent 的中間檔／交付檔名帶片號或 lane 名（共用 scratchpad 會互截）。
 - **任務包瘦身**：派工訊息分「必讀」與「需要時再讀」兩欄。必讀只放這片用得到的段落，從原文**逐字摘錄**進 `<片號>-brief.md` 並附出處路徑（用 `scripts/extract.py`，不手抄、不每次現寫摘錄腳本），不改寫成摘要（摘要會引入錯誤，也不是證據）；全文路徑一律留在「需要時再讀」。必讀合計 ≤ 約 90KB（`wc -c`，約 3 萬 token），超過要在派工訊息寫理由。不算在內的：審查對象本身（diff、程式碼）、agent 自己決定去讀的程式碼。為什麼：subagent 的花費七成以上是每一回合重讀累積的上下文，前面多讀一段，後面每一回合都再付一次；逐字摘錄加上保留全文路徑，品質不會因此下降。
