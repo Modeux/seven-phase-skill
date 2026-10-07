@@ -28,7 +28,7 @@ REVIEW.md 加「第 N 階段收斂裁決」表：每條一列（裁決、依據�
 - 涉 UI：修復後的真瀏覽器走一趟派 `ui-lane-reviewer`（同第 5 階段）。
 - 確認改動檔集合＝原本的檔＋收斂新增的檔（用 `baseline.sha256` 對），沒有多出無關檔。
 - 突變紀錄等證據先歸檔到 `tmp/`，再 `git worktree remove --force` 清掉所有審查／修復樹。
-- PROGRESS 寫第 7 階段紀錄與「下一步」（commit 範圍、主樹上不屬於本包的改動、部署後驗收、backlog——依 SKILL.md「排序」分組）。
+- PROGRESS 寫第 7 階段紀錄與「下一步」（commit 範圍、主樹上不屬於本包的改動、部署後驗收）；backlog 依 SKILL.md「排序」分組寫進 `.claude/PRPs/BACKLOG.md`（格式見 SKILL.md「backlog 的家」），PROGRESS 只寫一行「backlog 已寫進 BACKLOG.md：N 條」。
 - 記憶只更新「進行中」那一條的狀態，技術結論放子目錄 CLAUDE.md。
 
 → Checkpoint：白話總結（裁決數、拍板結果、閘結果、owner 會看到的外部變化如警報文案），附 `/compact`，等 owner 說 commit。commit 形狀與 `git commit --only` 規則見 SKILL.md。

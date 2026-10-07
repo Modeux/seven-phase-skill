@@ -53,6 +53,7 @@ owner 吃過「一路衝到底、末端才發現前提錯」的虧，也要自�
 - **owner 溝通**：先講人話再附技術細節；技術縮寫首次出現附一句白話。拍板題一律 AskUserQuestion（推薦項排第一標 Recommended、選項寫「選了會發生什麼」、關鍵對比用文字圖 preview），一次一件事。
 - **挑戰 owner**：有證據的立場要堅持並攤開證據、被說服才改；owner 新資訊推翻結論要坦白更新。發現更好的做法要反向挑戰並附理由。
 - **規模閥門**：小而明確的走精簡路（見「分流」）；明顯太大可提議 ROADMAP.md 拆子任務（owner 同意）。
+- **backlog 的家是 `.claude/PRPs/BACKLOG.md`**（不在任何任務目錄裡）：收斂或交付時發現的後續小包、「不修」但問題仍在、已知限制、另開任務，一律當下寫進這份，任務目錄只留子任務表與本包紀錄。為什麼：owner push 時會刪任務目錄，寫在 ROADMAP／PROGRESS／REVIEW 裡的 backlog 會跟著消失（10-07）。格式：依 `## 重要`／`## 有感`／`## 其餘`／`## 已知限制` 分組，每條 `- [ ] **白話標題** — 一句影響。方向：…。出處：\`路徑\` 條目 @<hash>｜狀態：未開／等外部：…／任務：<slug>（進行中）`；開成任務就改狀態，做完就刪那一行。看板（`board.py`）讀它顯示 Backlog 那排。
 - **排序**：backlog、後續小包與 ROADMAP 依「重要（錢、權限、未成年、全站可用性、資料遺失）＞使用者有感＞其餘」排；其餘合成一包走精簡路（owner 10-06：「優先重要功能跟使用者有感功能，其餘收斂」）。
 - **graphify 只准查詢**，改完 docs／sql／openapi 只提醒圖過期，沒 owner 指示不跑 `--update`。
 - **prod**：**任何 prod 查詢（DB、Langfuse 等量測 API）都先用 AskUserQuestion 問 owner**，附確切查詢、它要回答什麼、答案會怎麼改變決定；只看聚合數字也一樣要問（owner 09-28 定）。核准後由主 session 跑，subagent 一律禁打。DB 只下 SELECT；Langfuse 額度與 prod 警報輪詢器共用。不讀使用者對話內容、不印任何金鑰。
@@ -88,6 +89,6 @@ owner 吃過「一路衝到底、末端才發現前提錯」的虧，也要自�
 - `extract.py`：markdown 依標題或行號逐字切段、附出處（組任務包）。
 - `reviewcov.py`：核對 REVIEW.md 去重地圖涵蓋每份 lane 報告的每一條（第 6 階段收件）。
 - `claudemdcost.py`：子目錄 CLAUDE.md 與限定範圍規則（讀到才載入）的花費，依檔案彙總、worktree 副本併回原路徑。
-- `board.py`：跨任務進度看板——掃主 checkout 與所有掛分支的 worktree 的 PROGRESS.md，讀 frontmatter、git 狀態當場算，寫 `<主 checkout>/tmp/progress/board.html` 並印摘要；`~/.claude/settings.json` 的 SessionStart hook（startup／clear／compact）以 `--hook session-start` 跑它，把摘要注入 context。
+- `board.py`：跨任務進度看板——掃主 checkout 與所有掛分支的 worktree 的 PROGRESS.md，讀 frontmatter、git 狀態當場算，寫 `<主 checkout>/tmp/progress/board.html` 並印摘要；HTML 下半部是 `.claude/PRPs/BACKLOG.md` 的 Backlog 四欄。每次跑都把未完成任務的「下一步」快照進 `tmp/progress/ledger.json`，目錄刪了仍以「目錄已刪・待部署」顯示，owner 說部署完了 → 確認是哪幾個後 `--deployed <slug…|all>` 清掉；`~/.claude/settings.json` 的 SessionStart hook（startup／clear／compact）以 `--hook session-start` 跑它，把摘要注入 context。
 - `taskcost.py`／`laneyield.py`：每個任務、每個階段目錄的花費；每一路審查的獨家發現與花費（調路數、檢討流程前先跑）。
 Bash 一律絕對路徑或 `git -C`／`go test -C`，**不要 `cd`**（工作目錄會殘留，下一個 bridge 或 pathspec 會跑錯樹）。

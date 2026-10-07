@@ -30,6 +30,9 @@ import time
 
 PLANS = ".claude/PRPs/plans"
 OUT = "tmp/progress/board.html"
+LEDGER = "tmp/progress/ledger.json"
+BACKLOG = ".claude/PRPs/BACKLOG.md"
+BACKLOG_GROUPS = (("重要", "#e5484d"), ("有感", "#f5a524"), ("其餘", "#889096"), ("已知限制", "#8e8c99"))
 
 STATUSES = (  # key, column label, blurb, colour
     ("owner", "等你", "拍板／說繼續／commit／push", "#e5484d"),
@@ -40,6 +43,7 @@ STATUSES = (  # key, column label, blurb, colour
     ("done", "完成", "", "#889096"),
 )
 STATUS_KEYS = {s[0] for s in STATUSES}
+GONE_LABEL, GONE_COLOUR = "目錄已刪・待部署", "#0091ff"
 
 FM_RE = re.compile(r"\A---\n(.*?)\n---\n", re.S)
 # WHY: stage rows look like "| 5 TDD 實作 | ✅ …"; requiring a label after the digit keeps
@@ -129,14 +133,46 @@ def dirty_slugs(tree):
     return out
 
 
-def commit_ts(tree):
-    ts, cur = {}, 0
-    for line in _git(tree, "log", "--format=@%ct", "--name-only", "--", PLANS).splitlines():
+def commit_info(tree):
+    """path -> (commit time, short hash) of the last commit that touched it."""
+    info, cur = {}, (0, "")
+    for line in _git(tree, "log", "--format=@%ct %h", "--name-only", "--", PLANS).splitlines():
         if line.startswith("@"):
-            cur = int(line[1:])
-        elif line and line not in ts:
-            ts[line] = cur
-    return ts
+            ct, _, h = line[1:].partition(" ")
+            cur = (int(ct), h)
+        elif line and line not in info:
+            info[line] = cur
+    return info
+
+
+def sync_ledger(main, tasks, state_of, deployed=()):
+    """Snapshot every live task that isn't done; a task whose dir is gone stays until marked deployed."""
+    path = main / LEDGER
+    try:
+        led = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        led = {}
+    now = time.time()
+    for slug, t in tasks.items():
+        if t["status"] == "done":
+            led.pop(slug, None)
+            continue
+        prev = led.get(slug, {})
+        led[slug] = {"status": t["status"], "next": t["next"], "phase": t["phase"], "parent": t.get("parent", ""),
+                     "umbrella": bool(t["children"]), "tree": t["tree"], "rel": t["rel"],
+                     "record": t["record"] or prev.get("record", ""), "section": t["section"],
+                     "first_seen": prev.get("first_seen", now), "last_seen": now}
+    removed = [s for s in list(led) if s not in tasks and ("all" in deployed or s in deployed)]
+    for s in removed:
+        del led[s]
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_name(path.name + ".tmp")
+    tmp.write_text(json.dumps(led, ensure_ascii=False, indent=1), encoding="utf-8")
+    tmp.replace(path)
+    newest_first = sorted(led.items(), key=lambda kv: kv[1]["last_seen"], reverse=True)
+    gone = [dict(e, slug=s, git=None if e["umbrella"] else state_of(s), age=age(e["last_seen"]))
+            for s, e in newest_first if s not in tasks]
+    return gone, removed
 
 
 def pick(copies):
@@ -173,7 +209,36 @@ def age(ts):
     return "今天" if days <= 0 else f"{days} 天前"
 
 
-def collect(cwd):
+def read_backlog(main):
+    """Open items (`- [ ]`) of BACKLOG.md grouped by `## ` heading; indented lines continue an item."""
+    path = main / BACKLOG
+    if not path.is_file():
+        return None
+    groups = {g: [] for g, _ in BACKLOG_GROUPS}
+    cur = item = None
+    for line in path.read_text(encoding="utf-8").splitlines():
+        if line.startswith("## "):
+            cur = next((g for g, _ in BACKLOG_GROUPS if line[3:].strip().startswith(g)), None)
+            item = None
+        elif line.startswith("- [ ]") and cur:
+            item = {"raw": line[5:].strip()}
+            groups[cur].append(item)
+        elif item is not None and line.startswith("  ") and line.strip():
+            item["raw"] += " " + line.strip()
+        else:
+            item = None
+    for items in groups.values():
+        for it in items:
+            m = re.search(r"\*\*(.+?)\*\*", it["raw"])
+            rest = it["raw"][m.end():] if m else it["raw"]
+            body, _, status = rest.partition("｜狀態：")
+            body, _, src = body.partition("出處：")
+            it.update(title=m.group(1) if m else clip(clean(rest), 40), body=clean(body).lstrip("—-– ").strip(),
+                      src=clean(src), status=clean(status) or "未開")
+    return groups
+
+
+def collect(cwd, deployed=()):
     trees = worktrees(cwd)
     # INVARIANT: the SessionStart hook is user-level (fires in every project); without task dirs,
     # return None so nothing gets written into repos that don't use this workflow.
@@ -195,14 +260,16 @@ def collect(cwd):
         root = t["path"] / PLANS
         if not root.is_dir():
             continue
-        dirty, ts = dirty_slugs(t["path"]), commit_ts(t["path"])
+        dirty, info = dirty_slugs(t["path"]), commit_info(t["path"])
         for d in sorted(p for p in root.iterdir() if p.is_dir()):
             prog = d / "PROGRESS.md"
+            rel = f"{PLANS}/{d.name}/PROGRESS.md"
             text = prog.read_text(encoding="utf-8") if prog.is_file() else ""
             is_dirty = d.name in dirty
-            stamp = prog.stat().st_mtime if is_dirty and prog.is_file() else ts.get(f"{PLANS}/{d.name}/PROGRESS.md", 0)
-            copies.setdefault(d.name, []).append({"tree": t, "dir": d, "path": prog, "text": text,
-                                                  "fm": frontmatter(text), "dirty": is_dirty, "ts": stamp})
+            ct, record = info.get(rel, (0, ""))
+            stamp = prog.stat().st_mtime if is_dirty and prog.is_file() else ct
+            copies.setdefault(d.name, []).append({"tree": t, "dir": d, "path": prog, "rel": rel, "record": record,
+                                                  "text": text, "fm": frontmatter(text), "dirty": is_dirty, "ts": stamp})
 
     tasks, copies_text = {}, {}
     for slug, cs in copies.items():
@@ -222,7 +289,9 @@ def collect(cwd):
             "status": fm.get("status") if fm.get("status") in STATUS_KEYS else "unmarked",
             "next": clean(fm.get("next", "")) or first_next(c["text"]),
             "tree": "" if c["tree"]["main"] else c["tree"]["name"],
-            "path": c["path"], "dirty": c["dirty"], "ts": c["ts"], "age": age(c["ts"]),
+            "path": c["path"], "rel": c["rel"], "record": c["record"],
+            "dirty": c["dirty"], "ts": c["ts"], "age": age(c["ts"]),
+            "section": (m.group(1).strip()[:6000] if (m := NEXT_RE.search(c["text"])) else ""),
             "git": git_state(slug, commits, base_set, up_set, base),
             "children": re.findall(r"`([a-z0-9][a-z0-9-]+)`", roadmap.read_text(encoding="utf-8")) if roadmap.is_file() else [],
         }
@@ -249,9 +318,13 @@ def collect(cwd):
             # search over subjects says nothing about them; the dirty chip still shows unsaved docs.
             t["git"] = None
 
+    # WHY: the owner deletes task dirs when pushing to dev, but deploys later in batches; the
+    # ledger keeps each deleted task's deploy notes visible until the owner says it's deployed.
+    gone, removed = sync_ledger(main, tasks, lambda s: git_state(s, commits, base_set, up_set, base), deployed)
     return {"main": main, "base": base, "upstream": upstream, "ahead": ahead, "behind": behind,
             "trees": trees, "when": datetime.datetime.now().strftime("%m-%d %H:%M"),
-            "tasks": sorted(tasks.values(), key=lambda t: -t["ts"])}
+            "tasks": sorted(tasks.values(), key=lambda t: -t["ts"]), "gone": gone, "removed": removed,
+            "still": [s for s in deployed if s in tasks], "backlog": read_backlog(main)}
 
 
 def clip(s, n):
@@ -280,12 +353,21 @@ def render_text(b, out):
             tree = f" [{t['tree']}]" if t["tree"] else ""
             git = f" · {t['git'][1]}" if t["git"] else ""
             lines.append(f"  - {t['slug']}{tree} {t['phase']}{git} · {t['age']}：{clip(t['next'], 80)}")
+    if b["gone"]:
+        lines.append(f"■ {GONE_LABEL} {len(b['gone'])}：" + "、".join(g["slug"] for g in b["gone"]))
+    if b["backlog"]:
+        lines.append(f"■ Backlog（{BACKLOG}）：" + "・".join(f"{g} {len(b['backlog'][g])}" for g, _ in BACKLOG_GROUPS))
+        lines += [f"  - [重要] {it['title']}｜{it['status']}" for it in b["backlog"]["重要"]]
     return "\n".join(lines)
 
 
 def headline(b):
     counts = [f"{label} {n}" for key, label, _, _ in STATUSES
               if key != "done" and (n := sum(1 for t in b["tasks"] if t["status"] == key))]
+    if b["gone"]:
+        counts.append(f"{GONE_LABEL} {len(b['gone'])}")
+    if b["backlog"]:
+        counts.append(f"backlog 重要 {len(b['backlog']['重要'])}")
     return "進度看板：" + (" · ".join(counts) or "沒有進行中的任務") + f" → {OUT}"
 
 
@@ -314,6 +396,9 @@ body{margin:0;font:14px/1.55 -apple-system,"PingFang TC","Noto Sans TC",sans-ser
 .kids{margin:8px 0 0;padding:0;list-style:none;font-size:12px}
 .kids li{display:flex;gap:6px;align-items:center}.kids i{width:8px;height:8px;border-radius:50%;background:var(--k)}
 details>summary{cursor:pointer;color:var(--mute);font-size:13px;margin-bottom:8px}
+code{font:12px ui-monospace,Menlo,monospace;word-break:break-all}
+.sect{border-top:1px solid var(--line);margin-top:8px}
+pre.sec{white-space:pre-wrap;font:12px/1.5 ui-monospace,Menlo,monospace;max-height:320px;overflow:auto;margin:0;padding:8px;border:1px solid var(--line);border-radius:6px}
 """
 
 
@@ -349,6 +434,24 @@ def render_card(t, tasks):
             f'<div class="chips">{"".join(chips)}</div>{kids}</article>')
 
 
+def render_gone(g):
+    e = html.escape
+    label = next((s[1] for s in STATUSES if s[0] == g["status"]), g["status"])
+    chips = [f'<span class="chip">刪前：{e(label)}</span>', f'<span class="chip">{e(g["age"])}最後看到</span>']
+    if g["git"]:
+        chips.insert(0, f'<span class="chip {"ok" if g["git"][0] == "pushed" else "warn"}">{e(g["git"][1])}</span>')
+    if g["parent"]:
+        chips.append(f'<span class="chip">↳ {e(g["parent"])}</span>')
+    recover = (f'<p class="meta">全文：<code>git show {e(g["record"])}:{e(g["rel"])}</code></p>' if g["record"]
+               else '<p class="meta">PROGRESS 從未 commit，只剩下面的快照</p>')
+    section = (f'<details><summary>刪除前的「下一步」</summary><pre class="sec">{e(g["section"])}</pre></details>'
+               if g["section"] else "")
+    return (f'<article class="card" style="--c:{GONE_COLOUR}"><h3>{e(g["slug"])}</h3>'
+            f'<div class="dots"><span>{e(g["phase"])}</span></div>'
+            f'<p class="next" title="{e(g["next"])}">{e(g["next"]) or "（沒有下一步）"}</p>'
+            f'<div class="chips">{"".join(chips)}</div>{recover}{section}</article>')
+
+
 def render_html(b):
     e = html.escape
     tasks = {t["slug"]: t for t in b["tasks"]}
@@ -362,19 +465,45 @@ def render_html(b):
             cards = f"<details><summary>展開 {len(group)} 個</summary>{cards}</details>"
         cols.append(f'<section class="col" style="--c:{colour}"><h2><i></i>{e(label)} {len(group)}</h2>'
                     f'<p>{e(blurb)}</p>{cards}</section>')
+        if key == "deploy" and b["gone"]:
+            cols.append(f'<section class="col" style="--c:{GONE_COLOUR}"><h2><i></i>{GONE_LABEL} {len(b["gone"])}</h2>'
+                        f'<p>push 時刪了目錄、還沒部署；部署完跑 <code>board.py --deployed &lt;slug…|all&gt;</code> 清掉</p>'
+                        + "".join(render_gone(g) for g in b["gone"]) + "</section>")
     trees = "".join(f'<span>{e(t["name"])}：{e(t["branch"])}，領先 {e(b["base"])} {e(t["ahead"] or "0")}，{t["changes"]} 個未 commit 改動</span>'
                     for t in b["trees"] if not t["main"])
     return (f'<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8">'
             f'<meta http-equiv="refresh" content="60"><title>進度看板</title><style>{CSS}</style></head><body>'
             f'<div class="top"><h1>進度看板</h1><div class="meta"><span>產生於 {e(b["when"])}（每 60 秒重讀檔案；內容在 session 開始與 checkpoint 時重算）</span>'
             f'<span>{e(b["base"])} 領先 {e(b["upstream"] or "上游")} {e(b["ahead"])}、落後 {e(b["behind"])}</span>{trees}</div></div>'
-            f'<main class="board">{"".join(cols)}</main></body></html>')
+            f'<main class="board">{"".join(cols)}</main>{render_backlog(b["backlog"])}</body></html>')
+
+
+def render_backlog(groups):
+    if groups is None:
+        return ""
+    e = html.escape
+    cols = []
+    for g, colour in BACKLOG_GROUPS:
+        cards = []
+        for it in groups[g]:
+            s = it["status"]
+            cls = "ok" if s.startswith("任務") else ("warn" if s.startswith("未驗證") else "")
+            src = f'<p class="meta">出處：<code>{e(it["src"])}</code></p>' if it["src"] else ""
+            cards.append(f'<article class="card" style="--c:{colour}"><h3>{e(it["title"])}</h3>'
+                         f'<p class="next" title="{e(it["body"])}">{e(it["body"])}</p>'
+                         f'<div class="chips"><span class="chip {cls}">{e(s)}</span></div>{src}</article>')
+        cols.append(f'<section class="col" style="--c:{colour}"><h2><i></i>{e(g)} {len(groups[g])}</h2>'
+                    + ("".join(cards) or '<p class="meta">（無）</p>') + "</section>")
+    return (f'<div class="top sect"><h1>Backlog</h1><div class="meta"><span>真相源 <code>{e(BACKLOG)}</code>：'
+            f'不在任務目錄裡，push 刪目錄不會動到；要開任務、做完或改優先序，跟 Claude 說</span></div></div>'
+            f'<main class="board">{"".join(cols)}</main>')
 
 
 def main(argv):
     hook = "--hook" in argv
+    deployed = argv[argv.index("--deployed") + 1:] if "--deployed" in argv else []
     try:
-        b = collect(pathlib.Path.cwd())
+        b = collect(pathlib.Path.cwd(), deployed)
         if b is None:
             if not hook:
                 print(f"board.py: no {PLANS}/ in this repo or its worktrees", file=sys.stderr)
@@ -390,11 +519,17 @@ def main(argv):
         raise
     if hook:
         context = text + "\n續接任務：owner 說「繼續 <slug>」→ 載入 seven-phase skill，讀該任務 PROGRESS「下一步」（標了 [worktree] 的在該 worktree 的 .claude/PRPs/plans/<slug>/）。"
+        if b["gone"]:
+            context += f"\n{GONE_LABEL}的部署要點在 HTML 與 {LEDGER}；owner 說部署完了 → 先確認是哪幾個，再跑 board.py --deployed <slug…|all>。"
         print(json.dumps({"systemMessage": headline(b),
                           "hookSpecificOutput": {"hookEventName": "SessionStart", "additionalContext": context}},
                          ensure_ascii=False))
     else:
         print(text)
+        if b["removed"]:
+            print("已清掉（部署完）：" + "、".join(b["removed"]))
+        if b["still"]:
+            print("目錄還在、沒清：" + "、".join(b["still"]) + "（先刪目錄或把 status 改成 done）")
     return 0
 
 

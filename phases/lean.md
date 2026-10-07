@@ -23,7 +23,7 @@
 - 全閘照 `phases/7-converge.md` §5（對既存紅基線「零新增」）；耐久結論照全程規則搬進子目錄 `CLAUDE.md`／`.claude/rules/`。
 
 ## 5. 交付（唯一的 checkpoint）
-PROGRESS.md 補 `## 結果`（紅→綠、審查裁決、閘結果、殘留、backlog 依 SKILL.md「排序」分組），照 `assets/checkpoint.md` 回報並停。commit 形狀與完整路相同（程式碼一個、`docs(prps)` 一個），等 owner 說。
+PROGRESS.md 補 `## 結果`（紅→綠、審查裁決、閘結果、殘留；backlog 依 SKILL.md「排序」分組寫進 `.claude/PRPs/BACKLOG.md`，這裡只記條數），照 `assets/checkpoint.md` 回報並停。commit 形狀與完整路相同（程式碼一個、`docs(prps)` 一個），等 owner 說。
 
 ## 升級
 定位時前提不成立、途中碰到重要面、需要 owner 做設計／文案取捨、或正式碼明顯超過約 300 行 → 停下回報（checkpoint），owner 同意後改走完整：從第 3 階段接（方向有疑問則第 2 階段），已寫的紅與實作保留，PROGRESS.md 改成階段表。
