@@ -1,10 +1,10 @@
 # 第 7 階段：收斂
 
-目標：每條發現都有裁決（confirmed／false positive／won't fix／owner 拍板），confirmed 的修掉，重跑全閘，寫總結。**不 commit。**
+目標：每條發現都有裁決（confirmed／false positive／won't fix／unverified／owner 拍板），confirmed 的修掉，重跑全閘，寫總結。**不 commit。**
 
 ## 1. 收斂驗證（只驗值得驗的）
 - 挑出**有爭議、HIGH 以上、或需要 owner 拍板**的條目，派 1–2 路 `converge-verifier`（大包依條目量分路，同層的放一路）。派工訊息只逐字附上它負責條目的地圖列與 lane 原文段落，其他 lane 全文列「需要時再讀」。純註解／文件措辭類不另派驗證——修的人邊修邊確認。
-- 任務書用 `assets/converge-brief.md`：驗證員的工作是**試著推翻**每條宣稱（宣稱的情境可達嗎？HEAD 其實也一樣嗎？有別的機制已經擋住嗎？），推不翻才建議 confirmed；判定類別與報告格式照範本。拿不出程式碼或執行證據的一律建議 false positive。
+- 任務書用 `assets/converge-brief.md`：驗證員的工作是**試著推翻**每條宣稱（宣稱的情境可達嗎？HEAD 其實也一樣嗎？有別的機制已經擋住嗎？），推不翻才建議 confirmed；判定類別與報告格式照範本。false positive 要附推翻它的證據；推不翻也證實不了（缺環境、資料或重現不出來）的建議 `unverified`，並寫缺什麼證據、下一步、誰能補——缺證據不等於不成立。
 - 需要 prod 數據才能下結論：驗證員寫出**確切查詢**與它會怎麼改變判定，由主 session 用 AskUserQuestion 問 owner 能不能跑（SKILL.md 的 prod 規則）。
 - 驗證員會推翻審查 lane（例：lane 說某文件錯、驗證顯示文件對而 lane 錯）——這正是這一步的價值，裁決以驗證證據為準，並在修復任務包裡寫明「不要照 lane 原建議改」。
 
@@ -12,7 +12,7 @@
 需要拍板的條目用 AskUserQuestion 一次問完（最多 4 題）：每題兩三句白話脈絡、選項寫後果、推薦項排第一、關鍵對比附 preview。依據要來自驗證報告的實測數字，不要用審查 lane 的原始宣稱。
 
 ## 3. 裁決落檔
-REVIEW.md 加「第 N 階段收斂裁決」表：每條一列（裁決、依據、處置／修在哪一片）＋名單外交叉發現（併入修復或記錄不修）。UI 純主觀偏好不逕改，單列給 owner 拍板。審查驅動的**新**發現即使超出原範圍也算 actionable；審查前就已 defer 的 MEDIUM／LOW 維持 backlog。SPEC／PLAN 依拍板修訂（標「第 7 階段」與日期）。
+REVIEW.md 加「第 N 階段收斂裁決」表：每條一列（裁決、最終嚴重度、依據、處置／修在哪一片）＋名單外交叉發現（併入修復或記錄不修）。表頭欄名照寫「最終嚴重度」，`laneyield.py` 用它分 R／L，不再看編號前綴。HIGH 以上的 `unverified` 不得在表裡停著：進 §2 owner 拍板，或寫進 `.claude/PRPs/BACKLOG.md`（附缺的證據與下一步）。UI 純主觀偏好不逕改，單列給 owner 拍板。審查驅動的**新**發現即使超出原範圍也算 actionable；審查前就已 defer 的 MEDIUM／LOW 維持 backlog。SPEC／PLAN 依拍板修訂（標「第 7 階段」與日期）。
 
 ## 4. 修復
 - 依檔案範圍切片（每個檔只屬於一片），`assets/fixplan.md` 當共用任務包：背景、owner 拍板、環境規則、紅的歸屬、交付格式。每片另寫一份 `<片號>-brief.md`：從裁決表與驗證報告**逐字**摘出歸這片的條目（含建議新文字、測試設計、探針原文），不要叫每片去讀全部驗證報告。
@@ -26,7 +26,7 @@ REVIEW.md 加「第 N 階段收斂裁決」表：每條一列（裁決、依據�
 ## 5. 全閘與收尾
 - 主 session 親跑 PLAN 的全閘，輸出存 `tmp/<slug>/converge/gate/`，逐項對既存紅基線（判準「零新增」；lint／ruff 這類要逐條比對，不只比數字）。
 - 涉 UI：修復後的真瀏覽器走一趟派 `ui-lane-reviewer`（同第 5 階段）。
-- 確認改動檔集合＝原本的檔＋收斂新增的檔（用 `baseline.sha256` 對），沒有多出無關檔。
+- 確認改動檔集合＝原本的檔＋收斂新增的檔：`checktree.py` 對 baseline，「清單外」warning 就是多出來的檔，逐條確認是收斂新增還是並行 session 的改動，沒有無關檔。
 - 突變紀錄等證據先歸檔到 `tmp/`，再 `git worktree remove --force` 清掉所有審查／修復樹。
 - PROGRESS 寫第 7 階段紀錄與「下一步」（commit 範圍、主樹上不屬於本包的改動、部署後驗收）；backlog 依 SKILL.md「排序」分組寫進 `.claude/PRPs/BACKLOG.md`（格式見 SKILL.md「backlog 的家」），PROGRESS 只寫一行「backlog 已寫進 BACKLOG.md：N 條」。
 - 記憶只更新「進行中」那一條的狀態，技術結論放子目錄 CLAUDE.md。

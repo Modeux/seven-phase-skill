@@ -17,4 +17,5 @@
 - 送出前 `wc -c` 每份材料；收件先 `grep -i truncated`。
 
 ## 收件
+`run_external.py` 只在 CLI exit 0 且報告非空時才把 `<out>.partial` 改名成報告；否則以非零結束（CLI 的 rc，或 3＝rc 0 但沒有報告；agy 材料過大＝2），舊報告不動、也不算本輪。每次都寫 `lane-<x>.status.json`，`reviewcov.py` 讀它判失敗。背景跑完看 exit code，非零就記「沒跑」並換鏡頭替補。
 外審報告同樣是待驗證的宣稱：跟內審一起去重進 REVIEW.md，信心「中／低」的條目在第 7 階段優先驗證。

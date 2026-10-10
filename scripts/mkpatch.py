@@ -6,7 +6,11 @@ Writes into --out:
   change-src.patch    non-test, non-doc files
   change-tests.patch  test files
   change-docs.patch   docs (.md, docs/, openapi)
-  baseline.sha256     '<sha>  <path>' per changed file ('DELETED  <path>' for deletions)
+  baseline.sha256     '<sha>  <path>' per changed file ('DELETED  <path>' for deletions; a rename
+                      is its new path plus 'DELETED  <origin>')
+  outside.sha256      same format, for every dirty path the --exclude prefixes kept OUT of the change
+                      (minus the scratch prefixes tmp/ and .claude/PRPs/plans/); checktree.py treats
+                      these as pre-existing and only warns if they change later
   files.txt           changed file list
 
 Usage: python3 mkpatch.py --out tmp/<slug>/review [--root <repo>] [--exclude <prefix> ...]
@@ -18,7 +22,8 @@ import subprocess
 import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).parent))
-from _common import DEFAULT_EXCLUDES, changed_paths, classify, git, sha256_file, toplevel  # noqa: E402
+from _common import (DEFAULT_EXCLUDES, SCRATCH_PREFIXES, changed_paths, classify, dirty_paths,  # noqa: E402
+                     file_digest, git, toplevel)
 
 
 def untracked_patch(root, path):
@@ -57,13 +62,17 @@ def main():
             [p for p in tracked if classify(p) == kind], [p for p in untracked if classify(p) == kind]))
 
     all_paths = sorted(tracked + untracked)
-    with open(out / "baseline.sha256", "w") as f:
-        for p in all_paths:
-            fp = root / p
-            f.write(("DELETED" if not fp.exists() else sha256_file(fp)) + "  " + p + "\n")
-    (out / "files.txt").write_text("\n".join(all_paths) + "\n")
+    outside = sorted(p for p in dirty_paths(root) - set(all_paths) if not p.startswith(SCRATCH_PREFIXES))
+
+    def write_digests(name, paths):
+        (out / name).write_text("".join(f"{file_digest(root / p)}  {p}\n" for p in paths), encoding="utf-8")
+
+    write_digests("baseline.sha256", all_paths)
+    write_digests("outside.sha256", outside)
+    (out / "files.txt").write_text("\n".join(all_paths) + "\n", encoding="utf-8")
 
     print(f"tracked {len(tracked)}  untracked {len(untracked)}  HEAD {git(root, 'rev-parse', 'HEAD').strip()}")
+    print(f"outside.sha256       {len(outside)} dirty paths outside the change (pre-existing; checktree warns if they change)")
     for n in ("change.patch", "change-src.patch", "change-tests.patch", "change-docs.patch"):
         print(f"{n:<20} {(out / n).stat().st_size:>9} bytes")
     print("Excluded prefixes:", list(excludes), "- check files.txt holds only this change's files.")

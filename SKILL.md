@@ -43,7 +43,7 @@ owner 吃過「一路衝到底、末端才發現前提錯」的虧，也要自�
 3. 附一段可直接貼的 `/compact <摘要>`（位置、真相源檔、下一步、全程規則），用 `assets/checkpoint.md` 的形狀；**並明說現在能不能 `/clear`**（判準同檔第 6 條；owner 不要多個任務的 context 混在一起）。
 4. **等 owner 說「繼續」**才進下一階段。不得順勢往下做，也不得在回報裡先問下一階段的問題。
 5. 背景 subagent 在 checkpoint 之後才交件：併進記錄，下一則回覆一句話告知，並給更新版 `/compact`。
-6. **compact 要趁暖、要早**：`/compact` 在 owner 離開**之前**貼（快取 5 分鐘就冷，用量額度時段主對話只有 5m TTL；冷的 compact 會把整段歷史按未快取價重讀），目標 compact 時 context ≤ 200k（10-07 實測中位 358k＝太晚）。回來發現冷了（`/usage` 的 `Prompt cache (main)` 顯示 cold）而且下一階段不需要延續對話 → `/clear` 再讀 PROGRESS，不要 compact；要放棄一條路用 `/rewind`（回到已快取的前綴，比 compact 便宜）。
+6. **compact 要趁暖、要早**：`/compact` 在 owner 離開**之前**貼（主對話快取 1h，`~/.claude/settings.json` 的 `promptCacheTtl`；用量超額時降為 5m；冷的 compact 會把整段歷史按未快取價重讀），目標 compact 時 context ≤ 200k（10-07 實測中位 358k＝太晚）。回來發現冷了（`/usage` 的 `Prompt cache (main)` 顯示 cold）而且下一階段不需要延續對話 → `/clear` 再讀 PROGRESS，不要 compact；要放棄一條路用 `/rewind`（回到已快取的前綴，比 compact 便宜）。
 
 ## 全程規則
 - **禁 git commit／push**，直到 owner 明說（owner 要在進歷史之前看過整包結果）。commit 形狀＝兩個：`feat(x): ...`（程式碼＋CLAUDE.md／`.claude/rules/`＋契約）與 `docs(prps): <slug> 七階段記錄`（任務目錄）。工作樹常有別人／別任務的已暫存改動：**一律 `git commit --only -F <msg> -- <明確路徑>`**（新檔先 `git add` 那幾個路徑），絕不用裸 `git commit` 或 `git add -A`。push 前 `git fetch` 並確認 ahead-only。
@@ -81,15 +81,15 @@ owner 吃過「一路衝到底、末端才發現前提錯」的虧，也要自�
 
 ## 腳本（`python3 ~/.claude/skills/seven-phase/scripts/<name>.py --help`）
 - `numstat.py`：未 commit 改動（或對某個 base）依 prod／test／doc 分類的行數，給規模分級用。
-- `mkpatch.py`：產 `change.patch`（含 untracked 新檔）、`change-src/-tests/-docs.patch`、`baseline.sha256`、`files.txt`。
+- `mkpatch.py`：產 `change.patch`（含 untracked 新檔）、`change-src/-tests/-docs.patch`、`baseline.sha256`、`files.txt`，以及 `outside.sha256`（被 `--exclude` 排除的既有改動，給 checktree 分辨「本來就髒」）。
 - `mkworktree.py`：`git worktree add --detach HEAD` ＋ 套 patch ＋ 對 baseline 驗 sha（快照／突變樹／修復樹都用它）。
-- `checktree.py`：對 baseline 驗一棵或多棵樹（含主 checkout）的 sha。
-- `merge_back.py`：把工作樹相對快照改過的檔複製回主 checkout（先確認主樹那些檔仍等於快照、片與片之間零重疊）。
-- `run_external.py`：跑 codex／grok／agy 外審（背景跑，見 `references/external-review.md`）。
-- `wf_reports.py`：Workflow 扇出（第 6 階段內審、第 7 階段驗證）的報告全文從 run 的 `journal.jsonl` 抽出、依 label 落檔（subagent 在 Workflow 內寫不了檔）。
+- `checktree.py`：對 baseline 驗一棵或多棵樹的 sha（不符 exit 1）；清單外的變動另列 warning（`--strict` 才 fail）。`tmp/`、任務目錄與 gitignored 檔不在檢查內，所以它不是「整棵樹沒人寫過」的證明。
+- `merge_back.py`：把工作樹相對快照改過的檔複製回主 checkout。候選＝修復樹與快照兩邊 `git status` 的聯集（改回 HEAD、刪掉快照新檔都抓得到）；兩棵 HEAD 不同、主樹那些檔不等於快照、片與片重疊都會停；刪除只回報不套用；把檔改回 HEAD 一律先停（分不出是刻意還原還是 agent 誤 reset），確認是裁決要的才加 `--allow-revert <片>:<路徑>`。
+- `run_external.py`：跑 codex／grok／agy 外審（背景跑，見 `references/external-review.md`）。失敗 exit 非零、舊報告不動，每次寫 `lane-<x>.status.json`。
+- `wf_reports.py`：Workflow 扇出（第 6 階段內審、第 7 階段驗證）的報告全文從 run 的 `journal.jsonl` 抽出、依 label 落檔（subagent 在 Workflow 內寫不了檔）；每路寫 status 檔，`tasks/` 有派工單卻沒啟動的列 MISSING。
 - `extract.py`：markdown 依標題或行號逐字切段、附出處（組任務包）。
-- `reviewcov.py`：核對 REVIEW.md 去重地圖涵蓋每份 lane 報告的每一條（第 6 階段收件）。
+- `reviewcov.py`：第 6 階段收件。核對預期的每一路都交件（失敗、缺件、空檔、舊報告都擋），且每條發現都在去重地圖的「來源」欄或未收錄節（`--ack-manual`／`--waive` 見 `phases/6-review.md` §5）。
 - `claudemdcost.py`：子目錄 CLAUDE.md 與限定範圍規則（讀到才載入）的花費，依檔案彙總、worktree 副本併回原路徑。
 - `board.py`：跨任務進度看板——掃主 checkout 與所有掛分支的 worktree 的 PROGRESS.md，讀 frontmatter、git 狀態當場算，寫 `<主 checkout>/tmp/progress/board.html` 並印摘要；HTML 下半部是 `.claude/PRPs/BACKLOG.md` 的 Backlog 四欄。每次跑都把未完成任務的「下一步」快照進 `tmp/progress/ledger.json`，目錄刪了仍以「目錄已刪・待部署」顯示，owner 說部署完了 → 確認是哪幾個後 `--deployed <slug…|all>` 清掉；`~/.claude/settings.json` 的 SessionStart hook（startup／clear／compact）以 `--hook session-start` 跑它，把摘要注入 context。
-- `taskcost.py`／`laneyield.py`：每個任務、每個階段目錄的花費；每一路審查的獨家發現與花費（調路數、檢討流程前先跑）。
+- `taskcost.py`／`laneyield.py`：每個任務、每個階段目錄的花費；每一路審查的獨家發現與花費（調路數、檢討流程前先跑；精簡路讀 PROGRESS.md 的 `## 審查` 表）。`agentcost.py`／`taskcost.py`／`laneyield.py`／`claudemdcost.py` 共用 `_usage.py`：含 Workflow agent，同一訊息多筆 usage 取各欄最大值，依每筆時間戳過濾，cache write 分 5m／1h 計價；`--all-worktrees` 連 worktree 的 session 一起算。金額是 API 等價、不是帳單，沒有價格的模型列為 unpriced、不算 $0。
 Bash 一律絕對路徑或 `git -C`／`go test -C`，**不要 `cd`**（工作目錄會殘留，下一個 bridge 或 pathspec 會跑錯樹）。

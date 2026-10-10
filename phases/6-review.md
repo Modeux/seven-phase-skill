@@ -27,10 +27,10 @@
 - 突變只在突變樹做；主 session 在審查期間起的 dev server／`go run` 記下啟動時間——「檔案已還原」不等於「跑著的程序已還原」。
 
 ## 5. 收件與去重
-- 每份報告先 `grep -i truncated`；審完對 `baseline.sha256` 驗主 checkout 一次（沒有 lane 寫到主樹）。
+- 每份報告先 `grep -i truncated`；審完 `scripts/checktree.py --baseline <review 目錄>/baseline.sha256 <主 checkout>` 驗一次：baseline 檔不符＝有 lane 寫到主樹；「清單外」warning 逐條看是不是並行 session／owner 的正常改動（主 checkout 是共用的，所以預設只警告）。
 - lane 回報與任務書的 invariant 衝突時，先驗 invariant 再驗 finding；invariant 的勘誤寫進 REVIEW.md（只在對話裡說，compact 後第 7 階段會沿用錯版本）。
 - **合成交給 `doc-slice`**（owner 10-05 定）：任務包給各 lane 報告路徑、本節格式與 intake gate。它寫 REVIEW.md 的 lane 配置表、執行結果、重點面結論表（每個 F 一列＋主要證據 lane）、**去重地圖**（R1…＝MEDIUM 以上、L1…＝LOW；每條：宣稱嚴重度、一句話、位置、來源——來源寫條目編號 `<lane>#<n>`，n＝該 lane 報告裡第 n 個 `### [SEVERITY]` 標題，最後附幾路同報），intake gate 擋下的條目列進「未收錄」一節、各附一句理由。
-- **主 session 核對而不逐份重讀**：`scripts/reviewcov.py tmp/<slug>/review <REVIEW.md>` 要 exit 0（每條 lane 發現都在地圖或未收錄節）；沒照標題格式的報告（常是外審）主 session 親讀；再讀全部 CRITICAL／HIGH 原文、隨機抽 3 條 MEDIUM 原文對地圖。合錯（兩條不同的被併成一條）就拆開並在地圖註明。
+- **主 session 核對而不逐份重讀**：`scripts/reviewcov.py tmp/<slug>/review <REVIEW.md>` 要 exit 0：預期的每一路（`tasks/*.md`＋`ext-*.log`＋`*.status.json`）都交件且狀態 ok（失敗、缺件、空檔、早於快照的舊報告都會擋），每條發現都在地圖表格的「來源」欄或未收錄節（只出現在敘述或其他欄位裡不算，地圖表頭要有「來源」欄）；沒照標題格式的報告（常是外審）主 session 親讀後加 `--ack-manual <lane>`，跑不了而換鏡頭替補的加 `--waive <lane>=<理由與替補>`；再讀全部 CRITICAL／HIGH 原文、隨機抽 3 條 MEDIUM 原文對地圖。合錯（兩條不同的被併成一條）就拆開並在地圖註明。
 - intake gate：只有「嚴重技術債」或「潛在 bug 風險」（含跨層漂移、誤導性註解）才進地圖；審美、風格偏好、PLAN「不做清單」裡的東西不進（除非證明本包讓它變糟）。
 - 收件後 lane 報告原文留在 `tmp/`，REVIEW.md 只留地圖與結論。
 
