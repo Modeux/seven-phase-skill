@@ -40,7 +40,7 @@ owner 是產品負責人不是工程師。這套流程把方向控制權與 toke
 owner 吃過「一路衝到底、末端才發現前提錯」的虧，也要自己決定何時 compact——所以每階段都停。
 1. 結論與下一步寫進 PROGRESS.md（階段表那一列＋「## 下一步」＋「## 第 N 階段紀錄」五行：做了什麼／關鍵裁決／紅→綠或證據／閘結果／殘留），**同時改檔頭 frontmatter**：`status`（`owner` 等 owner 拍板／說繼續／commit／push、`doing` 做到一半被打斷、`blocked` 等外部、`deploy` 已 commit 剩部署驗收、`done`）＋`next`（一句話：下一步是什麼、誰要動）；任務住在 worktree 加 `worktree: <名稱>`，多包任務或階段表推不出來時加 `phase:`（如 `第三包 5/7`）。改完跑 `python3 ~/.claude/skills/seven-phase/scripts/board.py` 重算看板。精簡路在建檔與交付時各改一次；owner 說 commit 並 commit 完，改成 `status: deploy`、`next` 寫部署要點。
 2. **完全停止**，白話回報：做了什麼、發現什麼、為什麼這樣決定、接下來幹嘛。
-3. 附一段可直接貼的 `/compact <摘要>`（位置、真相源檔、下一步、全程規則），用 `assets/checkpoint.md` 的形狀。
+3. 附一段可直接貼的 `/compact <摘要>`（位置、真相源檔、下一步、全程規則），用 `assets/checkpoint.md` 的形狀；**並明說現在能不能 `/clear`**（判準同檔第 6 條；owner 不要多個任務的 context 混在一起）。
 4. **等 owner 說「繼續」**才進下一階段。不得順勢往下做，也不得在回報裡先問下一階段的問題。
 5. 背景 subagent 在 checkpoint 之後才交件：併進記錄，下一則回覆一句話告知，並給更新版 `/compact`。
 6. **compact 要趁暖、要早**：`/compact` 在 owner 離開**之前**貼（快取 5 分鐘就冷，用量額度時段主對話只有 5m TTL；冷的 compact 會把整段歷史按未快取價重讀），目標 compact 時 context ≤ 200k（10-07 實測中位 358k＝太晚）。回來發現冷了（`/usage` 的 `Prompt cache (main)` 顯示 cold）而且下一階段不需要延續對話 → `/clear` 再讀 PROGRESS，不要 compact；要放棄一條路用 `/rewind`（回到已快取的前綴，比 compact 便宜）。
@@ -86,6 +86,7 @@ owner 吃過「一路衝到底、末端才發現前提錯」的虧，也要自�
 - `checktree.py`：對 baseline 驗一棵或多棵樹（含主 checkout）的 sha。
 - `merge_back.py`：把工作樹相對快照改過的檔複製回主 checkout（先確認主樹那些檔仍等於快照、片與片之間零重疊）。
 - `run_external.py`：跑 codex／grok／agy 外審（背景跑，見 `references/external-review.md`）。
+- `wf_reports.py`：Workflow 扇出（第 6 階段內審、第 7 階段驗證）的報告全文從 run 的 `journal.jsonl` 抽出、依 label 落檔（subagent 在 Workflow 內寫不了檔）。
 - `extract.py`：markdown 依標題或行號逐字切段、附出處（組任務包）。
 - `reviewcov.py`：核對 REVIEW.md 去重地圖涵蓋每份 lane 報告的每一條（第 6 階段收件）。
 - `claudemdcost.py`：子目錄 CLAUDE.md 與限定範圍規則（讀到才載入）的花費，依檔案彙總、worktree 副本併回原路徑。

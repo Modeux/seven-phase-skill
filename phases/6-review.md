@@ -17,7 +17,7 @@
 任務書裡每條 invariant 都標出處（SPEC 條號或參照實作的 file:symbol）並先回查——它同時是第 7 階段的裁決依據，寫錯會把正確實作判成違規。「某功能只在使用者觸發時才跑」「某欄位有讀者」這類要 grep 到實際呼叫點才寫。
 
 ## 4. 派工
-- 一則訊息同時起所有內部 lane（背景跑；關注面 lane 用 `lane-reviewer`，不用 general-purpose），每路給報告檔路徑 `tmp/<slug>/review/lane-<名>.md`；沒有 Write 的 agent（comment-analyzer）由主 session 依 hand-back 落檔，並註明「主 session 落檔、內容未改」。
+- **內部 lane 一律用 `Workflow` 扇出**（owner 10-07；先載 `workflow-authoring`）：每路一份派工單 `tmp/<slug>/review/tasks/<名>.md`（鏡頭、必讀／需要時再讀、可跑的指令），script 只放 `{key, agentType}` 清單＋一段共用交件句，`agent(prompt, {agentType, label: 'lane-<名>', schema})`（不傳 model／effort，frontmatter 會保留；關注面 lane 用 `lane-reviewer`，不用 general-purpose）。Workflow 內的 subagent 寫不了報告檔 → schema 帶 `report_markdown`（全文）＋`summary`＋`counts`；**script 只回 summary／counts**（全文不灌回主 session），收件時 `scripts/wf_reports.py` 從 run 的 `journal.jsonl` 抽 `report_markdown` 落檔成 `lane-<名>.md`。外審三路是 CLI，不進 Workflow，同一則訊息用 `run_external.py` 背景跑。
 - 外審三路照 `references/external-review.md`：先 `git -C` 確認在 repo 根、`wc -c` 材料、agy 材料要自含且 ≤170KB；全部背景跑，大包前 8 分鐘 0 輸出屬正常。
 - lane 死掉或外審跑不了：記清楚是「沒跑」還是「空跑」，**換一個不同鏡頭替補**，不同質重跑（常被漏的鏡頭見 `references/lanes.md`）；跑不了的原因（例如缺金鑰）屬 owner 的設定，主 session 不改 owner 的 CLI 設定、也不去讀它的憑證。
 - 規格忠實度 lane 要主動列「本節沒處理的 3 個情境」——fan-out 抓錯誤行為，case walk-through 才抓缺少的行為。

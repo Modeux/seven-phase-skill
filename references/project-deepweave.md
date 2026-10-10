@@ -11,6 +11,8 @@
 - **契約**：`npx --yes @redocly/cli lint docs/api-contracts/openapi.yaml`。
 - **lint／audit**：`just lint-gateway`（exit 1 是常態，判準「碰過的檔零新增」；`backend-golang/tmp/` 是 gitignored 探針碼，不算）；`bash scripts/audit-pgx-tx-patterns.sh`（既存 (b)×2、(e)×4）；`just fix-go-changed`（**零輸出**才過：這次改到的 Go 行都已是新語法；`--apply` 只套這些 hunk、併進本包；全庫 `just fix-go-check` 在存量清掉前 exit 1 是常態，不當閘）。
 - **整合測試既存紅名單**：`backend-golang/CLAUDE.md` §Testing 的表（逐名比對，不用前綴）。
+  - 全量整合加 `-timeout 2400s`：`cmd/server` 單包跑超過預設 10 分鐘（10-07 撞 900 s 逾時 panic、41 支沒跑，被錯讀成「紅比基線少」）。比對前先 `grep -c 'panic: test timed out'` 為 0 才算數。
+  - `backend-golang/tmp/` 下的 `.go` 探針會被 `go vet ./...`／`go build ./...` 掃到：探針檔存成 `.go.src`，用 `go test -overlay <json>` 掛進目標套件跑。
 - 判「這條紅是不是我弄的」：`git archive HEAD | tar -x -C <tmp>` 匯出乾淨副本跑同一條；比 stash 安全（stash stack 與所有 worktree 共用）。
 
 ## 環境坑

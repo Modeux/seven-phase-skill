@@ -36,7 +36,7 @@
 ## 收斂驗證
 - 只驗「有爭議／HIGH 以上／需 owner 拍板」的條目：小包 1 路、大包依條目量 2 路起（同層的條目放同一路，例：偵測面、追蹤、單一服務、時間預算）。
 - agent：`converge-verifier`（xhigh，有 Write 寫報告）。
-- 驗證員 ≥2 顆時用 `Workflow` 扇出（owner 已同意的用法；先載 `workflow-authoring`）：`agent(prompt, {agentType: 'converge-verifier', schema})`，frontmatter 的 effort 會保留（實測 xhigh）。**Workflow 內的 subagent 被 harness 擋寫報告檔**（「Subagents should return findings as text」，探針檔照寫）——schema 放 `report_markdown` 全文欄位，主 session 從結果落檔，任務書不要求寫報告檔。
+- 驗證員 ≥2 顆時用 `Workflow` 扇出（owner 已同意的用法；先載 `workflow-authoring`；第 6 階段內審同法，見 `phases/6-review.md` §4）：`agent(prompt, {agentType: 'converge-verifier', schema})`，frontmatter 的 effort 會保留（實測 xhigh）。**Workflow 內的 subagent 被 harness 擋寫報告檔**（「Subagents should return findings as text」，探針檔照寫）——schema 放 `report_markdown` 全文欄位，主 session 從結果落檔，任務書不要求寫報告檔。
 - 其餘條目由修復者邊修邊確認。
 
 ## 實作與修復
