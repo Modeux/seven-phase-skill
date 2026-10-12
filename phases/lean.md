@@ -3,7 +3,7 @@
 進來的條件見 SKILL.md「分流」。省的是：討論、訪談、RESEARCH／SPEC／PLAN／REVIEW 四份檔、中間的停點。照舊的是：紅先於綠、審查（路數照「依規模分級」，含外審）、收斂、主 session 親跑閘、commit 等 owner 明說、全程規則。
 
 ## 1. 定位與前提
-- 讀窄找到要改的檔與符號（大範圍派 code-explorer）。backlog 條目或 bug 報告寫的根因與修法是**待否證的假設**：回程式碼核對它還成立（行號會漂、別的包可能已修）。
+- 讀窄找到要改的檔與符號（大範圍派 code-explorer）。要改的行為可能不只一處發生時，先跑 graphify 再 grep、候選取聯集（配方見 `phases/1-research.md` 第 2 步）。backlog 條目或 bug 報告寫的根因與修法是**待否證的假設**：回程式碼核對它還成立（行號會漂、別的包可能已修）。
 - 寫 `.claude/PRPs/plans/<slug>/PROGRESS.md`（唯一的任務檔，續接靠它）：
   - 檔頭 frontmatter `status: doing`＋`next`（格式見 SKILL.md「Checkpoint 協定」第 1 條），交付時改成 `status: owner`。
   - 開頭一行「分流：精簡路」＋三條理由各一句。

@@ -31,7 +31,7 @@
 | UI/UX | `ui-lane-reviewer`＋瀏覽器截圖（繼承全部工具、自帶 Playwright server（`--codegen=none`）取代 plugin 那套；lane-reviewer 已限縮工具、開不了瀏覽器） | 涉 UI 時；驗不了的標「需人工目視」 |
 
 ## 大包或高風險包：完整路數
-小包清單全開，再加：security-reviewer（必開）、影響範圍 lane（所有 caller／呼叫點實讀第三方碼）、時間與順序 lane（預算鏈、取消語義、視窗邊界、混版時序）、grok、agy；註解 lane 可拆成程式碼註解與文件兩路。任一路跑不了就換一個不同鏡頭替補。
+小包清單全開，再加：security-reviewer（必開）、影響範圍 lane（所有 caller／呼叫點實讀第三方碼；caller 清單起手用 `graphify affected "<Func()>" --relation calls` ＋ grep 取聯集，本包新符號圖裡沒有、只能 grep）、時間與順序 lane（預算鏈、取消語義、視窗邊界、混版時序）、grok、agy；註解 lane 可拆成程式碼註解與文件兩路。任一路跑不了就換一個不同鏡頭替補。
 
 ## 收斂驗證
 - 只驗「有爭議／HIGH 以上／需 owner 拍板」的條目：小包 1 路、大包依條目量 2 路起（同層的條目放同一路，例：偵測面、追蹤、單一服務、時間預算）。
