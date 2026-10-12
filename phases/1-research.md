@@ -4,7 +4,7 @@
 
 1. **盤點**專案配置的 subagents／skills／MCP，讀各 agent 的職責定義與工具集，供全流程對號起用。
 2. **fan-out 平行探索**（職責相符的專案探索 agent 優先；code-explorer 是 high、判斷性探索用 general-purpose／Explore，後兩者 effort 跟主 session）分工：
-   - graphify 查詢（定義處、引用點、資料流、依賴）——從 repo 根跑 `graphify query "<行為關鍵詞>" --context call --budget 1500`（不帶 `--context` 會被 `imports_from` 邊淹沒），讀第一行 `Start: [...]` 當候選檔清單；caller 用 `graphify affected "<Func()>" --relation calls`。圖不含新符號、行號會漂，結論回原始碼確認；
+   - graphify 查詢（定義處、引用點、資料流、依賴）——從 repo 根跑 `graphify query "<行為關鍵詞>" --context call --budget 1500`（不帶 `--context` 會被 `imports_from` 邊淹沒），讀第一行 `Start: [...]` 當候選檔清單；caller 用 `graphify affected "<Func()>" --relation calls`；跨模組資料流（請求→worker→WS、前端→gateway→ai-service）用 `graphify path "<入口符號>" "<落點符號>"` 列中間節點，再逐點回碼確認——只用 query 會各查一段、接縫處漏掉。圖不含新符號、行號會漂，結論回原始碼確認；
    - **graph 與 grep 兩邊都跑、候選取聯集**：RESEARCH.md 的現況摘要列出「行為發生點」清單並標每點來源（graph／grep／兩者）。只有 grep 的探索會漏掉換了用詞的路徑（provider 分支、fallback 組字器、後處理 pass）；
    - 關聯測試與環境設定盤點；可沿用的既有模式；
    - 需要時一路上網佐證：**學術論文／官方文件／規範／權威文章優先**，引用附連結＋一句「它如何支撐設計決策」；找不到可靠來源就明說，不得杜撰。

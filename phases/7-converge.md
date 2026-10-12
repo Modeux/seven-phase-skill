@@ -30,5 +30,6 @@ REVIEW.md 加「第 N 階段收斂裁決」表：每條一列（裁決、最終�
 - 突變紀錄等證據先歸檔到 `tmp/`，再 `git worktree remove --force` 清掉所有審查／修復樹。
 - PROGRESS 寫第 7 階段紀錄與「下一步」（commit 範圍、主樹上不屬於本包的改動、部署後驗收）；backlog 依 SKILL.md「排序」分組寫進 `.claude/PRPs/BACKLOG.md`（格式見 SKILL.md「backlog 的家」），PROGRESS 只寫一行「backlog 已寫進 BACKLOG.md：N 條」。
 - 記憶只更新「進行中」那一條的狀態，技術結論放子目錄 CLAUDE.md。
+- 本包改了 **docs／templates／`.sql`／`openapi.yaml`／任何 `CLAUDE.md`／`.claude/rules/`** 嗎？有 → checkpoint 總結加一行「graphify 圖已過期（post-commit hook 只刷 AST 層），要不要 `/graphify . --update` 由你決定」；**不自跑 `--update`**（owner 10-05：傘狀全做完才一次更新）。
 
 → Checkpoint：白話總結（裁決數、拍板結果、閘結果、owner 會看到的外部變化如警報文案），附 `/compact`，等 owner 說 commit。commit 形狀與 `git commit --only` 規則見 SKILL.md。
