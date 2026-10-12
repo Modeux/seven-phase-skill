@@ -5,6 +5,7 @@ Usage:
   python3 extract.py SPEC.md --list                          # headings with line numbers
   python3 extract.py PLAN.md "0.1 owner 拍板" "B character" >> tmp/<slug>/impl/B-brief.md
   python3 extract.py SPEC.md L120-L180                       # a line range instead of a heading
+  python3 extract.py PLAN.md L94                             # one line (same as L94-L94)
   python3 extract.py PLAN.md "切片" --first                  # take the first of several matches
 
 A heading selector matches any heading whose text contains it; the section runs to the next heading
@@ -52,9 +53,12 @@ def main():
         return
     shown = str(path)
     for sel in a.selectors:
-        rng = re.fullmatch(r"L?(\d+)-L?(\d+)", sel)
+        # L94 is the one-line range L94-L94. Before this, a bare line number fell
+        # through to the heading matcher, matched nothing and aborted the whole
+        # run — every selector after it was silently missing from the brief.
+        rng = re.fullmatch(r"L?(\d+)(?:-L?(\d+))?", sel)
         if rng:
-            start, end = int(rng.group(1)) - 1, int(rng.group(2))
+            start, end = int(rng.group(1)) - 1, int(rng.group(2) or rng.group(1))
             label = f"L{start + 1}–L{end}"
         else:
             hits = [k for k, (_, _, text) in enumerate(heads) if sel in text]
