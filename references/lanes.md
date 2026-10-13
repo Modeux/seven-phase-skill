@@ -42,7 +42,8 @@
 ## 實作與修復
 - 切片實作（每片一棵私有樹）：
   - `tdd-guide`（high）：所有實作片與修復片。碰錢、權限、owner 拍板語義的紅照舊由主 session 先寫。
-  - `ab-tdd-guide-v2`／`ab-security-reviewer-v2` 只在 owner 指定 A/B 的包跑兩臂。現況：tdd v2 兩次都便宜約 3 成、但都漏了「同一行為在多個呼叫點」的守衛（交叉突變 6／7→5／7、14／14→12／14），10-07 加了「每個呼叫點各一支」那句後待下一個指定包再比；security v2 便宜 3 成、在沒有安全缺陷的包上分不出偵測力，待碰錢／權限的包再比。合併前一律由主 session 跑交叉突變（同一語義突變、各臂自己的程式碼、`go test -overlay`），不信兩臂自報。
+  - tdd 只用 `tdd-guide`：`ab-tdd-guide-v2` 三次 A/B 後 10-13 刪除（owner 定）。前兩次 v2 便宜約 3 成、但漏了「同一行為在多個呼叫點」的守衛；加了「每個呼叫點各一支」後第三次兩臂偵測打平（預登記 19／21、多呼叫點 6／6），v2 反而貴 12%。那句與 testcontainers 契約已搬進 `tdd-guide`，同時拿掉 80% 覆蓋率（綁不存在的 npm 指令）、八項邊界清單與「mock external dependencies」；v2 原文留在 `character-dual-portrait` worktree 的 `tmp/character-dual-portrait/xmut-w4/ab-tdd-guide-v2.recovered.md`。
+  - `ab-security-reviewer-v2` 只在 owner 指定 A/B 的包跑兩臂。security v2 便宜 3 成、在沒有安全缺陷的包上分不出偵測力，待碰錢／權限的包再比。合併前一律由主 session 跑交叉突變（同一語義突變、各臂自己的程式碼、`go test -overlay`），不信兩臂自報。
 - 文件片：`doc-slice`（high，每句先回程式碼確認）；codemap／README 生成才用 doc-updater。
 - 探索／定位：code-explorer（high）；判斷性探索用 general-purpose／Explore（effort 跟主 session）。
 - 組材料包、批次文字改寫、graphify 抽取：quick-task（high）。
