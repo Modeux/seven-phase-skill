@@ -19,7 +19,11 @@
 - **唯讀**：不得修改快照、主 checkout 任何檔案；除了指定給你的突變樹，什麼都不寫；交件方式見派工訊息（Workflow 扇出：放進 schema 的 `report_markdown`，Workflow 內寫不了檔；單顆 Agent：寫派工訊息給的報告檔；外審：直接輸出）。禁 git commit／stash／checkout／apply／worktree 操作。Bash 用絕對路徑或 `-C`，不要 `cd`。
 - <專案特有：例如禁在 host 跑會重建共用環境的指令，以及唯讀的測試配方>
 - 不得連 prod DB、不得呼叫外部量測 API（額度與 prod 共用）、不得呼叫任何 LLM provider。不讀使用者對話內容、不印任何金鑰。
-- graphify 只准查詢（從主 checkout 根目錄跑）；圖不含本包新符號，結論回快照原始碼確認。
+- graphify 只准查詢，不要 cd 到主 checkout：`graphify affected "<Func()>" --relation calls --graph <主 checkout 絕對路徑>/graphify-out/graph.json`（query 必帶 `--context call`）。主 session 已附的 caller 清單見下方「圖給的起點」；圖不含本包新符號，結論回快照原始碼確認。
+
+## 圖給的起點（主 session 跑 graphify 貼進來；沒有 Bash 的 lane 只能靠這節）
+- 本包改到的符號 → caller 清單：<`graphify affected "<Func()>" --relation calls` 的輸出，每個符號一組；本包新符號標「圖裡沒有，grep：…」>
+- 行為關鍵詞 → 候選檔：<`graphify query "<詞>" --context call --budget 1500` 的 `Start: [...]` 行>
 
 ## 證據規則
 - **註解、CLAUDE.md、SPEC、PLAN、commit message 都不是行為證據**。行為只信：實際執行 > 程式碼本體。註解／文件與程式碼不符＝回報成 finding（誤導性註解嚴重度視同邏輯 bug），並判斷哪邊錯。
