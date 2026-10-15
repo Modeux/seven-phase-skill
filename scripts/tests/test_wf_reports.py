@@ -49,6 +49,27 @@ class WfReportsTest(unittest.TestCase):
         self.assertEqual(st["report"], str((self.out / "lane-go.md").resolve()))
         self.assertIsNone(st["error"])
         self.assertIn("finished", st)
+        self.assertNotIn("counts", st)
+
+    def test_schema_counts_kept_in_status_for_reviewcov(self):
+        counts = {"critical": 0, "high": 1, "medium": 0, "low": 2}
+        self.write_journal({"type": "started", "agentId": "a1", "label": "lane-go"},
+                           {"type": "result", "agentId": "a1",
+                            "result": {"report_markdown": "### [HIGH] x\n", "counts": counts}})
+        r, out = self.run_wf()
+        self.assertEqual(r.returncode, 0, out)
+        self.assertEqual(self.status("lane-go")["counts"], counts)
+
+    def test_result_without_started_event_and_unknown_only_label_fail(self):
+        self.write_journal({"type": "started", "agentId": "a1", "label": "lane-go"},
+                           {"type": "result", "agentId": "a1", "result": {"report_markdown": "### [LOW] x\n"}},
+                           {"type": "result", "agentId": "a2", "result": {"report_markdown": "### [CRITICAL] y\n"}})
+        r, out = self.run_wf()
+        self.assertEqual(r.returncode, 1, out)
+        self.assertIn("a2: result has no started event", out)
+        r, out = self.run_wf("--only", "lane-gp")
+        self.assertEqual(r.returncode, 1, out)
+        self.assertIn("--only lane-gp: no such label", out)
 
     def test_started_without_result_writes_failed_status(self):
         self.out.mkdir()

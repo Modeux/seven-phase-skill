@@ -300,6 +300,153 @@ class ReviewCovTest(unittest.TestCase):
         r, out = self.run_cov()
         self.assertEqual(r.returncode, 0, out)
 
+    def test_severity_with_qualifier_inside_bracket_is_numbered(self):
+        # chat-image-decider-gender shape: `### [LOW｜需要 owner 拍板]` used to fall out of the numbering,
+        # so the map's spec#6 looked dangling while reviewcov's spec#2 silently meant the lane's 5th finding.
+        self.task("spec")
+        self.lane("spec", "### [LOW] a\n\n### [LOW｜需要 owner 拍板] b\n\n### [MEDIUM / 信心低] c\n\n## 已查證無問題\n")
+        self.review(MAP + "| R1 | a | spec#1 |\n| L1 | b | spec#2 |\n| L2 | c | spec#3 |\n")
+        r, out = self.run_cov()
+        self.assertEqual(r.returncode, 0, out)
+        self.assertRegex(out, r"spec\s+ok\s.*3 findings")
+
+    def test_one_stray_heading_among_proper_ones_is_mixed_not_ok(self):
+        self.task("go")
+        self.lane("go", "### [HIGH] a\n\n## [MEDIUM] b\n\n## 已查證無問題\n")
+        self.review(MAP + "| R1 | a | go#1 |\n")
+        r, out = self.run_cov()
+        self.assertEqual(r.returncode, 1, out)
+        self.assertRegex(out, r"go\s+mixed")
+        r, out = self.run_cov("--ack-manual", "go")
+        self.assertEqual(r.returncode, 0, out)
+
+    def test_schema_counts_disagreeing_with_headings_fail(self):
+        self.task("go")
+        self.lane("go", report("HIGH"))
+        (self.dir / "lane-go.status.json").write_text(json.dumps(
+            {"rc": 0, "ok": True, "counts": {"critical": 0, "high": 1, "medium": 1, "low": 0}}))
+        self.review(MAP + "| R1 | a | go#1 |\n")
+        r, out = self.run_cov()
+        self.assertEqual(r.returncode, 1, out)
+        self.assertIn("MEDIUM counts 1 vs headings 0", out)
+
+    def test_source_ids_pointing_at_no_finding_are_dangling(self):
+        self.task("go", "comments")
+        self.lane("go", report("HIGH"))
+        self.lane("comments", report("LOW"))
+        self.review(MAP + "| R1 | a | go#1、go#2 |\n| L1 | b | comments#1、comment#1 |\n")
+        r, out = self.run_cov()
+        self.assertEqual(r.returncode, 1, out)
+        self.assertIn("go#2 (go has 1)", out)
+        self.assertIn("comment#1 (no such lane)", out)
+
+    def test_repeated_map_ids_fail_and_section_scopes_one_round(self):
+        # journey-entry-and-home shape: two packages' maps in one doc, both numbered from R1.
+        self.task("go")
+        self.lane("go", report("HIGH"))
+        self.review("## 包 1\n### 去重地圖\n" + MAP + "| R1 | old | go#1 |\n"
+                    "## 包 2a\n### 去重地圖\n" + MAP + "| R1 | new | spec#1 |\n")
+        r, out = self.run_cov()
+        self.assertEqual(r.returncode, 1, out)
+        self.assertIn("duplicate map id R1", out)
+        r, out = self.run_cov("--section", "包 2a")
+        self.assertEqual(r.returncode, 1, out)
+        # WHY: inside 包 2a only, 包 1's go#1 no longer hides that this round never merged go#1.
+        self.assertRegex(out, r"missing\s+HIGH\s+go#1")
+        self.assertNotIn("duplicate", out)
+
+    def test_index_writes_counts_table_and_rows_as_md_and_json(self):
+        self.task("go", "ts")
+        self.lane("go", "### [HIGH] a | pipe\n- 位置：`a.go:1`\n\n### [LOW] b\n\n## 已查證無問題\n- 位置：not a finding\n")
+        self.lane("ts", "# ts\n\n## 已查證無問題\n- fine\n")
+        idx = self.dir / "findings-index.md"
+        r, out = self.run_cov("--index", str(idx), with_md=False)
+        self.assertEqual(r.returncode, 0, out)
+        md = idx.read_text(encoding="utf-8")
+        self.assertIn("| go | ok | 0 | 1 | 0 | 1 | 2 | 0 |", md)
+        self.assertIn("| ts | ok-zero | 0 | 0 | 0 | 0 | 0 | 0 |", md)
+        self.assertIn("| go#1 | HIGH | a \\| pipe | `a.go:1` |", md)
+        self.assertIn("| go#2 | LOW | b | （缺） |", md)
+        rows = json.loads(idx.with_suffix(".json").read_text(encoding="utf-8"))
+        self.assertEqual([(x["id"], x["severity"], x["location"]) for x in rows],
+                         [("go#1", "HIGH", "`a.go:1`"), ("go#2", "LOW", "")])
+
+    # Independent-review cases (10-15): each was a silent pass before.
+
+    def test_qualified_or_fullwidth_tags_without_numbered_headings_are_not_ok_zero(self):
+        for body in ("## [HIGH｜需要 owner 拍板] x\n", "### 【HIGH】 x\n", "**[MEDIUM｜需拍板]** x\n"):
+            with self.subTest(body=body):
+                self.task("go")
+                self.lane("go", "# r\n\n" + body + "\n## 已查證無問題\n- ok\n")
+                r, out = self.run_cov(with_md=False)
+                self.assertEqual(r.returncode, 1, out)
+                self.assertNotIn("ok-zero", out)
+
+    def test_counts_above_zero_without_headings_and_non_integer_counts_fail(self):
+        self.task("go")
+        self.lane("go", "# r\n\n### H1 退款重複\n\n## 已查證無問題\n- ok\n")
+        status = self.dir / "lane-go.status.json"
+        for counts in ({"critical": 0, "high": 2, "medium": 0, "low": 0}, {"high": "0", "low": 0.0}):
+            with self.subTest(counts=counts):
+                status.write_text(json.dumps({"rc": 0, "ok": True, "counts": counts}))
+                r, out = self.run_cov(with_md=False)
+                self.assertEqual(r.returncode, 1, out)
+                self.assertRegex(out, r"go\s+count-mismatch")
+
+    def test_glued_heading_after_prose_is_mixed(self):
+        # chat-menu-trim lane-grok shape: `…對不上。### [HIGH] title` on the report's first line.
+        self.task("grok")
+        self.lane("grok", "我從接縫著手，看有沒有對不上。### [HIGH] 回滾\n\n### [MEDIUM] b\n\n## 已查證無問題\n")
+        self.review(MAP + "| R1 | b | grok#1 |\n")
+        r, out = self.run_cov()
+        self.assertEqual(r.returncode, 1, out)
+        self.assertRegex(out, r"grok\s+mixed")
+
+    def test_dangling_covers_ok_zero_lanes_and_zero(self):
+        self.task("go", "spec")
+        self.lane("go", report("HIGH"))
+        self.lane("spec", "# spec\n\n## 已查證無問題\n- ok\n")
+        self.review(MAP + "| R1 | a | go#1、go#0、spec#3 |\n")
+        r, out = self.run_cov()
+        self.assertEqual(r.returncode, 1, out)
+        self.assertIn("go#0 (go has 1)", out)
+        self.assertIn("spec#3 (spec has 0)", out)
+
+    def test_verdict_basis_cells_and_headings_merely_mentioning_exclusion_do_not_account(self):
+        self.task("go")
+        self.lane("go", report("HIGH", "LOW"))
+        self.review("## 地圖（0 未收錄）\n" + MAP + "| R1 | a | go#1 |\n\ngo#2 待補列\n"
+                    "## 收斂裁決\n| 編號 | 裁決 | 依據（來源報告） |\n|---|---|---|\n| R1 | confirmed | 與 go#2 不同根因 |\n")
+        r, out = self.run_cov()
+        self.assertEqual(r.returncode, 1, out)
+        self.assertRegex(out, r"missing\s+LOW\s+go#2")
+
+    def test_index_keeps_tags_stray_lines_and_json_path(self):
+        self.task("go")
+        self.lane("go", "### [LOW｜需要 owner 拍板] a\n- 位置：\n  - `a.go:1`\n\n## [CRITICAL] b\n\n### [HIGH] c\n"
+                        "- **File**: `c.go:3`\n\n## 已查證無問題\n")
+        idx = self.dir / "idx.json"
+        r, out = self.run_cov("--index", str(idx), "--ack-manual", "go", with_md=False)
+        self.assertEqual(r.returncode, 0, out)
+        md = (self.dir / "idx.md").read_text(encoding="utf-8")
+        self.assertIn("| go#1 | LOW｜需要 owner 拍板 | a | `a.go:1` |", md)
+        self.assertIn("| go#2 | HIGH | c | `c.go:3` |", md)
+        self.assertIn("| go | 5 | ## [CRITICAL] b |", md)
+        rows = json.loads(idx.read_text(encoding="utf-8"))
+        self.assertEqual([x["id"] for x in rows], ["go#1", "go#2", None])
+
+    def test_required_field_gaps_warn_without_failing(self):
+        self.task("go")
+        self.lane("go", "### [HIGH] a\nno location\n\n## 已查證無問題\n")
+        self.review("## 去重地圖\n| 編號 | 一句話 | 來源 |\n|---|---|---|\n| L1 | a | go#1 |\n")
+        r, out = self.run_cov()
+        self.assertEqual(r.returncode, 0, out)
+        self.assertIn("WARN map table at line 4 has no 宣稱嚴重度／位置 column", out)
+        self.assertIn("WARN go: 1 finding(s) without", out)
+        self.review("## 去重地圖\n| 編號 | 宣稱嚴重度 | 位置 | 來源 |\n|---|---|---|---|\n| L1 | HIGH | x | go#1 |\n")
+        r, out = self.run_cov()
+        self.assertIn("WARN L1 is in the L series but claims HIGH", out)
+
 
 if __name__ == "__main__":
     unittest.main()

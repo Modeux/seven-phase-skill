@@ -15,11 +15,11 @@
 - 碰到的層各跑一次 targeted 測試＋build（deepweave 的指令與收尾閘見 `references/project-deepweave.md`）。
 
 ## 3. 審查（不省）
-照 `phases/6-review.md` §1–§4 做：`numstat.py` 確認規模、凍結快照、共用任務書、派 lane（小包表的必開項全開，含 codex；條件項依觸發）。收件照 §5，但去重地圖寫進 PROGRESS.md 的 `## 審查` 表（條目、來源 `<lane>#<n>`、嚴重度、裁決、處置），用 `reviewcov.py tmp/<slug>/review .claude/PRPs/plans/<slug>/PROGRESS.md` 核對涵蓋。
+照 `phases/6-review.md` §1–§4 做：`numstat.py` 確認規模、凍結快照、共用任務書、派 lane（小包表的必開項全開，含 codex；條件項依觸發）。收件照 §5，但去重地圖寫進 PROGRESS.md 的 `## 審查` 表（編號 R1…／L1…、來源 `<lane>#<n>`、宣稱嚴重度、最終嚴重度、裁決、處置；裁決詞照 `phases/7-converge.md` §3），用 `reviewcov.py tmp/<slug>/review .claude/PRPs/plans/<slug>/PROGRESS.md` 核對涵蓋；裁決填完跑 `laneyield.py <slug> --no-cost --strict`。
 
 ## 4. 收斂
 - 要 owner 取捨的條目：批成一則 AskUserQuestion（推薦項第一），不另開 checkpoint。
-- 有爭議或 HIGH 以上：派 1 路 `converge-verifier`；其餘主 session 邊修邊確認。修復照紅→綠。
+- 有爭議或 HIGH 以上：派 1 路 `converge-verifier`；其餘主 session 邊修邊確認。修復照紅→綠。範圍分流、修後複查與「兩輪不收斂就停」照 `phases/7-converge.md` §3「範圍」與 §4。
 - 全閘照 `phases/7-converge.md` §5（對既存紅基線「零新增」）；耐久結論照全程規則搬進子目錄 `CLAUDE.md`／`.claude/rules/`。
 
 ## 5. 交付（唯一的 checkpoint）
