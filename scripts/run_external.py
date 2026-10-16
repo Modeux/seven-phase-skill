@@ -22,7 +22,7 @@ from _lanes import write_status  # noqa: E402
 
 CODEX_MODEL, CODEX_EFFORT = "gpt-6-sol", "xhigh"
 GROK_MODEL = "grok-4.7"
-AGY_MODEL, AGY_EFFORT = "gemini-3.8-flash", "high"
+AGY_MODEL, AGY_EFFORT = "gemini-4-argon", "high"
 AGY_MAX_BYTES = 170_000
 
 
