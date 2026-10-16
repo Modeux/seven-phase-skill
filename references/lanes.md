@@ -13,9 +13,9 @@
 - agent 名字描述專長不是能力：寫完 lane prompt 回頭問「這份任務書要求的動作，那個 agent type 做得到嗎」（a11y-architect 沒有 Bash、跑不了瀏覽器）。
 
 ## effort
-- comment-analyzer、go-reviewer、silent-failure-hunter、tdd-guide＝high；其餘 reviewer 仍 xhigh。由來：10-06 重放 A/B——三路 reviewer 已確認條目零漏、花費 −44%；tdd-guide 兩片（跨層、碰錢＋權限）突變殺傷相同、花費 −37%（`history.md`）。
+- comment-analyzer、go-reviewer、silent-failure-hunter、tdd-guide、typescript-reviewer、python-reviewer＝high；其餘 reviewer 仍 xhigh。由來：10-06 重放 A/B——三路 reviewer 已確認條目零漏、花費 −44%；tdd-guide 兩片（跨層、碰錢＋權限）突變殺傷相同、花費 −37%；ts／python 是 10-16 依下面的擴大判準（`history.md`）。
 - tdd-guide 降檔後唯一看到的退步：照抄任務書的錯前提寫成 INVARIANT。第 6 階段註解 lane 是這類錯的防線，不因小包而省。
-- 擴大判準：接下來兩個包跑完第 6 階段，用 `laneyield.py` 比這三路的獨家發現與確認數有沒有比 10-06 前少（10-15 前的 `laneyield.py` 會把備註字當 lane、漏讀裁決欄與第二輪地圖、把 `LOW（原 HIGH）` 算成 R，兩邊都用新版重跑，`DATA error` 未清的那份不拿來比）。沒少 → typescript-／database-／python-reviewer 也改 high；少了 → 三路退回 xhigh。推理型（lane-reviewer、converge-verifier）、碰錢權限（security-reviewer）、突變（pr-test-analyzer）、真瀏覽器（ui-lane-reviewer）不在擴大範圍。
+- 擴大判準（10-16 結案）：`laneyield.py` 比 go／silent／comment 三路的獨家發現與確認數有沒有比 10-06 前少（`DATA error` 未清的那份不拿來比）。結果：獨家已確認沒少，但 go／silent 的已確認／包在對照 lane 全升時下降 13–19%（少掉的是別路也抓到的）→ typescript-／python-reviewer 改 high；**database-reviewer 留 xhigh**（小 lane 裡獨家發現率最高、DB 錯最貴、降檔只省約 $20／週）。推理型（lane-reviewer、converge-verifier）、碰錢權限（security-reviewer）、突變（pr-test-analyzer）不在擴大範圍；真瀏覽器（ui-lane-reviewer）另走自己的 A/B。比較腳本在 repo `tmp/laneyield-cmp/compare.py`（舊 REVIEW 要 `git log --all --full-history` 才找得到，刪除發生在已合併的側分支）。
 - 再做 effort A/B：另建 `ab-<名>-high.md`（本體逐字相同，只改 name／effort），新檔要到下一回合才載入；不改原檔，並行 session 會在不知情的情況下中招。重放材料＝凍結快照＋原任務書；任務書刪了可以從任一 lane transcript 的 Read 結果逐字還原。xhigh 自己重跑一次當雜訊基準：嚴重度本來就會浮動，比的是有沒有抓到。
 
 ## 小包（正式碼 ≤1500 行，且不碰 credits／權限／跨層不變式）：6–8 路
