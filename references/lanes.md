@@ -47,6 +47,7 @@
 - 文件片：`doc-slice`（high，每句先回程式碼確認）；codemap／README 生成才用 doc-updater。
 - 探索／定位：code-explorer（high）；判斷性探索用 general-purpose／Explore（effort 跟主 session）。
 - 組材料包、批次文字改寫、graphify 抽取：quick-task（high）。
+- 丟棄式原型（第 2／3 階段，觸發條件見 `phases/2-discuss.md` 第 3 步）：general-purpose，照 §模型與 agent 不傳 `model`。原型雖然會丟，做工粗糙會讓 owner 因「醜」否決對的方向，做工就是判斷的一部分，不降模型。
 - 真瀏覽器走一趟（第 5／7 階段末）：`ui-lane-reviewer`（xhigh）。
 - 盲評（模型／提示詞探針）：`blind-judge`（xhigh、不載 CLAUDE.md、只有 Read／Write／Glob）；位置由主 session 隨機化後才交給它。
 
