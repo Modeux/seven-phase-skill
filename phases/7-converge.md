@@ -16,6 +16,16 @@
 REVIEW.md 加「第 N 階段收斂裁決」表（標題含「收斂裁決」）：每條一列（編號、裁決、最終嚴重度、依據、處置／修在哪一片）＋名單外交叉發現（併入修復或記錄不修）。裁決欄以 `confirmed`／`confirmed-部分`／`false positive`／`won't fix`／`unverified`／`owner 拍板` 開頭（補充放括號），還沒定的寫 `pending`，修完回填——「修片確認」這類自創詞腳本認不得。宣稱嚴重度留在地圖，「最終嚴重度」欄只在這張表（`laneyield.py` 用它分 R／L），格內只放一個嚴重度字，原值或理由放括號（`LOW（原 HIGH）`）。寫完跑 `scripts/laneyield.py <slug> --no-cost --strict`：未辨認／pending／缺裁決的 R、來源認不出 lane、編號重複都會列出，exit 0 才算表齊。HIGH 以上的 `unverified` 不得在表裡停著：進 §2 owner 拍板，或寫進 `.claude/PRPs/BACKLOG.md`（附缺的證據與下一步）。UI 純主觀偏好不逕改，單列給 owner 拍板。SPEC／PLAN 依拍板修訂（標「第 7 階段」與日期）。
 **範圍**：本包引入的、擋驗收的、擋安全上線的問題一律處置，包括審查才發現、超出原範圍的；與它同根因、同一刀修得到的既有缺口可併修（寫明哪些是既有的）。與本包無關的既有問題進 BACKLOG（附出處），不併進本包；其中碰重要面（錢、權限、未成年、資料遺失、全站可用性）或最終嚴重度 HIGH 以上的，不能只進 backlog，在 checkpoint 回報逐條點名給 owner。審查前就已 defer 的 MEDIUM／LOW 維持 backlog。
 
+**流出分析**（根因問「為什麼發生」，這裡問「為什麼沒更早被攔下」）：裁決落定、切修復片之前，主 session 對下列條目各答一次「哪一道閘本該更早攔下它、為什麼沒攔」。
+- **問哪些**：最終嚴重度 HIGH 以上的 `confirmed`（含名單外交叉發現、§5 走一趟才抓到的）；同一類問題以前出現過的（子目錄 CLAUDE.md、`.claude/rules/`、BACKLOG 已有同形狀條目，graphify＋grep 查）；本包修的 bug 本身是上線後才發現的，被修的那個也算一條。其餘不問——每條都問會變成儀式。
+- **答到具體的閘與缺口**：閘＝PLAN 測試矩陣、tdd 的紅、全閘的某支 pin／audit、第 6 階段某一路、hook；缺口＝矩陣沒列這個情境、pin 只蓋三個呼叫點中的兩個、那一路的任務書沒列這個面、閘沒跑到這條路徑。缺口回原文或執行確認（「註解不可信」照樣適用）。「粗心」「模型漏看」不是答案——那不是閘。
+- **落點四選一**（這一例的回歸測試修片本來就會寫，這裡要的是整類）：
+  1. **機械閘**：蓋全部呼叫點的守門測試、audit 腳本、hook、lint。**同類再現只能選這條或 4**：上次的文字規則已經被跳過一次，再加文字沒用（history 10-13）。
+  2. **形狀規則**：照全程規則寫進子目錄 CLAUDE.md／`.claude/rules/`，讓之後的 PLAN 與實作套得到。
+  3. **流程**：PLAN 矩陣欄位、審查任務書、`references/lanes.md` 的檢查面——這是改本 skill，**不自己改**，列進 checkpoint 由 owner 決定。
+  4. **接受**：沒有划算的更早閘，寫一句理由（例：只有真瀏覽器看得到，第 6 階段 UI lane 已是最早的閘）。
+- **落檔**：REVIEW.md 在裁決表之後另起 `## 流出分析` 標題（不放在收斂裁決標題底下），表頭 `| 編號 | 本該攔的閘 | 為什麼沒攔 | 落點 |`；欄名不得含「來源」「裁決」，否則 `laneyield.py`／`reviewcov.py` 會把它當地圖或裁決表讀。精簡路寫在 PROGRESS.md 同名標題下。落點 1、2 併進 §4 的修復片（進 `feat` commit）；大到要另開任務或碰別的模組就進 BACKLOG，出處指到流出分析那一列。
+
 ## 4. 修復
 - 依檔案範圍切片（每個檔只屬於一片），`assets/fixplan.md` 當共用任務包：背景、owner 拍板、環境規則、紅的歸屬、交付格式。§1 已先派的片不重切，這裡只切剩下的條目。每片另寫一份 `<片號>-brief.md`：從裁決表與驗證報告**逐字**摘出歸這片的條目（含建議新文字、測試設計、探針原文），不要叫每片去讀全部驗證報告。
 - agent：程式碼片用 `tdd-guide`（`references/lanes.md`「實作與修復」）；文件片用 `doc-slice`。註解類條目在任務包寫明「先回程式碼確認宣稱成立再改，不成立就在報告標 false positive」。
@@ -36,4 +46,4 @@ REVIEW.md 加「第 N 階段收斂裁決」表（標題含「收斂裁決」）�
 - 記憶只更新「進行中」那一條的狀態，技術結論放子目錄 CLAUDE.md。
 - 本包改了 **docs／templates／`.sql`／`openapi.yaml`／任何 `CLAUDE.md`／`.claude/rules/`** 嗎？有 → checkpoint 總結加一行「graphify 圖已過期（post-commit hook 只刷 AST 層），要不要 `/graphify . --update` 由你決定」；**不自跑 `--update`**（owner 10-05：傘狀全做完才一次更新）。
 
-→ Checkpoint：白話總結（裁決數、拍板結果、閘結果、owner 會看到的外部變化如警報文案），附 `/compact`，等 owner 說 commit。commit 形狀與 `git commit --only` 規則見 SKILL.md。
+→ Checkpoint：白話總結（裁決數、拍板結果、閘結果、流出分析的落點——等 owner 決定的流程改動逐條列、owner 會看到的外部變化如警報文案），附 `/compact`，等 owner 說 commit。commit 形狀與 `git commit --only` 規則見 SKILL.md。
