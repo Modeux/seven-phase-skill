@@ -66,6 +66,11 @@ owner 吃過「一路衝到底、末端才發現前提錯」的虧，也要自�
 - **主 session vs subagent**：1–3 檔、內容已確定的小改（照報告改註解、改 SPEC／PLAN）主 session 直接做；彼此獨立的多片、需要大量閱讀而主 session 不必記住的、審查（要新視角）交 subagent。主 session context 已很長時偏向 subagent（每一步都重送整段對話）。
 
 ## 模型與 agent
+- **取捨順序：品質 > 省錢 > 速度**（owner 10-16）。評估降 effort、換模型、拆片、砍路數，一律照這個順序判：
+  - 省錢先動不碰品質的槓桿（依 laneyield 砍「零獨家已確認」的路、任務包瘦身、少回合、久等前先縮 context），換模型排最後。
+  - 要判斷的工作（審查、收斂驗證、規劃、實作片）不降模型；不為了讓小模型接手而把片切得更細——本專案的 bug 多在接縫（跨層漂移、三處對齊），切細等於把接縫切掉，錯誤只是移到整合與收斂才被抓。
+  - 降檔／換模型的 A/B 除了正確性，必驗**完整性**（以原設定產出為答案，比檔案清單／命中數／節點數，不得少）與**下游**（同一份產出餵同一顆 reviewer，已確認 findings 不得變少）；任一不過就維持原設定。sha 對上不代表沒漏。
+  - Sonnet／Haiku 的延遲優勢不構成換模型的理由。
 - 主 session：簡報、訪談、規劃、委派協調、**親跑測試與閘**、一切最終裁決。subagent 只回結論與證據，**不代表 owner 做任何決定**。
 - subagent 一律 opus-5.5，**effort 只能由 agent frontmatter 決定**（`~/.claude/agents/*.md` 的 `model:`／`effort:`；prompt 寫 effort 是安慰劑；Agent 工具的 `model` 參數勿傳）。
   - **xhigh（要判斷）**：planner、database-reviewer、security-reviewer、pr-test-analyzer、`lane-reviewer`（關注面 lane）、`ui-lane-reviewer`（真瀏覽器的 UI lane 與走一趟）、`converge-verifier`（收斂驗證）、`blind-judge`（盲評，不載 CLAUDE.md）。
