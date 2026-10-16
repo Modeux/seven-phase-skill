@@ -37,7 +37,8 @@
 - 只驗「有爭議／HIGH 以上／需 owner 拍板」的條目：小包 1 路、大包依條目量 2 路起（同層的條目放同一路，例：偵測面、追蹤、單一服務、時間預算）。
 - agent：`converge-verifier`（xhigh，有 Write 寫報告）。
 - 驗證員 ≥2 顆時用 `Workflow` 扇出（owner 已同意的用法；先載 `workflow-authoring`；第 6 階段內審同法，見 `phases/6-review.md` §4）：`agent(prompt, {agentType: 'converge-verifier', schema})`，frontmatter 的 effort 會保留（實測 xhigh）。**Workflow 內的 subagent 被 harness 擋寫報告檔**（「Subagents should return findings as text」，探針檔照寫）——schema 放 `report_markdown` 全文欄位，主 session 從結果落檔，任務書不要求寫報告檔。
-- 其餘條目由修復者邊修邊確認。
+- 其餘條目由修復者邊修邊確認，修復片和驗證員同時開工（`phases/7-converge.md` §1「不必驗證的條目先修」）。
+- **一波派完，不拆細**：吃 Docker 的指令經 `scripts/dockerslot.py` 排隊，驗證員不分波。每顆約 20–30 分鐘、和條數幾乎無關（10-16 量 91 顆：5 條約 21 分、10–15 條 19–30 分），固定成本約 20 分——拆得更細只多付固定成本、不會更快。LOW 改用 Sonnet 5.5 或 high 另派一顆也一樣：它跟 xhigh 那幾顆同時跑，總時間看最慢那顆，而 LOW 本來就不另派驗證。
 
 ## 實作與修復
 - 切片實作（每片一棵私有樹）：
@@ -48,13 +49,14 @@
 - 探索／定位：code-explorer（high）；判斷性探索用 general-purpose／Explore（effort 跟主 session）。
 - 組材料包、批次文字改寫、graphify 抽取：quick-task（high）。
 - 丟棄式原型（第 2／3 階段，觸發條件見 `phases/2-discuss.md` 第 3 步）：general-purpose，照 §模型與 agent 不傳 `model`。原型雖然會丟，做工粗糙會讓 owner 因「醜」否決對的方向，做工就是判斷的一部分，不降模型。
-- 真瀏覽器走一趟（第 5／7 階段末）：`ui-lane-reviewer`（xhigh）。
+- 真瀏覽器走一趟（第 5／7 階段末）：`ui-lane-reviewer`（xhigh），與全閘同時跑、交件附走一趟套件（`phases/5-implement.md`「主 session 的驗收」、`assets/walk-kit.md`）。不拆給多顆同時走：共用 dev DB 與測試帳號會互踩，每顆都重付起環境與讀碼，還會切斷「重整後狀態」這類跨流程的接縫。
 - 盲評（模型／提示詞探針）：`blind-judge`（xhigh、不載 CLAUDE.md、只有 Read／Write／Glob）；位置由主 session 隨機化後才交給它。
 
 ## 派工前檢查
 - agent 的工具集（有沒有 Write／Bash；lane-reviewer、quick-task 沒有瀏覽器與 MCP）。
 - 共用任務書已寫明每棵可寫樹的唯一 writer。
 - 並行 agent 的交付檔名帶 lane／片號。
+- 任務書裡每條吃 Docker 的指令都包了 `scripts/dockerslot.py`，並寫了 Bash `timeout: 600000`。
 - 共用一份沒實測過的處方且 >5 顆 → 先一顆探針。
 
 ## 成本參考

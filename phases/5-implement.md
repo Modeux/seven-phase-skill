@@ -14,7 +14,7 @@
 - **每片一份 `<片號>-brief.md`**：PLAN 裡歸這片的段落（含矩陣那片的符號／行號欄）、測試設計清單、相關 invariant，用 `scripts/extract.py` 逐字摘錄並附出處；SPEC／PLAN 全文列「需要時再讀」（SKILL.md「任務包瘦身」）。
 - **隔離**：每片一棵私有 worktree。工作樹有未 commit 的改動時，`isolation: "worktree"` 起在預設分支、看不到這些改動——改用 `scripts/mkworktree.py`（detach 到本 HEAD＋套 `mkpatch.py` 產的 patch＋驗 sha）自己建樹，派工訊息寫明樹的絕對路徑。
 - **交回**：agent 在私有樹改完，主用 `scripts/merge_back.py` 對快照算出改過的檔，確認主樹那些檔仍等於快照、片間零重疊後複製回主樹（不靠 agent 產 patch；`git apply` 從子目錄跑會靜默略過目錄外 hunk）。同波兩片打到同檔＝矩陣寫錯，回 Plan 修，不硬合。
-- **共用資源**：testcontainers 並行會吃 Docker 位址池，每波結束清殘留網路、同波跑整合的片數設上限；sqlc 等 Docker 生成器一次一片；Python 共用 venv 只准唯讀掛載進一次性容器。
+- **共用資源——上限加在指令上，不加在 agent 上**：檔案互斥的片一波派完，不為 Docker 分波。任務包寫明：每條吃 Docker 的指令（`-tags integration`、testcontainers、sqlc 容器）一律包 `scripts/dockerslot.py --`（預設同時 3 條、其餘排隊，Bash 設 `timeout: 600000`；exit 75＝等太久，照訊息重試或回報）；sqlc 用 `--pool sqlc --slots 1`；主 session 的全量整合用 `--all`。前端片不吃 Docker，不排在後端片後面——派工同時由主 session 先在前端樹跑 `pnpm install`。每波結束清殘留網路；Python 共用 venv 只准唯讀掛載進一次性容器。為什麼：agent 九成時間在讀碼與推理、`go test` 約佔 4%，按 agent 分波等於讓不碰 Docker 的時間也排隊（age-gate-unify 第 7 階段：驗證員 3＋2 兩波多等約 17 分、前端修復片等後端那波約 39 分）。
 - **先探針再整批**：第一波只派一片驗「寫紅＋綠＋交 red-run.out」處方，通過才併發其餘。
 
 ## 主 session 的驗收（不放寬）
@@ -23,6 +23,8 @@
 - diff 生產碼對快照，確認只動該片範圍；改完一律 `git status --porcelain`（不帶 pathspec）對帳。
 - 全閘（整合全包、lint、audit、前端整包＋production build、契約 lint）只在本階段末跑一次，判準是「對既存紅基線零新增」。
 - 涉 UI 的包，階段末的真瀏覽器走一趟派 `ui-lane-reviewer`（步驟、樹與 dev server、證據目錄寫在任務包）；主 session 讀結論、開它點名的一兩張截圖。為什麼：瀏覽器輸出很大，留在主 session 會讓之後每一回合都重付（owner 10-05 定）。
+  - **與全閘同時跑**：最後一片合回主樹後，立刻用 `mkpatch.py`＋`mkworktree.py` 建走一趟專用的快照樹並派出，主 session 同時在主樹跑全閘。全閘期間主樹又改了檔：`checktree.py --baseline <走一趟快照的 baseline.sha256> <主 checkout>` 列出變動，有走一趟碰得到的執行期檔（前端非 spec 檔、handler／service／SQL）就只重驗涉及的步驟（用套件）；只動測試、文件、lint 樣式的不必重驗。為什麼：走一趟不等全閘，每趟省約 15–20 分。
+  - **交件附走一趟套件**（`assets/walk-kit.md`，任務包寫明套件路徑與該檔路徑）。修完重走、第 7 階段收尾那趟從套件起手：重走實測中位 30 分、比第一次 25 分還久，因為每次都從零摸環境與頁面（約四成呼叫在讀檔）。
 
 ## 加速
 - 同一層、各自預估 <20 分鐘的小片，或要讀的檔案大量重疊的片，合成一片、一個 agent、一次記錄。

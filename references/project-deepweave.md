@@ -3,7 +3,7 @@
 專案的權威規則在根 `CLAUDE.md` 與各子目錄 `CLAUDE.md`；這裡只放七階段流程裡反覆要用、容易打錯的指令與基線。
 
 ## 測試與閘
-- **Go**：一律 `env -u GOROOT go test -C <tree>/backend-golang ./...`（`GOROOT` 汙染讓 toolchain 靜默用錯版本）。整合測試加 `-tags integration`，會起 testcontainers、吃 Docker 位址池——同時跑的片數設上限，跑完清殘留網路。
+- **Go**：一律 `env -u GOROOT go test -C <tree>/backend-golang ./...`（`GOROOT` 汙染讓 toolchain 靜默用錯版本）。整合測試加 `-tags integration`，會起 testcontainers、吃 Docker 位址池——一律包 `python3 ~/.claude/skills/seven-phase/scripts/dockerslot.py -- env -u GOROOT go test ...`（同時最多 3 條；主 session 的全量整合加 `--all --max-wait 1800` 並背景跑；`just sqlc` 用 `--pool sqlc --slots 1`），跑完清殘留網路。
 - **ai-service（Python）**：**禁在 host 跑 `uv`／`just test-ai`／host pytest**（會把共用 venv 重建成 macOS 版，容器壞掉）。只用一次性容器：
   `docker run --rm --network none -v <tree>/ai-service:/app:ro -v <repo>/ai-service/.venv:/app/.venv:ro -w /app -e PYTHONDONTWRITEBYTECODE=1 -e LANGFUSE_TRACING_ENABLED=false -e APP_ENV=development -e MYPY_CACHE_DIR=/tmp/mypy ghcr.io/astral-sh/uv:python3.12-bookworm .venv/bin/python -m pytest -q -p no:cacheprovider`
   （ruff：`-m ruff check --no-cache app tests`；mypy：`-m mypy app`）。在 worktree 裡跑要先 `mkdir -p <tree>/ai-service/.venv` 當掛載點（`mkworktree.py --mkdir ai-service/.venv`）。zsh 下把指令存成變數再展開要用 `${=VAR}`。

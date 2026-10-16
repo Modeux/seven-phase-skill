@@ -43,7 +43,7 @@
 SKILL.md       入口：開工步驟、分流判準、停點協定、全程規則、模型與 agent 分工
 phases/        每個階段各一份做法（1-research.md … 7-converge.md），精簡路在 lean.md
 references/    用到才讀：審查路數怎麼配、外部審查、規則的由來、專案特定設定
-assets/        範本：審查任務書、收斂驗證任務書、修復任務包、停點回報
+assets/        範本：審查任務書、收斂驗證任務書、修復任務包、停點回報、走一趟套件
 scripts/       可重用腳本：進度看板、凍結快照與 worktree、審查覆蓋率、花費統計、摘錄任務書
 evals/         skill 的評測案例
 ```
@@ -59,6 +59,7 @@ evals/         skill 的評測案例
 | `extract.py` | 從文件逐字摘錄段落進派工任務書（不改寫，附出處） |
 | `reviewcov.py` | 檢查每個審查員都交件了、發現地圖沒漏條目 |
 | `run_external.py` | 跑外部審查（codex / grok / agy） |
+| `dockerslot.py` | 吃 Docker 的指令排隊（同時最多 N 條），讓 agent 一波派完不必分波 |
 | `agentcost.py` / `taskcost.py` / `laneyield.py` / `claudemdcost.py` | 從對話紀錄算花費：每顆 agent、每個任務、每條審查路買到了什麼、指令檔載入成本 |
 
 ## 改規則之前

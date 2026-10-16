@@ -10,7 +10,7 @@ owner 拍板（<日期>）：
 ## 環境規則
 - 只准寫**你那棵工作樹**（見派工訊息）與 `<converge 目錄>/impl/<片號>-*` 交付檔。主 checkout 其他檔案都不准碰。
 - 不要 `cd`；<專案測試配方>。禁 git commit／stash／checkout／reset／apply／worktree 操作。樹裡本包改動是未 commit 的，`git diff` 會連本包一起顯示——正常。
-- 不跑會吃共用資源的測試（除非派工訊息允許）、不連 prod、不呼叫量測 API 或 LLM provider、不印金鑰。
+- 不跑會吃共用資源的測試（除非派工訊息允許；允許的吃 Docker 指令一律包 `<skill>/scripts/dockerslot.py --`、Bash 設 `timeout: 600000`）、不連 prod、不呼叫量測 API 或 LLM provider、不印金鑰。
 - hook 若改到你範圍外的檔，還原它（`git -C <tree> diff --stat` 對帳）。
 - 已知既存紅（不要修、不要報）：<列出>。
 

@@ -25,7 +25,7 @@ owner 是產品負責人不是工程師。這套流程把方向控制權與 toke
 | 精簡路 | `phases/lean.md` | 一份 PROGRESS.md（計畫、審查地圖、結果） |
 
 參考檔**用得到時才讀**，開工時不要全讀（評測時多讀兩份參考檔，除了多花 token 沒有好處）：`references/lanes.md`（第 4 階段定路數、第 6／7 階段派工時）、`references/external-review.md`（第 6 階段派外審時）、`references/history.md`（想推翻或放寬某條規則時）、`references/project-deepweave.md`（在 deepweave repo 要跑測試、閘或碰 prod 時）。
-範本：`assets/`（審查任務書、收斂驗證任務書、修復任務包、checkpoint 回報）。腳本：`scripts/`（見下）。
+範本：`assets/`（審查任務書、收斂驗證任務書、修復任務包、checkpoint 回報、走一趟套件）。腳本：`scripts/`（見下）。
 
 ## 分流：精簡路或完整七階段
 開工判一次，寫進 PROGRESS.md 開頭。**審查不分流**：兩條路都照「依規模分級」派該派的 reviewer，含外審（owner 10-05、10-06：「唯獨 review 不能省」）。
@@ -91,6 +91,7 @@ owner 吃過「一路衝到底、末端才發現前提錯」的虧，也要自�
 - `checktree.py`：對 baseline 驗一棵或多棵樹的 sha（不符 exit 1）；清單外的變動另列 warning（`--strict` 才 fail）。`tmp/`、任務目錄與 gitignored 檔不在檢查內，所以它不是「整棵樹沒人寫過」的證明。
 - `merge_back.py`：把工作樹相對快照改過的檔複製回主 checkout。候選＝修復樹與快照兩邊 `git status` 的聯集（改回 HEAD、刪掉快照新檔都抓得到）；兩棵 HEAD 不同、主樹那些檔不等於快照、片與片重疊都會停；刪除只回報不套用；把檔改回 HEAD 一律先停（分不出是刻意還原還是 agent 誤 reset），確認是裁決要的才加 `--allow-revert <片>:<路徑>`。
 - `run_external.py`：跑 codex／grok／agy 外審（背景跑，見 `references/external-review.md`）。失敗 exit 非零、舊報告不動，每次寫 `lane-<x>.status.json`。
+- `dockerslot.py`：`-- <cmd>` 拿到全機 N 個槽位之一才跑（預設 3，flock 檔，持有者死掉自動釋放）；`--all` 拿全部且讓後到的排在它後面（全量整合）、`--pool <名> --slots 1`（sqlc）、`--status` 看誰佔著；等超過 `--max-wait`（預設 300 秒）exit 75 並印出持有者。讓 agent 一波派完、只在吃 Docker 的那一刻排隊。
 - `wf_reports.py`：Workflow 扇出（第 6 階段內審、第 7 階段驗證）的報告全文從 run 的 `journal.jsonl` 抽出、依 label 落檔（subagent 在 Workflow 內寫不了檔）；每路寫 status 檔（含 schema 的 `counts`），`tasks/` 有派工單卻沒啟動的列 MISSING。
 - `extract.py`：markdown 依標題或行號逐字切段、附出處（組任務包）。
 - `reviewcov.py`：第 6 階段收件。核對預期的每一路都交件（失敗、缺件、空檔、舊報告、標題形狀混雜、`counts` 對不上都擋），每條發現都在去重地圖的「來源」欄或未收錄節、地圖編號不重複、來源不指向不存在的條目（`--ack-manual`／`--waive`／`--section` 見 `phases/6-review.md` §5）；`--index` 產生給合成用的計數表與逐條清單（md＋json）。
