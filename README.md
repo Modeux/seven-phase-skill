@@ -41,7 +41,9 @@
 
 ```
 SKILL.md       入口：開工步驟、分流判準、停點協定、全程規則、模型與 agent 分工
-phases/        每個階段各一份做法（1-research.md … 7-converge.md），精簡路在 lean.md
+ACCEPTANCE.md  流程改動的驗收帳（待驗、結案、檢討紀錄）
+phases/        每個階段各一份做法（1-research.md … 7-converge.md），精簡路在 lean.md，跨任務檢討在 retro.md
+retros/        每次檢討的報告
 references/    用到才讀：審查路數怎麼配、外部審查、規則的由來、專案特定設定
 assets/        範本：審查任務書、PLAN 審查任務書、收斂驗證任務書、修復任務包、停點回報、走一趟套件
 scripts/       可重用腳本：進度看板、凍結快照與 worktree、審查覆蓋率、花費統計、摘錄任務書
@@ -61,6 +63,13 @@ evals/         skill 的評測案例
 | `run_external.py` | 跑外部審查（codex / grok / agy） |
 | `dockerslot.py` | 吃 Docker 的指令排隊（同時最多 N 條），讓 agent 一波派完不必分波 |
 | `agentcost.py` / `taskcost.py` / `laneyield.py` / `claudemdcost.py` | 從對話紀錄算花費：每顆 agent、每個任務、每條審查路買到了什麼、指令檔載入成本 |
+| `wallclock.py` | 每種 agent 花了多少時間、時間花在哪類工具（檢討與排程改動用） |
+
+## 檢討與驗收
+
+- 跟 Claude 說「檢討」：看最近一批任務的品質、花費、速度，結清以前流程改動的驗收，最多提 3 條改法給你選（做法在 `phases/retro.md`，報告存 `retros/`）。不是每個任務都跑；上次檢討後記錄滿 5 個任務，看板會提示。
+- `ACCEPTANCE.md` 是流程改動的驗收帳：每次改流程就登記「什麼時候、用什麼指令、怎樣算有用」；到期時看板會列出來。
+- 看板的「流程」區另外列出過大的 CLAUDE.md／規則檔（超過 40KB，或比上次檢討長 20% 以上）。
 
 ## 改規則之前
 

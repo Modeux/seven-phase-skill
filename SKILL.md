@@ -1,6 +1,6 @@
 ---
 name: seven-phase
-description: owner 的七階段開發工作流（research → 討論 → interview → plan → TDD 實作 → 多方審查 → 收斂），含每階段做法、審查／驗證路數分級、checkpoint 協定、commit 規則與可重用腳本。Use this whenever the owner wants a feature or fix taken through the seven-phase workflow (七階段、七階段工作流、走完整流程), pastes the workflow text, says 「繼續」／「下一階段」 at a checkpoint, asks to review／converge／commit a task that has a task directory under `.claude/PRPs/plans/`, or when resuming such a task after a /compact or a new session — compaction drops details like model names and lane rules, so reload it rather than working from the summary.
+description: owner 的七階段開發工作流（research → 討論 → interview → plan → TDD 實作 → 多方審查 → 收斂），含每階段做法、審查／驗證路數分級、checkpoint 協定、commit 規則與可重用腳本。Use this whenever the owner wants a feature or fix taken through the seven-phase workflow (七階段、七階段工作流、走完整流程), pastes the workflow text, says 「繼續」／「下一階段」 at a checkpoint, asks to review／converge／commit a task that has a task directory under `.claude/PRPs/plans/`, or when resuming such a task after a /compact or a new session — compaction drops details like model names and lane rules, so reload it rather than working from the summary. Also use it when the owner says 「檢討」 (cross-task retro over quality／cost／speed, `phases/retro.md`) or when a process change needs an acceptance row in `ACCEPTANCE.md`.
 ---
 
 # 七階段工作流
@@ -23,6 +23,7 @@ owner 是產品負責人不是工程師。這套流程把方向控制權與 toke
 | 6 多方審查 | `phases/6-review.md` | REVIEW.md 去重地圖 |
 | 7 收斂 | `phases/7-converge.md` | 裁決表、修復、全閘、總結 |
 | 精簡路 | `phases/lean.md` | 一份 PROGRESS.md（計畫、審查地圖、結果） |
+| 跨任務檢討（owner 說「檢討」） | `phases/retro.md` | `retros/<日期>.md`、`ACCEPTANCE.md` 結案與新列 |
 
 參考檔**用得到時才讀**，開工時不要全讀（評測時多讀兩份參考檔，除了多花 token 沒有好處）：`references/lanes.md`（第 4 階段定路數、第 6／7 階段派工時）、`references/external-review.md`（第 6 階段派外審、大包第 4 階段 PLAN 審查時）、`references/history.md`（想推翻或放寬某條規則時）、`references/project-deepweave.md`（在 deepweave repo 要跑測試、閘或碰 prod 時）。
 範本：`assets/`（審查任務書、PLAN 審查任務書、收斂驗證任務書、修復任務包、checkpoint 回報、走一趟套件）。腳本：`scripts/`（見下）。
@@ -57,6 +58,8 @@ owner 吃過「一路衝到底、末端才發現前提錯」的虧，也要自�
   - 子任務表（ROADMAP）或包表（PLAN）每包加「驗證帳」欄：這包的驗收項各自要到哪一層才證明得了（單元／pin＜指定整合＜全閘＜走一趟＜探針盲評＜部署後 prod 查詢），走一趟、探針、prod 查詢各幾次。比較切法時比各包加總，不只比單包。
 - **backlog 的家是 `.claude/PRPs/BACKLOG.md`**（不在任何任務目錄裡）：收斂或交付時發現的後續小包、「不修」但問題仍在、已知限制、另開任務，一律當下寫進這份，任務目錄只留子任務表與本包紀錄。為什麼：owner push 時會刪任務目錄，寫在 ROADMAP／PROGRESS／REVIEW 裡的 backlog 會跟著消失（10-07）。格式：依 `## 重要`／`## 有感`／`## 其餘`／`## 已知限制` 分組，每條 `- [ ] **白話標題** — 一句影響。方向：…。出處：\`路徑\` 條目 @<hash>｜狀態：未開／等外部：…／任務：<slug>（進行中）`；開成任務就改狀態，做完就刪那一行。看板（`board.py`）讀它顯示 Backlog 那排。
 - **排序**：backlog、後續小包與 ROADMAP 依「重要（錢、權限、未成年、全站可用性、資料遺失）＞使用者有感＞其餘」排；其餘合成一包走精簡路（owner 10-06：「優先重要功能跟使用者有感功能，其餘收斂」）。
+- **改流程就登記驗收**：改本 skill、repo 的 hook／agent 檔／settings，或 CLAUDE.md 結構，同一次就在 `ACCEPTANCE.md`「待驗」加一列（到期日、指令、判準＋基線、出處）；驗收指令不准指向 `tmp/`。看板在 SessionStart 列出到期的列；看到「驗收到期」，在下一次回報時跟 owner 提一句。為什麼：10-17 檢討時，5 筆流程驗收有 2 筆腳本被清掉、2 筆過期沒跑，規則一直加卻不知道哪些有用。
+- **說明檔大小**：看板列出超過 40KB 或比上次檢討長 20% 以上的 CLAUDE.md／`.claude/rules/` 檔。第 7 階段搬耐久結論後跑 `scripts/board.py --docsize`，checkpoint 回報淨增減；把一份推過 40KB 的，同一包內合併改寫或依「全程規則」拆規則檔。為什麼：10-06 瘦身後 11 天，指示檔總量 730KB → 1,119KB，文字規則「合併改寫、不往後追加」沒守住。
 - **graphify 只准查詢**，改完 docs／sql／openapi 只提醒圖過期，沒 owner 指示不跑 `--update`。
 - **prod**：**任何 prod 查詢（DB、Langfuse 等量測 API）都先用 AskUserQuestion 問 owner**，附確切查詢、它要回答什麼、答案會怎麼改變決定；只看聚合數字也一樣要問（owner 09-28 定）。核准後由主 session 跑，subagent 一律禁打。DB 只下 SELECT；Langfuse 額度與 prod 警報輪詢器共用。不讀使用者對話內容、不印任何金鑰。
 
@@ -98,6 +101,7 @@ owner 吃過「一路衝到底、末端才發現前提錯」的虧，也要自�
 - `extract.py`：markdown 依標題或行號逐字切段、附出處（組任務包）。
 - `reviewcov.py`：第 6 階段收件。核對預期的每一路都交件（失敗、缺件、空檔、舊報告、標題形狀混雜、`counts` 對不上都擋），每條發現都在去重地圖的「來源」欄或未收錄節、地圖編號不重複、來源不指向不存在的條目（`--ack-manual`／`--waive`／`--section` 見 `phases/6-review.md` §5）；`--index` 產生給合成用的計數表與逐條清單（md＋json）。
 - `claudemdcost.py`：子目錄 CLAUDE.md 與限定範圍規則（讀到才載入）的花費，依檔案彙總、worktree 副本併回原路徑。
-- `board.py`：跨任務進度看板——掃主 checkout 與所有掛分支的 worktree 的 PROGRESS.md，讀 frontmatter、git 狀態當場算，寫 `<主 checkout>/tmp/progress/board.html` 並印摘要；HTML 下半部是 `.claude/PRPs/BACKLOG.md` 的 Backlog 四欄。每次跑都把未完成任務的「下一步」快照進 `tmp/progress/ledger.json`，目錄刪了仍以「目錄已刪・待部署」顯示，owner 說部署完了 → 確認是哪幾個後 `--deployed <slug…|all>` 清掉；`~/.claude/settings.json` 的 SessionStart hook（startup／clear／compact）以 `--hook session-start` 跑它，把摘要注入 context。
+- `wallclock.py`：每種 subagent 的牆鐘（中位／p90／最大）與時間花在哪類工具；檢討與排程改動的驗收用。
+- `board.py`：跨任務進度看板（另含「流程」區：`ACCEPTANCE.md` 到期的驗收、上次檢討後記錄了幾個任務、過大的說明檔；`--docsize` 印每份說明檔的大小與增減）——掃主 checkout 與所有掛分支的 worktree 的 PROGRESS.md，讀 frontmatter、git 狀態當場算，寫 `<主 checkout>/tmp/progress/board.html` 並印摘要；HTML 下半部是 `.claude/PRPs/BACKLOG.md` 的 Backlog 四欄。每次跑都把未完成任務的「下一步」快照進 `tmp/progress/ledger.json`，目錄刪了仍以「目錄已刪・待部署」顯示，owner 說部署完了 → 確認是哪幾個後 `--deployed <slug…|all>` 清掉；`~/.claude/settings.json` 的 SessionStart hook（startup／clear／compact）以 `--hook session-start` 跑它，把摘要注入 context。
 - `taskcost.py`／`laneyield.py`：每個任務、每個階段目錄的花費；每一路審查的獨家發現與花費（調路數、檢討流程前先跑；精簡路讀 PROGRESS.md 的 `## 審查` 表）。`laneyield.py` 依表頭欄名讀地圖與裁決表，讀不懂的資料（認不出的裁決詞、來源不是 lane、編號重複、找不到地圖）一律印成 `DATA error`、不當零；`--no-cost --strict` 是第 7 階段裁決表的格式閘。`agentcost.py`／`taskcost.py`／`laneyield.py`／`claudemdcost.py` 共用 `_usage.py`：含 Workflow agent，同一訊息多筆 usage 取各欄最大值，依每筆時間戳過濾，cache write 分 5m／1h 計價；`--all-worktrees` 連 worktree 的 session 一起算。金額是 API 等價、不是帳單，沒有價格的模型列為 unpriced、不算 $0。
 Bash 一律絕對路徑或 `git -C`／`go test -C`，**不要 `cd`**（工作目錄會殘留，下一個 bridge 或 pathspec 會跑錯樹）。

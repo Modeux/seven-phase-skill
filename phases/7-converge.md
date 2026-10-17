@@ -41,6 +41,7 @@ REVIEW.md 加「第 N 階段收斂裁決」表（標題含「收斂裁決」）�
 ## 5. 全閘與收尾
 - 主 session 親跑 PLAN 的全閘，輸出存 `tmp/<slug>/converge/gate/`，逐項對既存紅基線（判準「零新增」；lint／ruff 這類要逐條比對，不只比數字）。
 - 涉 UI：修復後的真瀏覽器走一趟派 `ui-lane-reviewer`，做法同第 5 階段：與全閘同時跑（最後一片合回後就用快照樹派出）、從走一趟套件起手，修過的條目逐條親手重驗（`assets/walk-kit.md`）。
+- 耐久結論搬進子目錄 CLAUDE.md／`.claude/rules/` 之後跑 `python3 ~/.claude/skills/seven-phase/scripts/board.py --docsize`，checkpoint 回報這包讓說明檔淨增減多少（「vs HEAD」欄）；有一份被推過 40KB 的，這包內就合併改寫或拆成規則檔（SKILL.md「說明檔大小」）。
 - 確認改動檔集合＝原本的檔＋收斂新增的檔：`checktree.py` 對 baseline，「清單外」warning 就是多出來的檔，逐條確認是收斂新增還是並行 session 的改動，沒有無關檔。
 - 突變紀錄等證據先歸檔到 `tmp/`，再 `git worktree remove --force` 清掉所有審查／修復樹。
 - PROGRESS 寫第 7 階段紀錄與「下一步」（commit 範圍、主樹上不屬於本包的改動、部署後驗收）；backlog 依 SKILL.md「排序」分組寫進 `.claude/PRPs/BACKLOG.md`（格式見 SKILL.md「backlog 的家」），PROGRESS 只寫一行「backlog 已寫進 BACKLOG.md：N 條」。

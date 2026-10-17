@@ -8,6 +8,10 @@ writes <main checkout>/tmp/progress/board.html and prints a short summary.
 
   board.py                        # write HTML, print summary
   board.py --hook session-start   # write HTML, emit SessionStart hook JSON
+  board.py --docsize              # size of every CLAUDE.md／.claude/rules file: now, vs HEAD, vs last retro
+
+Besides tasks it shows the process items: 驗收到期 (rows of the skill's ACCEPTANCE.md 待驗 whose date
+has come), tasks recorded since the last retro (ACCEPTANCE.md 檢討紀錄), and oversized instruction files.
 
 PROGRESS.md frontmatter is the only hand-written part (checkpoint step 1):
   ---
@@ -28,11 +32,22 @@ import subprocess
 import sys
 import time
 
+import _mdtable
+
 PLANS = ".claude/PRPs/plans"
 OUT = "tmp/progress/board.html"
 LEDGER = "tmp/progress/ledger.json"
 BACKLOG = ".claude/PRPs/BACKLOG.md"
 BACKLOG_GROUPS = (("重要", "#e5484d"), ("有感", "#f5a524"), ("其餘", "#889096"), ("已知限制", "#8e8c99"))
+ACCEPTANCE = pathlib.Path(__file__).resolve().parents[1] / "ACCEPTANCE.md"
+DATE_RE = re.compile(r"\d{4}-\d{2}-\d{2}")
+RECORD_RE = re.compile(r"^docs\(prps\): (\S+) .*七階段記錄")
+RETRO_EVERY = 5
+# WHY: the 10-05／10-06 slimming (24 CLAUDE.md 1.35MB → 0.68MB) regrew to 1.12MB in 11 days under a text-only
+# 「合併改寫、不往後追加」rule; a nested CLAUDE.md is reloaded every turn once read, so size is recurring cost.
+DOC_CAP, DOC_GROWTH, DOC_GROWTH_MIN = 40_000, 0.20, 2_000
+DOC_RE = re.compile(r"(^|/)CLAUDE\.md$|^\.claude/rules/.+\.md$")
+DOC_SKIP = ("tmp/", ".claude/worktrees/")
 
 STATUSES = (  # key, column label, blurb, colour
     ("owner", "等你", "拍板／說繼續／commit／push", "#e5484d"),
@@ -238,6 +253,76 @@ def read_backlog(main):
     return groups
 
 
+def read_acceptance(path=ACCEPTANCE, today=None):
+    """待驗 rows of the skill's ACCEPTANCE.md with the last date in their 到期 cell (a row without one is due:
+    the file requires a date), plus the latest 檢討紀錄 date."""
+    if not path.is_file():
+        return None
+    today = today or datetime.date.today()
+    pending, retros = [], []
+    for t in _mdtable.tables(path.read_text(encoding="utf-8")):
+        section = t.headings[-1][1] if t.headings else ""
+        if section.startswith("待驗"):
+            due_i, what_i = _mdtable.pick_col(t.header, "到期"), _mdtable.pick_col(t.header, "改動")
+            for _, row in t.rows:
+                due_text = row[due_i] if due_i is not None and due_i < len(row) else ""
+                what = row[what_i] if what_i is not None and what_i < len(row) else row[0]
+                dates = DATE_RE.findall(due_text)
+                due = datetime.date.fromisoformat(dates[-1]) if dates else None
+                pending.append({"what": re.split(r"[（(]", what, 1)[0].strip(), "due": due,
+                                "due_text": due_text, "overdue": due is None or due <= today})
+        elif section.startswith("檢討紀錄"):
+            retros += [datetime.date.fromisoformat(m.group(0)) for _, row in t.rows if (m := DATE_RE.search(row[0]))]
+    return {"pending": pending, "due": [p for p in pending if p["overdue"]], "last_retro": max(retros, default=None)}
+
+
+def tasks_since(main, base, day):
+    """Distinct slugs with a `docs(prps): <slug> … 七階段記錄` commit on base after `day`."""
+    if day is None:
+        return []
+    log = _git(main, "log", base, f"--after={day.isoformat()}T23:59:59", "--format=%s")
+    return list(dict.fromkeys(m.group(1) for line in log.splitlines() if (m := RECORD_RE.match(line))))
+
+
+def _tree_sizes(main, rev):
+    out = {}
+    for line in _git(main, "ls-tree", "-r", "-l", rev).splitlines():
+        meta, _, path = line.partition("\t")
+        parts = meta.split()
+        if DOC_RE.search(path) and len(parts) == 4 and parts[3].isdigit():
+            out[path] = int(parts[3])
+    return out
+
+
+def doc_report(main, base, since_day):
+    """Size of every CLAUDE.md and `.claude/rules/**.md` (tracked or new) now, at HEAD and at the last retro;
+    flagged when over DOC_CAP or grown more than DOC_GROWTH (and DOC_GROWTH_MIN bytes) since that retro."""
+    listed = _git(main, "ls-files", "--cached", "--others", "--exclude-standard").splitlines()
+    paths = sorted(p for p in dict.fromkeys(listed) if DOC_RE.search(p) and not p.startswith(DOC_SKIP))
+    head = _tree_sizes(main, "HEAD")
+    rev = _git(main, "rev-list", "-1", f"--before={since_day.isoformat()}T23:59:59", base).strip() if since_day else ""
+    then = _tree_sizes(main, rev) if rev else {}
+    rows = []
+    for p in paths:
+        f = main / p
+        now = f.stat().st_size if f.is_file() else 0
+        old = then.get(p)
+        grew = old is not None and now - old > max(old * DOC_GROWTH, DOC_GROWTH_MIN)
+        rows.append({"path": p, "now": now, "head": head.get(p), "then": old,
+                     "flag": "過大" if now > DOC_CAP else ("長太快" if grew else "")})
+    return {"rows": rows, "since": since_day, "total": sum(r["now"] for r in rows),
+            "total_then": sum(then.values()) if then else None, "flagged": [r for r in rows if r["flag"]]}
+
+
+def short_doc(path):
+    parts = path.split("/")
+    return "/".join(parts[-2:]) if parts[-1] == "CLAUDE.md" and len(parts) > 1 else parts[-1]
+
+
+def kb(n):
+    return f"{n / 1000:.1f}KB"
+
+
 def collect(cwd, deployed=()):
     trees = worktrees(cwd)
     # INVARIANT: the SessionStart hook is user-level (fires in every project); without task dirs,
@@ -321,10 +406,14 @@ def collect(cwd, deployed=()):
     # WHY: the owner deletes task dirs when pushing to dev, but deploys later in batches; the
     # ledger keeps each deleted task's deploy notes visible until the owner says it's deployed.
     gone, removed = sync_ledger(main, tasks, lambda s: git_state(s, commits, base_set, up_set, base), deployed)
+    acc = read_acceptance()
+    last_retro = acc["last_retro"] if acc else None
     return {"main": main, "base": base, "upstream": upstream, "ahead": ahead, "behind": behind,
             "trees": trees, "when": datetime.datetime.now().strftime("%m-%d %H:%M"),
             "tasks": sorted(tasks.values(), key=lambda t: -t["ts"]), "gone": gone, "removed": removed,
-            "still": [s for s in deployed if s in tasks], "backlog": read_backlog(main)}
+            "still": [s for s in deployed if s in tasks], "backlog": read_backlog(main),
+            "acceptance": acc, "since_retro": tasks_since(main, base, last_retro),
+            "docs": doc_report(main, base, last_retro)}
 
 
 def clip(s, n):
@@ -355,6 +444,7 @@ def render_text(b, out):
             lines.append(f"  - {t['slug']}{tree} {t['phase']}{git} · {t['age']}：{clip(t['next'], 80)}")
     if b["gone"]:
         lines.append(f"■ {GONE_LABEL} {len(b['gone'])}：" + "、".join(g["slug"] for g in b["gone"]))
+    lines += process_lines(b)
     if b["backlog"]:
         lines.append(f"■ Backlog（{BACKLOG}）：" + "・".join(f"{g} {len(b['backlog'][g])}" for g, _ in BACKLOG_GROUPS))
         # WHY: injected into every session; the top of 重要 (owner-ranked first) is enough to steer, the rest is in the HTML.
@@ -365,11 +455,47 @@ def render_text(b, out):
     return "\n".join(lines)
 
 
+def process_lines(b):
+    """Process items for the injected summary; each line only when there is something to act on."""
+    out, acc = [], b["acceptance"]
+    if acc and acc["due"]:
+        out.append(f"■ 驗收到期 {len(acc['due'])}（{ACCEPTANCE}）：" + "、".join(
+            f"{p['what']}（{p['due'].strftime('%m-%d') if p['due'] else '沒寫日期'}）" for p in acc["due"]))
+    if acc and acc["last_retro"] and len(b["since_retro"]) >= RETRO_EVERY:
+        out.append(f"■ 檢討：上次 {acc['last_retro'].strftime('%m-%d')}，之後記錄了 {len(b['since_retro'])} 個任務"
+                   " → 回報時跟 owner 提一句可以檢討（phases/retro.md）")
+    if b["docs"]["flagged"]:
+        fl = sorted(b["docs"]["flagged"], key=lambda r: -r["now"])
+        out.append(f"■ 說明檔過大 {len(fl)}（上限 {kb(DOC_CAP)}，board.py --docsize）：" + "、".join(
+            f"{short_doc(r['path'])} {kb(r['now'])}" + ("" if r["flag"] == "過大" else "↑") for r in fl[:5])
+            + (f"…另 {len(fl) - 5} 份" if len(fl) > 5 else ""))
+    return out
+
+
+def render_docsize(d):
+    def delta(now, old):
+        return "新檔" if old is None else (f"{now - old:+,}" if now != old else "0")
+    since = d["since"].strftime("%m-%d") if d["since"] else "?"
+    width = max((len(r["path"]) for r in d["rows"]), default=4)
+    lines = [f"{'path':{width}} {'now':>9} {'vs HEAD':>9} {'vs ' + since:>9}  flag"]
+    for r in sorted(d["rows"], key=lambda r: -r["now"]):
+        lines.append(f"{r['path']:{width}} {r['now']:9,} {delta(r['now'], r['head']):>9} "
+                     f"{delta(r['now'], r['then']) if d['since'] else '-':>9}  {r['flag']}")
+    then = f"，上次檢討（{since}）{d['total_then']:,}" if d["total_then"] else ""
+    lines.append(f"total {len(d['rows'])} 份 {d['total']:,} bytes{then}；過大＝>{DOC_CAP:,}，長太快＝比上次檢討"
+                 f" +{DOC_GROWTH:.0%} 且 +{DOC_GROWTH_MIN:,} bytes 以上")
+    return "\n".join(lines)
+
+
 def headline(b):
     counts = [f"{label} {n}" for key, label, _, _ in STATUSES
               if key != "done" and (n := sum(1 for t in b["tasks"] if t["status"] == key))]
     if b["gone"]:
         counts.append(f"{GONE_LABEL} {len(b['gone'])}")
+    if b["acceptance"] and b["acceptance"]["due"]:
+        counts.append(f"驗收到期 {len(b['acceptance']['due'])}")
+    if b["docs"]["flagged"]:
+        counts.append(f"說明檔過大 {len(b['docs']['flagged'])}")
     if b["backlog"]:
         counts.append(f"backlog 重要 {len(b['backlog']['重要'])}")
     return "進度看板：" + (" · ".join(counts) or "沒有進行中的任務") + f" → {OUT}"
@@ -479,7 +605,30 @@ def render_html(b):
             f'<meta http-equiv="refresh" content="60"><title>進度看板</title><style>{CSS}</style></head><body>'
             f'<div class="top"><h1>進度看板</h1><div class="meta"><span>產生於 {e(b["when"])}（每 60 秒重讀檔案；內容在 session 開始與 checkpoint 時重算）</span>'
             f'<span>{e(b["base"])} 領先 {e(b["upstream"] or "上游")} {e(b["ahead"])}、落後 {e(b["behind"])}</span>{trees}</div></div>'
-            f'<main class="board">{"".join(cols)}</main>{render_backlog(b["backlog"])}</body></html>')
+            f'<main class="board">{"".join(cols)}</main>{render_process(b)}{render_backlog(b["backlog"])}</body></html>')
+
+
+def render_process(b):
+    e = html.escape
+    acc, d, cols = b["acceptance"], b["docs"], []
+    if acc:
+        cards = "".join(
+            f'<article class="card" style="--c:{"#e5484d" if p["overdue"] else "#889096"}"><h3>{e(p["what"])}</h3>'
+            f'<div class="chips"><span class="chip{" warn" if p["overdue"] else ""}">{e(p["due_text"] or "沒寫日期")}</span></div></article>'
+            for p in sorted(acc["pending"], key=lambda p: (not p["overdue"], p["due"] or datetime.date.min)))
+        last = acc["last_retro"].strftime("%m-%d") if acc["last_retro"] else "（沒有紀錄）"
+        since = "、".join(b["since_retro"]) or "（無）"
+        cols.append(f'<section class="col" style="--c:#e5484d"><h2><i></i>待驗收 {len(acc["pending"])}（到期 {len(acc["due"])}）</h2>'
+                    f'<p>真相源 <code>{e(str(ACCEPTANCE))}</code></p>{cards or "<p class=meta>（無）</p>"}</section>'
+                    f'<section class="col" style="--c:#6e56cf"><h2><i></i>檢討</h2><p>上次 {e(last)}；之後記錄了 '
+                    f'{len(b["since_retro"])} 個任務（滿 {RETRO_EVERY} 個提醒 owner）</p><p class="meta">{e(since)}</p></section>')
+    rows = "".join(f'<li><code>{e(short_doc(r["path"]))}</code> {kb(r["now"])} {e(r["flag"])}</li>'
+                   for r in sorted(d["flagged"], key=lambda r: -r["now"]))
+    cols.append(f'<section class="col" style="--c:#f5a524"><h2><i></i>說明檔過大 {len(d["flagged"])}</h2>'
+                f'<p>CLAUDE.md＋.claude/rules 共 {len(d["rows"])} 份 {kb(d["total"])}；明細 <code>board.py --docsize</code></p>'
+                f'<ul class="kids">{rows}</ul></section>')
+    return (f'<div class="top sect"><h1>流程</h1><div class="meta"><span>驗收到期、檢討節奏與說明檔大小</span></div></div>'
+            f'<main class="board">{"".join(cols)}</main>')
 
 
 def render_backlog(groups):
@@ -506,6 +655,15 @@ def render_backlog(groups):
 def main(argv):
     hook = "--hook" in argv
     deployed = argv[argv.index("--deployed") + 1:] if "--deployed" in argv else []
+    if "--docsize" in argv:
+        main_tree = worktrees(pathlib.Path.cwd())
+        if not main_tree:
+            print("board.py: not in a git repo", file=sys.stderr)
+            return 1
+        acc = read_acceptance()
+        print(render_docsize(doc_report(main_tree[0]["path"], main_tree[0]["branch"] or "HEAD",
+                                        acc["last_retro"] if acc else None)))
+        return 0
     try:
         b = collect(pathlib.Path.cwd(), deployed)
         if b is None:
