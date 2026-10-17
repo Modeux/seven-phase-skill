@@ -315,8 +315,8 @@ def doc_report(main, base, since_day):
 
 
 def short_doc(path):
-    parts = path.split("/")
-    return "/".join(parts[-2:]) if parts[-1] == "CLAUDE.md" and len(parts) > 1 else parts[-1]
+    # WHY: rules files share names across areas (worker/journey.md vs frontend/journey.md).
+    return "/".join(path.split("/")[-2:])
 
 
 def kb(n):
