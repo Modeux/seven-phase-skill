@@ -1,6 +1,6 @@
 # 外部異源審查（codex／grok／agy）
 
-外審的價值來自它不知道你的設計意圖，所以材料包只給事實（任務書、SPEC／PLAN、diff），不給你的結論。三路都用 `scripts/run_external.py` 在背景跑；跑之前確認目前工作目錄在 repo 根（殘留的 cwd 會把審查派到錯的樹，而且不報錯）。
+外審的價值來自它不知道你的設計意圖，所以材料包只給事實（任務書、SPEC／PLAN、diff），不給你的結論。用在兩處：第 6 階段審 diff（下面「材料包」），大包另在第 4 階段審 PLAN（文末「PLAN 審查的材料包」）。三路都用 `scripts/run_external.py` 在背景跑；跑之前確認目前工作目錄在 repo 根（殘留的 cwd 會把審查派到錯的樹，而且不報錯）。
 
 ## 配方
 | lane | 指令（`run_external.py` 內建） | 要點 |
@@ -15,6 +15,12 @@
 - grok：非測試碼 diff 內聯，測試／文件 diff 給檔案路徑。
 - agy：PLAN 只給定案、風險、不做清單三節＋非測試碼 diff＋文件 diff，全部內聯，控制在 170KB 內。
 - 送出前 `wc -c` 每份材料；收件先 `grep -i truncated`。
+
+## PLAN 審查的材料包（第 4 階段，大包）
+審查對象是 PLAN 加上 HEAD 的程式碼，沒有 diff。偏誤風險在「主 session 挑哪段程式碼給外審看」——挑的人就是寫 PLAN 的人，所以摘錄一律照 PLAN 的檔案矩陣機械取，不另挑。
+- 共用任務書：`assets/plan-review-brief.md`（填好的）。
+- codex：任務書＋快照內 `tmp/review-input/` 的 SPEC／PLAN 路徑，自己讀 repo，不附摘錄。
+- grok、agy：同一份自含材料包——任務書＋PLAN 全文＋SPEC 全文＋矩陣每一列「符號／行號範圍」的程式碼摘錄（從快照取，每段標頭 `path:Lx-Ly`，前後各多帶 10 行）＋PLAN 提到的每個 `.claude/rules/*.md`／`CLAUDE.md` 的原文（PLAN 只引某一節就取那一節，用 `scripts/extract.py`）。組包可交 quick-task；收件前核對摘錄標頭數＝矩陣列數。agy 超過 170KB 時依序裁：規則檔改成只留 PLAN 引到的那一節 → SPEC 只留方向決議與驗收節 → 摘錄去掉前後 10 行；PLAN 全文與摘錄本身不裁。grok 用同一份（不另外裁短）。
 
 ## 收件
 `run_external.py` 只在 CLI exit 0 且報告非空時才把 `<out>.partial` 改名成報告；否則以非零結束（CLI 的 rc，或 3＝rc 0 但沒有報告；agy 材料過大＝2），舊報告不動、也不算本輪。每次都寫 `lane-<x>.status.json`，`reviewcov.py` 讀它判失敗。背景跑完看 exit code，非零就記「沒跑」並換鏡頭替補。

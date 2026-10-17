@@ -18,14 +18,14 @@ owner 是產品負責人不是工程師。這套流程把方向控制權與 toke
 | 1 Research | `phases/1-research.md` | RESEARCH.md（現況摘要＋挑戰結論） |
 | 2 討論 | `phases/2-discuss.md` | SPEC.md 首段「方向決議」 |
 | 3 Interview | `phases/3-interview.md` | SPEC.md 完整規格 |
-| 4 Plan | `phases/4-plan.md` | PLAN.md（owner 核准前禁寫實作碼） |
+| 4 Plan | `phases/4-plan.md` | PLAN.md（大包含 PLAN 審查地圖；owner 核准前禁寫實作碼） |
 | 5 TDD 實作 | `phases/5-implement.md` | 程式碼＋PROGRESS 切片紀錄 |
 | 6 多方審查 | `phases/6-review.md` | REVIEW.md 去重地圖 |
 | 7 收斂 | `phases/7-converge.md` | 裁決表、修復、全閘、總結 |
 | 精簡路 | `phases/lean.md` | 一份 PROGRESS.md（計畫、審查地圖、結果） |
 
-參考檔**用得到時才讀**，開工時不要全讀（評測時多讀兩份參考檔，除了多花 token 沒有好處）：`references/lanes.md`（第 4 階段定路數、第 6／7 階段派工時）、`references/external-review.md`（第 6 階段派外審時）、`references/history.md`（想推翻或放寬某條規則時）、`references/project-deepweave.md`（在 deepweave repo 要跑測試、閘或碰 prod 時）。
-範本：`assets/`（審查任務書、收斂驗證任務書、修復任務包、checkpoint 回報、走一趟套件）。腳本：`scripts/`（見下）。
+參考檔**用得到時才讀**，開工時不要全讀（評測時多讀兩份參考檔，除了多花 token 沒有好處）：`references/lanes.md`（第 4 階段定路數、第 6／7 階段派工時）、`references/external-review.md`（第 6 階段派外審、大包第 4 階段 PLAN 審查時）、`references/history.md`（想推翻或放寬某條規則時）、`references/project-deepweave.md`（在 deepweave repo 要跑測試、閘或碰 prod 時）。
+範本：`assets/`（審查任務書、PLAN 審查任務書、收斂驗證任務書、修復任務包、checkpoint 回報、走一趟套件）。腳本：`scripts/`（見下）。
 
 ## 分流：精簡路或完整七階段
 開工判一次，寫進 PROGRESS.md 開頭。**審查不分流**：兩條路都照「依規模分級」派該派的 reviewer，含外審（owner 10-05、10-06：「唯獨 review 不能省」）。
@@ -63,7 +63,7 @@ owner 吃過「一路衝到底、末端才發現前提錯」的虧，也要自�
 ## 依規模分級（2026-09-28 owner 定；優先於 history 裡的舊規則）
 在 Plan 階段用 `scripts/numstat.py` 或估算標出「正式程式碼行數（不含測試與文件）＋是否碰錢／權限／跨層不變式」，第 6 階段開工前用實際 diff 再確認一次：
 - **小包**（正式碼 ≤1500 行，且不碰 credits／權限／跨層不變式）：審查 6–8 路、收斂驗證只驗「有爭議／HIGH 以上／需 owner 拍板」的條目 1–2 路。
-- **大包或高風險包**：完整路數（含 grok／agy 外審）、收斂驗證依條目量分路。
+- **大包或高風險包**：第 4 階段 checkpoint 前多一輪 PLAN 審查（內部 `lane-reviewer`＋codex＋grok＋agy，見 `phases/4-plan.md`「PLAN 審查」）；第 6 階段完整路數（含 grok／agy 外審）、收斂驗證依條目量分路。
 - 拿不準就往完整走。路數組成見 `references/lanes.md`。
 - **主 session vs subagent**：1–3 檔、內容已確定的小改（照報告改註解、改 SPEC／PLAN）主 session 直接做；彼此獨立的多片、需要大量閱讀而主 session 不必記住的、審查（要新視角）交 subagent。主 session context 已很長時偏向 subagent（每一步都重送整段對話）。
 
