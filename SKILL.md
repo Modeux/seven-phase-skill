@@ -99,6 +99,7 @@ owner 吃過「一路衝到底、末端才發現前提錯」的虧，也要自�
 - `dockerslot.py`：`-- <cmd>` 拿到全機 N 個槽位之一才跑（預設 3，flock 檔，持有者死掉自動釋放）；`--all` 拿全部且讓後到的排在它後面（全量整合）、`--pool <名> --slots 1`（sqlc）、`--status` 看誰佔著；等超過 `--max-wait`（預設 300 秒）exit 75 並印出持有者。讓 agent 一波派完、只在吃 Docker 的那一刻排隊。
 - `wf_reports.py`：Workflow 扇出（第 6 階段內審、第 7 階段驗證）的報告全文從 run 的 `journal.jsonl` 抽出、依 label 落檔（subagent 在 Workflow 內寫不了檔）；每路寫 status 檔（含 schema 的 `counts`），`tasks/` 有派工單卻沒啟動的列 MISSING。
 - `extract.py`：markdown 依標題或行號逐字切段、附出處（組任務包）。
+- `rulesfor.py`：依 PLAN 檔案矩陣路徑列出命中的 `.claude/rules/` 檔與子目錄 `CLAUDE.md`，產生 `## 規則對照` 骨架；`--check PLAN.md` 會擋缺列，也擋處置不是「套用：」或「不相關：」開頭的（第 4 階段第 11 條）。
 - `reviewcov.py`：第 6 階段收件。核對預期的每一路都交件（失敗、缺件、空檔、舊報告、標題形狀混雜、`counts` 對不上都擋），每條發現都在去重地圖的「來源」欄或未收錄節、地圖編號不重複、來源不指向不存在的條目（`--ack-manual`／`--waive`／`--section` 見 `phases/6-review.md` §5）；`--index` 產生給合成用的計數表與逐條清單（md＋json）。
 - `claudemdcost.py`：子目錄 CLAUDE.md 與限定範圍規則（讀到才載入）的花費，依檔案彙總、worktree 副本併回原路徑。
 - `wallclock.py`：每種 subagent 的牆鐘（中位／p90／最大）與時間花在哪類工具；檢討與排程改動的驗收用。

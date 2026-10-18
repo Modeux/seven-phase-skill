@@ -13,6 +13,7 @@ PLAN 必須有：
 8. **本任務用到的 skills／MCP／agents 清單**與各自用途、使用時機。
 9. 範圍面：沒有讀者的表不單獨先建，與第一個讀者同批做。
 10. **刪除／重構／新模組的圖查核**（根 CLAUDE.md §graphify）：PLAN 要刪除、合併或改簽名的每個符號先 `graphify query "<symbol>" --context call --budget 1500`；在 `graphify-out/GRAPH_REPORT.md` god-nodes 表內、或 dependents >3 的，列進 §0 定案附 dependents 清單，owner 核准 PLAN 才算確認，沒列的不得在第 5 階段順手移除。新增模組／helper 前先 `graphify query "<行為關鍵詞>"` 找既有等價物（規則的 WHY 在節點 `rationale` 屬性），找到就重用、找不到在 PLAN 寫一句「查過：無等價物」。
+11. **規則對照**（每個完整路的包都要，不分大小）：把第 4 條檔案矩陣的路徑（含新檔、spec、`.html`）交給 `scripts/rulesfor.py <路徑…> >> PLAN.md` 產生 `## 規則對照` 表——`paths:` 命中的 `.claude/rules/` 檔＋沿途的子目錄 `CLAUDE.md`，每份一列、列出它的 `##` 節。逐份讀過再填處置：`套用：§<節> → <片／測試編號>`，或 `不相關：<一句理由>`；套用的節要真的落成矩陣的一列或一支測試。checkpoint 前 `scripts/rulesfor.py --check .claude/PRPs/plans/<slug>/PLAN.md` 要 exit 0。為什麼：10-17 檢討的 19 條漏網問題裡約 6 條，規則檔早就寫了同樣的規則，只是 PLAN 沒套用。限定範圍的規則要讀到命中的檔才會自動載入，而寫 PLAN 時讀的是正式碼，`.html`／spec 範圍的規則（例如 `a11y.md`、`dom-testing.md`）根本沒載入。結果同一件事到審查才被重新想一次，然後修一次、再走一趟。
 
 ## PLAN 審查（大包／高風險包；小包與精簡路不跑）
 PLAN 定稿後、checkpoint 之前跑完，owner 一次看 PLAN 與審查結果，不多停一次。為什麼：流出分析裡第 6 階段才抓到的 HIGH，多數「本該攔的閘」是 PLAN——狀態矩陣缺列、先例沒回碼核對、歸類與規則檔矛盾——這三種在 checkpoint 上 owner 看不出來（owner 10-17 定：大包加 PLAN 外審、三方都要）。
@@ -21,6 +22,6 @@ PLAN 定稿後、checkpoint 之前跑完，owner 一次看 PLAN 與審查結果�
 3. **任務書**：填 `assets/plan-review-brief.md` 當共用任務書，「圖給的起點」貼第 4 條寫矩陣時跑的 `affected` 輸出。內部 lane 派工單 `tmp/<slug>/plan-review/tasks/inner.md`、報告 `lane-inner.md`（寫不了檔就 hand-back 全文、主 session 落檔）。外審材料包照 `references/external-review.md`「PLAN 審查的材料包」。
 4. **收件**：`scripts/reviewcov.py tmp/<slug>/plan-review` 過 lane 閘。
 5. **處置**（主 session）：PLAN.md 末尾加 `## PLAN 審查地圖`，表頭 `| 編號 | 宣稱嚴重度 | 一句話 | 位置 | 來源 | 處置 |`（來源寫 `<lane>#<n>`；R…＝MEDIUM 以上、L…＝LOW）。處置三選一：`改 PLAN（<節>）`——預設；`不採：<file:line 或規則原句>`——要附程式碼或規則證據，「考慮過」不算；`交 owner`——要推翻 §0 owner 拍板的。改完跑 `scripts/reviewcov.py tmp/<slug>/plan-review .claude/PRPs/plans/<slug>/PLAN.md --section "PLAN 審查地圖"` 要 exit 0。不另派收斂驗證員：PLAN 條目採納的代價是加一列矩陣或一支測試，比驗證便宜；「不採」帶著寫 PLAN 的人的偏誤，所以下一條交給 owner 看。
-6. **checkpoint 回報多三項**：四路交件狀況（沒跑的寫原因）、採納幾條、HIGH 以上的「不採」逐條白話列出；「交 owner」的條目用 AskUserQuestion 問。
+6. **checkpoint 回報多三項**（第 11 條的 `--check` 不論大小包都要先過）：四路交件狀況（沒跑的寫原因）、採納幾條、HIGH 以上的「不採」逐條白話列出；「交 owner」的條目用 AskUserQuestion 問。
 
 → Checkpoint（owner 核准 PLAN 才能進第 5 階段）。
