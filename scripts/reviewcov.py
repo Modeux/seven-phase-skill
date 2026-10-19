@@ -42,6 +42,9 @@ level. Mentions in prose, 依據 cells or result tables do not count. Fenced cod
 --section TEXT reads only the section under the first heading containing TEXT.
 --index writes the lane × severity count table and one row per finding (id, severity＋bracket tag, title,
 位置) as Markdown, and the same rows as JSON: the map's checklist, generated instead of retyped.
+--plan-tests (PLAN review map, phase 4): every map row whose 處置 starts with 改 PLAN must say `測試 <ID>[、<ID>]`,
+each ID the first cell of a table row in the PLAN file or `plan-appendix/*.md` beside it (the map's own ids do
+not count), or `無測試：<理由>` (passes, counted).
 """
 import argparse
 import collections
@@ -52,7 +55,7 @@ import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).parent))
 from _lanes import SEV_TAG, expected_lanes, lane_name, read_status, report_findings, stray_findings  # noqa: E402
-from _mdtable import cells, map_tables, pick_col, row_ids, unfenced  # noqa: E402
+from _mdtable import cells, map_tables, pick_col, row_ids, tables, unfenced  # noqa: E402
 
 _PAREN = re.compile(r"[（(][^（）()]*[）)]")
 _SEV_WORD = re.compile(r"CRITICAL|HIGH|MEDIUM|LOW", re.I)
@@ -181,6 +184,45 @@ def accounting_text(text):
     return "\n".join(keep)
 
 
+_TEST_REF = re.compile(r"測試\s*[:：]?\s*([^；;）)]+)")
+_ID_SPLIT = re.compile(r"[、,，/／\s]+")
+
+
+def plan_test_fails(doc, plan_path):
+    """(fail messages, no-test count) for 改 PLAN dispositions that name no test the PLAN has.
+
+    WHY: a PLAN-review finding marked 改 PLAN once shrank into a weaker test case (chat-image-publish R1:
+    reviewed, adopted, then the test exercised the wrong state) — naming the test makes the adoption checkable."""
+    texts = [plan_path.read_text(encoding="utf-8")]
+    texts += [p.read_text(encoding="utf-8") for p in sorted((plan_path.parent / "plan-appendix").glob("*.md"))]
+    known = {_norm_id(row[0]) for t in texts for tb in tables(t) for _, row in tb.rows if row}
+    fails, no_test = [], 0
+    for t, _, rows_ in map_tables(doc):
+        col = pick_col(t.header, "處置")
+        if col is None:
+            continue
+        map_ids = {_norm_id(row[0]) for _, row in rows_}
+        for lineno, row in rows_:
+            cell = row[col] if col < len(row) else ""
+            if not cell.startswith("改 PLAN"):
+                continue
+            if "無測試：" in cell:
+                no_test += 1
+                continue
+            m = _TEST_REF.search(cell)
+            if not m:
+                fails.append(f"{row[0]} (line {lineno}): 改 PLAN without 測試 <ID> or 無測試：<理由>")
+                continue
+            for tid in filter(None, _ID_SPLIT.split(m.group(1).strip())):
+                if tid not in known or tid in map_ids:
+                    fails.append(f"{row[0]} (line {lineno}): unknown test {tid} (not a table-row id in the PLAN files)")
+    return fails, no_test
+
+
+def _norm_id(cell):
+    return cell.strip().strip("*`").strip()
+
+
 def write_index(path, rows, heads_by_lane, strays_by_lane=None):
     """Markdown checklist (lane × severity counts, one row per finding) plus the same rows as JSON.
     Severity lines in other shapes (acked／mixed lanes) are listed unnumbered so they still reach the map."""
@@ -226,6 +268,8 @@ def main():
     ap.add_argument("--waive", action="append", default=[], metavar="NAME=REASON", help="lane excused, with reason")
     ap.add_argument("--ack-manual", action="append", default=[], metavar="NAME",
                     help="unformatted or mixed lane report the main session merged by hand")
+    ap.add_argument("--plan-tests", action="store_true",
+                    help="PLAN review map: each 改 PLAN disposition names 測試 <ID> that the PLAN files have")
     a = ap.parse_args()
     d = pathlib.Path(a.review_dir)
 
@@ -324,6 +368,13 @@ def main():
         print(f"  dangling source {x}")
     if dangling:
         fails.append(f"{len(dangling)} 來源 ids point at no finding")
+    if a.plan_tests:
+        pfails, no_test = plan_test_fails(doc, pathlib.Path(a.review_md))
+        for x in pfails:
+            print(f"  {x}")
+        print(f"{no_test} 改 PLAN without a test (無測試：…)")
+        if pfails:
+            fails.append(f"{len(pfails)} 改 PLAN dispositions name no PLAN test")
     no_loc = {name: sum(1 for h in hs if not h["location"]) for name, hs in heads_by_lane.items()}
     warns += [f"{name}: {n} finding(s) without a `- 位置：` line" for name, n in no_loc.items() if n]
     for w in warns:

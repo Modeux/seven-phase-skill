@@ -26,7 +26,7 @@ def report(*sevs):
     return body + "## 已查證無問題\n- the rest\n"
 
 
-class ReviewCovTest(unittest.TestCase):
+class _Base(unittest.TestCase):
     def setUp(self):
         self._td = tempfile.TemporaryDirectory()
         self.dir = pathlib.Path(self._td.name) / "review"
@@ -55,6 +55,8 @@ class ReviewCovTest(unittest.TestCase):
         r = subprocess.run(args + list(extra), capture_output=True, text=True, timeout=60)
         return r, r.stdout + r.stderr
 
+
+class ReviewCovTest(_Base):
     def test_all_ok_lanes_with_ids_in_table_pass(self):
         self.task("go", "ts")
         self.lane("go", report("HIGH", "LOW"))
@@ -446,6 +448,65 @@ class ReviewCovTest(unittest.TestCase):
         self.review("## 去重地圖\n| 編號 | 宣稱嚴重度 | 位置 | 來源 |\n|---|---|---|---|\n| L1 | HIGH | x | go#1 |\n")
         r, out = self.run_cov()
         self.assertIn("WARN L1 is in the L series but claims HIGH", out)
+
+
+PLAN_MAP = ("## PLAN 審查地圖\n| 編號 | 宣稱嚴重度 | 一句話 | 位置 | 來源 | 處置 |\n|---|---|---|---|---|---|\n")
+
+
+class PlanTestsTest(_Base):
+    """--plan-tests: a PLAN review map's 改 PLAN disposition must name a test the PLAN actually has."""
+
+    def plan(self, *dispositions, tests="| T7 | x |\n"):
+        self.task("inner")
+        self.lane("inner", report(*["HIGH"] * len(dispositions)))
+        rows = "".join(f"| R{i} | HIGH | a | f.go:1 | inner#{i} | {d} |\n" for i, d in enumerate(dispositions, 1))
+        self.review("# PLAN\n\n## §4 測試\n| # | 測什麼 |\n|---|---|\n" + tests + "\n" + PLAN_MAP + rows)
+
+    def run_plan(self):
+        return self.run_cov("--section", "PLAN 審查地圖", "--plan-tests")
+
+    def test_named_existing_test_passes(self):
+        self.plan("改 PLAN（P3；測試 T7）", "不採：`a.go:3` 已處理")
+        r, out = self.run_plan()
+        self.assertEqual(r.returncode, 0, out)
+
+    def test_change_without_test_fails_naming_the_row(self):
+        self.plan("改 PLAN（§4）")
+        r, out = self.run_plan()
+        self.assertEqual(r.returncode, 1, out)
+        self.assertIn("R1", out)
+        self.assertIn("測試 <ID>", out)
+
+    def test_unknown_test_id_fails(self):
+        self.plan("改 PLAN（測試 T7、T99）")
+        r, out = self.run_plan()
+        self.assertEqual(r.returncode, 1, out)
+        self.assertIn("T99", out)
+        self.assertNotIn("unknown test T7", out)
+
+    def test_test_listed_only_in_plan_appendix_passes(self):
+        self.plan("改 PLAN（測試 H1-14）")
+        (self.md.parent / "plan-appendix").mkdir()
+        (self.md.parent / "plan-appendix" / "FE.md").write_text(
+            "## 4. 測試\n| # | 測什麼 |\n|---|---|\n| **H1-14** | y |\n", encoding="utf-8")
+        r, out = self.run_plan()
+        self.assertEqual(r.returncode, 0, out)
+
+    def test_map_row_id_does_not_count_as_a_test(self):
+        self.plan("改 PLAN（測試 R1）")
+        r, out = self.run_plan()
+        self.assertEqual(r.returncode, 1, out)
+
+    def test_explicit_no_test_reason_passes_and_is_counted(self):
+        self.plan("改 PLAN（§7；無測試：只改不做清單）")
+        r, out = self.run_plan()
+        self.assertEqual(r.returncode, 0, out)
+        self.assertIn("1 改 PLAN without a test (無測試：…)", out)
+
+    def test_without_flag_dispositions_are_not_checked(self):
+        self.plan("改 PLAN（§4）")
+        r, out = self.run_cov("--section", "PLAN 審查地圖")
+        self.assertEqual(r.returncode, 0, out)
 
 
 if __name__ == "__main__":

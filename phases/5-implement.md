@@ -24,8 +24,9 @@
 - 全閘（整合全包、lint、audit、前端整包＋production build、契約 lint）只在本階段末跑一次，判準是「對既存紅基線零新增」。
 - 涉 UI 的包，階段末的真瀏覽器走一趟派 `ui-lane-reviewer`（步驟、樹與 dev server、證據目錄寫在任務包）；主 session 讀結論、開它點名的一兩張截圖。為什麼：瀏覽器輸出很大，留在主 session 會讓之後每一回合都重付（owner 10-05 定）。
   - **與全閘同時跑**：最後一片合回主樹後，立刻用 `mkpatch.py`＋`mkworktree.py` 建走一趟專用的快照樹並派出，主 session 同時在主樹跑全閘。全閘期間主樹又改了檔：`checktree.py --baseline <走一趟快照的 baseline.sha256> <主 checkout>` 列出變動，有走一趟碰得到的執行期檔（前端非 spec 檔、handler／service／SQL）就只重驗涉及的步驟（用套件）；只動測試、文件、lint 樣式的不必重驗。為什麼：走一趟不等全閘，每趟省約 15–20 分。
-  - **交件附走一趟套件**（`assets/walk-kit.md`，任務包寫明套件路徑與該檔路徑；步驟寫成 runner 相容）。修完重走、第 7 階段收尾那趟從套件起手，**主 session 派工前先用 `scripts/run_kit.mjs` 一次跑完套件**（試點中，做法見 `walk-kit.md`「重走怎麼用」第 0 步）：重走實測中位 30 分、比第一次 25 分還久，因為每次都從零摸環境與頁面（約四成呼叫在讀檔）。
+  - **交件附走一趟套件**（`assets/walk-kit.md`，任務包寫明套件路徑與該檔路徑；步驟寫成 runner 相容）。修完重走、第 7 階段收尾那趟從套件起手，**主 session 派工前先用 `scripts/run_kit.mjs` 一次跑完套件**，沒有 `summary.json` 不派（`walk-kit.md`「重走怎麼用」第 0 步）：重走實測中位 30 分、比第一次 25 分還久，因為每次都從零摸環境與頁面（約四成呼叫在讀檔）。
   - 走一趟找到「中」以上的行為 bug：修片照 SKILL.md「修片進場門檻」，任務包用 `assets/fixplan.md`。
+  - 有原型差異表的包：走一趟對照差異表的 P 編號報「像了／還差」。要擴大或縮小對齊範圍＝改 SPEC 差異表，先停 checkpoint 問 owner，不在修片裡順手改。
 
 ## 加速
 - 同一層、各自預估 <20 分鐘的小片，或要讀的檔案大量重疊的片，合成一片、一個 agent、一次記錄。
