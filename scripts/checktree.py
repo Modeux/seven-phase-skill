@@ -43,7 +43,8 @@ def main():
     for t in a.trees:
         bad = verify_tree(t, a.baseline)
         print(f"{t}: checked {n}, mismatches {len(bad)}")
-        for b in bad[:20]:
+        # WHY: callers parse this list as the merge set; a silent cap at 20 once dropped the 21st changed file from a merge-back.
+        for b in bad:
             print("   ", b)
         failed |= bool(bad)
         extra = outside_changes(t, a.baseline, outside)
