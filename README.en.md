@@ -52,12 +52,21 @@ It means "download this instruction bundle into the folder `~/.claude/skills/sev
 
 If it doesn't, the folder is almost certainly in the wrong place. Run `ls ~/.claude/skills/seven-phase/SKILL.md` — you should see that file.
 
-### Step 3: Bring the reviewers along (required on a new computer)
+### Step 3: Hook up the reviewers (one command, required)
 
-The workflow hands work to a team of named helpers that write tests and do reviews (e.g. `tdd-guide`, `lane-reviewer`, `converge-verifier`, `security-reviewer`). **Their setup files are not in this repo** — they live in `~/.claude/agents/`.
+The workflow hands work to a team of named helpers that write tests and do reviews (e.g. `tdd-guide`, `lane-reviewer`, `converge-verifier`, `security-reviewer`). Their setup files are in this repo's `agents/` folder, so you already downloaded them.
 
-- Same computer: nothing to do, they're already there.
-- New computer: copy the whole `~/.claude/agents/` folder from the old computer to the same place on the new one. Skip this and you'll see "agent not found" when work gets handed out.
+But Claude Code only looks for helpers in `~/.claude/agents`, so make a "shortcut" pointing there:
+
+```bash
+ln -s ~/.claude/skills/seven-phase/agents ~/.claude/agents
+```
+
+- If you see `File exists`: you already have a `~/.claude/agents` folder. Move its files into `~/.claude/skills/seven-phase/agents/`, rename the empty folder (e.g. `mv ~/.claude/agents ~/.claude/agents.old`), then run the line above again.
+- To check it worked: run `ls ~/.claude/agents/` and you should see a list of `.md` files.
+- The upside: there's only one copy. Change a helper's settings and it gets committed / pushed with the skill — nothing to keep in sync.
+
+Skip this and you'll see "agent not found" when work gets handed out.
 
 ### Step 4 (optional): Show the progress board every time Claude starts
 
@@ -129,6 +138,7 @@ Everything is recorded in your project under `.claude/PRPs/plans/<task name>/`. 
 
 ```
 SKILL.md       Entry point: how to start, full vs. lean, stop rules, rules for the whole run, who does what
+agents/        Setup files for the helpers (reviewers, test writers, verifiers); ~/.claude/agents is a shortcut to here
 ACCEPTANCE.md  Checklist for process changes (what changed, when to check it, what counts as working)
 phases/        One how-to per step (1-research.md … 7-converge.md), lean path in lean.md, retro in retro.md
 retros/        Report from each retro

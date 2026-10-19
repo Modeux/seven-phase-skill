@@ -50,12 +50,21 @@ git clone git@github.com:Modeux/seven-phase-skill.git ~/.claude/skills/seven-pha
 
 看不到的話，十之八九是資料夾放錯：打 `ls ~/.claude/skills/seven-phase/SKILL.md`，要能看到這個檔案。
 
-### 第 3 步：把「審查員」也搬過來（換新電腦時一定要做）
+### 第 3 步：接上「審查員」（一行指令，一定要做）
 
-這套流程會派一群有名字的小幫手去寫測試、做審查（例如 `tdd-guide`、`lane-reviewer`、`converge-verifier`、`security-reviewer`）。**它們的設定檔不在這個 repo 裡**，而是放在 `~/.claude/agents/`。
+這套流程會派一群有名字的小幫手去寫測試、做審查（例如 `tdd-guide`、`lane-reviewer`、`converge-verifier`、`security-reviewer`）。它們的設定檔就在這個 repo 的 `agents/` 資料夾，剛剛已經一起下載了。
 
-- 同一台電腦：不用管，已經在了。
-- 換新電腦：把舊電腦的 `~/.claude/agents/` 整個資料夾複製到新電腦同一個位置。漏了這步，派工時會出現「找不到這個 agent」。
+但 Claude Code 只會去 `~/.claude/agents` 找小幫手，所以要做一個「捷徑」指過去：
+
+```bash
+ln -s ~/.claude/skills/seven-phase/agents ~/.claude/agents
+```
+
+- 出現 `File exists`：代表電腦上本來就有 `~/.claude/agents` 資料夾。先把裡面的檔案搬進 `~/.claude/skills/seven-phase/agents/`，再把那個空資料夾改名（例如 `mv ~/.claude/agents ~/.claude/agents.old`），然後重打上面那行。
+- 怎麼確認成功：打 `ls ~/.claude/agents/`，看得到一排 `.md` 檔就對了。
+- 好處：只有一份檔案。改了小幫手的設定，就跟 skill 一起 commit／push，不用另外同步。
+
+漏了這步，派工時會出現「找不到這個 agent」。
 
 ### 第 4 步（可選）：每次開 Claude 自動顯示進度看板
 
@@ -127,6 +136,7 @@ cd ~/.claude/skills/seven-phase && git pull
 
 ```
 SKILL.md       入口：開工步驟、怎麼分流、停點規矩、全程規則、誰負責什麼
+agents/        小幫手（審查員、寫測試的、驗證的）的設定檔；~/.claude/agents 是指到這裡的捷徑
 ACCEPTANCE.md  流程改動的驗收清單（改了什麼、何時驗、怎樣算有效）
 phases/        每一步各一份做法（1-research.md … 7-converge.md），精簡版 lean.md，檢討 retro.md
 retros/        每次檢討的報告
