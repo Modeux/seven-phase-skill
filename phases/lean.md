@@ -19,7 +19,7 @@
 
 ## 4. 收斂
 - 要 owner 取捨的條目：批成一則 AskUserQuestion（推薦項第一），不另開 checkpoint。
-- 有爭議或 HIGH 以上：派 1 路 `converge-verifier`；其餘主 session 邊修邊確認。修復照紅→綠。範圍分流、修後複查與「兩輪不收斂就停」照 `phases/7-converge.md` §3「範圍」與 §4；§3「流出分析」也照做（精簡路常是修已上線的 bug，正是它要問的那一條）。
+- 有爭議或 HIGH 以上：派 1 路 `converge-verifier`；其餘主 session 邊修邊確認。修復照紅→綠，行為 bug 照 SKILL.md「修片進場門檻」。範圍分流、修後複查與「兩輪不收斂就停」照 `phases/7-converge.md` §3「範圍」與 §4；§3「流出分析」也照做（精簡路常是修已上線的 bug，正是它要問的那一條）。
 - 全閘照 `phases/7-converge.md` §5（對既存紅基線「零新增」）；耐久結論照全程規則搬進子目錄 `CLAUDE.md`／`.claude/rules/`。
 
 ## 5. 交付（唯一的 checkpoint）
