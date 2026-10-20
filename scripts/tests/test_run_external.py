@@ -26,6 +26,10 @@ mode = os.environ.get("FAKE_MODE", "ok")
 report = {report!r}
 name = pathlib.Path(sys.argv[0]).name
 if name == "codex":
+    workdir = sys.argv[sys.argv.index("-C") + 1]
+    if not os.path.isdir(workdir):
+        sys.stderr.write("no such directory: " + workdir + "\n")
+        sys.exit(1)
     sys.stdin.read()
     out = sys.argv[sys.argv.index("-o") + 1]
     if mode == "ok":
@@ -35,6 +39,9 @@ if name == "codex":
     elif mode == "partial-then-fail":
         pathlib.Path(out).write_text("### [LOW] half")
 else:
+    if "--prompt-file" in sys.argv:
+        # WHY: the real grok reads this path relative to its own cwd; FileNotFoundError -> exit 1 like it.
+        pathlib.Path(sys.argv[sys.argv.index("--prompt-file") + 1]).read_text()
     if mode == "ok":
         sys.stdout.write(report)
     elif mode == "blank":
@@ -67,13 +74,17 @@ class RunExternalTest(unittest.TestCase):
     def tearDown(self):
         self._td.cleanup()
 
-    def run_lane(self, lane, mode="ok"):
+    def run_lane(self, lane, mode="ok", relative=False, root=None):
         out = self.review / f"lane-{lane}.md"
         env = dict(os.environ, PATH=f"{self.bin}{os.pathsep}{os.environ.get('PATH', '')}",
                    FAKE_MODE=mode, FAKE_CALLED=str(self.called))
-        r = subprocess.run([sys.executable, str(SCRIPT), lane, "--packet", str(self.packet),
-                            "--snapshot", str(self.snap), "--out", str(out)],
-                           capture_output=True, text=True, env=env, timeout=60)
+        path = (lambda p: os.path.relpath(p, self.tmp)) if relative else str
+        args = [sys.executable, str(SCRIPT), lane, "--packet", path(self.packet),
+                "--snapshot", path(self.snap), "--out", path(out)]
+        if root:
+            args += ["--root", str(root)]
+        r = subprocess.run(args, capture_output=True, text=True, env=env, timeout=60,
+                           cwd=self.tmp if relative else None)
         return r, out
 
     def status(self, lane):
@@ -105,6 +116,18 @@ class RunExternalTest(unittest.TestCase):
         self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
         self.assertEqual(out.read_text(), REPORT)
         self.assertTrue(self.status("agy")["ok"])
+
+    def test_caller_relative_paths_survive_the_cli_cwd_change(self):
+        # WHY: grok runs with cwd=snapshot and codex with cwd=--root; an unresolved caller-relative
+        # path pointed inside that cwd (10-12～10-19: 5+ sessions of "Failed to read 'tmp/…'").
+        elsewhere = self.tmp / "elsewhere"
+        elsewhere.mkdir()
+        for lane in ("codex", "grok", "agy"):
+            with self.subTest(lane=lane):
+                r, out = self.run_lane(lane, relative=True, root=elsewhere)
+                self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+                self.assertEqual(out.read_text(), REPORT)
+                self.assertTrue(self.status(lane)["ok"])
 
     def test_nonzero_rc_propagates_and_status_fails(self):
         for lane in ("codex", "grok", "agy"):

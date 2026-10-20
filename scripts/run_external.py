@@ -34,13 +34,14 @@ def main():
     ap.add_argument("--out", required=True)
     ap.add_argument("--root", default=None, help="cwd for codex (repo root); default: snapshot's parent repo cwd")
     a = ap.parse_args()
-    packet, snap, out = pathlib.Path(a.packet), pathlib.Path(a.snapshot), pathlib.Path(a.out)
+    # INVARIANT: resolve before any CLI runs — grok gets cwd=snapshot and codex cwd=--root, so a
+    # caller-relative path handed over as-is points inside that cwd ("Failed to read 'tmp/…'").
+    packet, snap, out = (pathlib.Path(p).resolve() for p in (a.packet, a.snapshot, a.out))
     log_path = out.parent / f"ext-{a.lane}.log"
     partial = out.with_name(out.name + ".partial")
     status_file = out.with_suffix(".status.json")
     size = packet.stat().st_size
-    base = dict(lane=a.lane, snapshot=str(snap.resolve()), packet=str(packet.resolve()), packet_bytes=size,
-                log=str(log_path.resolve()))
+    base = dict(lane=a.lane, snapshot=str(snap), packet=str(packet), packet_bytes=size, log=str(log_path))
     print(f"{a.lane}: packet {size} bytes")
     # WHY: a partial left by an earlier crash would otherwise be promoted as this run's report.
     partial.unlink(missing_ok=True)
