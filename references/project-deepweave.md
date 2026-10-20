@@ -7,7 +7,7 @@
 - **ai-service（Python）**：**禁在 host 跑 `uv`／`just test-ai`／host pytest**（會把共用 venv 重建成 macOS 版，容器壞掉）。只用一次性容器：
   `docker run --rm --network none -v <tree>/ai-service:/app:ro -v <repo>/ai-service/.venv:/app/.venv:ro -w /app -e PYTHONDONTWRITEBYTECODE=1 -e LANGFUSE_TRACING_ENABLED=false -e APP_ENV=development -e MYPY_CACHE_DIR=/tmp/mypy ghcr.io/astral-sh/uv:python3.12-bookworm .venv/bin/python -m pytest -q -p no:cacheprovider`
   （ruff：`-m ruff check --no-cache app tests`；mypy：`-m mypy app`）。在 worktree 裡跑要先 `mkdir -p <tree>/ai-service/.venv` 當掛載點（`mkworktree.py --mkdir ai-service/.venv`）。zsh 下把指令存成變數再展開要用 `${=VAR}`。
-- **Angular**：從 `angular-workspace/` 跑，單行子 shell `bash -c 'cd <tree>/angular-workspace && npx ng test admin --include <spec> --watch=false'`；worktree 要先 `pnpm install`。production build：`npx ng build <project>`。
+- **Angular**：從 `angular-workspace/` 跑，單行子 shell `bash -c 'cd <tree>/angular-workspace && npx ng test admin --include <spec> --watch=false'`；`--include` 路徑相對於 `angular-workspace/`（`projects/frontend/src/...`）或用 `**/x.spec.ts`，相對 project 根會報 `No tests found`。片收件跑該 project 整包（`npx ng test frontend --watch=false`，424 支約 60 秒，10-20 量）。worktree 要先 `pnpm install`。production build：`npx ng build <project>`。
 - **契約**：`npx --yes @redocly/cli lint docs/api-contracts/openapi.yaml`。
 - **lint／audit**：`just lint-gateway`（exit 1 是常態，判準「碰過的檔零新增」；`backend-golang/tmp/` 是 gitignored 探針碼，不算）；`bash scripts/audit-pgx-tx-patterns.sh`（既存 (b)×2、(e)×4）；`just fix-go-changed`（**零輸出**才過：這次改到的 Go 行都已是新語法；`--apply` 只套這些 hunk、併進本包；全庫 `just fix-go-check` 在存量清掉前 exit 1 是常態，不當閘）。
 - **整合測試既存紅名單**：`backend-golang/CLAUDE.md` §Testing 的表（逐名比對，不用前綴）。

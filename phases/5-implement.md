@@ -20,6 +20,7 @@
 ## 主 session 的驗收（不放寬）
 - 偏離裁決：agent 自報的每條偏離逐條接受／否決，否決的寫成第二輪紅丟回同一 agent。
 - **主親跑閘**：每片跑「受影響包」的 build／vet／單元＋該片具名整合；**不採信 subagent 自報**（已知失敗模式：只跑窄範圍 `-run` 就報綠，漏掉命名不同的連帶紅）。輸出重導向到檔案再 grep（接 `tail` 會藏掉前面的包並把 exit code 歸零）。
+  - 前端片的「受影響包」＝片改到的 project 整包（`ng test frontend --watch=false`，整包 424 支約 60 秒；`admin` 同理），不是只 `--include` 片自己改到的 spec。為什麼：`--include` 只是不跑其他 spec、仍會編譯它們，型別錯本來就會現形；漏掉的是沒跑到的 spec 在執行期紅，例如經 page／store 間接 import，或 spec 之間不隔離造成的全域汙染。以前這類要到階段末全閘才抓到（10-19 洞察報告：修片弄壞自己沒跑的 spec）。照 import 關係挑子集的工具試過，每片只省約 50 秒，又抓不到全域汙染，不採。
 - diff 生產碼對快照，確認只動該片範圍；改完一律 `git status --porcelain`（不帶 pathspec）對帳。
 - 全閘（整合全包、lint、audit、前端整包＋production build、契約 lint）只在本階段末跑一次，判準是「對既存紅基線零新增」。
 - 涉 UI 的包，階段末的真瀏覽器走一趟派 `ui-lane-reviewer`（步驟、樹與 dev server、證據目錄寫在任務包）；主 session 讀結論、開它點名的一兩張截圖。為什麼：瀏覽器輸出很大，留在主 session 會讓之後每一回合都重付（owner 10-05 定）。

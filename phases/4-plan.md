@@ -9,7 +9,7 @@ PLAN 必須有：
 4. **單一 writer 檔案矩陣**：同一波裡 `routes.go`／`wire.go`／`openapi.yaml`／`api.types.ts`／同一 Go 套件／同一 spec 檔／`db/queries`＋sqlc 生成碼只屬於一片。資料層（migration＋sqlc＋設定全鏈）通常自成第一波單線。矩陣每片另列**要碰的符號、行號範圍、主要呼叫者**（第 1 階段查到的位置；寫矩陣時對每個要改簽名／搬動／刪除的符號重跑一次 `graphify affected "<Func()>" --relation calls`＋grep 取聯集——第 1 階段到第 4 階段之間 dev 可能已前進），這欄逐字進任務包——tdd-guide 每回合重讀的 context 約四成是自己 Read／cat／grep 找程式碼。`openapi.yaml`（32k 行單檔、零外部 `$ref`）必列**path 字串與 schema 名＋行號**、要套用的既有 `*_openapi_test.go` pin（`pathBlock`／`schemaBlock`／`jsonTags` 反射比對），並明寫「只 `grep -n` 定位後 `Read` offset／limit，不整檔讀」。
 5. **每片的測試清單**：每支測什麼、期望紅的原因；**紅的歸屬**（主寫或 agent 寫，見第 5 階段）；先 grep 全 repo 既有 pin，避免漏掉命名不同的連帶紅。測試寫成表格、第一欄是編號（T1、H1-14…）：PLAN 審查的處置要點名它（下面「PLAN 審查」第 5 條）。
    - SPEC 有原型差異表的：每個「照做」列對到負責的片與驗收方式（走一趟步驟或測試編號），P 編號一個不漏。
-6. **閘**：受影響包的 build／vet／單元＋具名整合（每片）；全閘（整合全包、lint、audit、前端整包＋production build、契約 lint）只在第 5 階段末與第 7 階段末各跑一次。寫出每個閘的既存紅基線與判準（「不新增」而非「全綠」）。
+6. **閘**：受影響包的 build／vet／單元＋具名整合（每片；前端片＝該 project 的 `ng test` 整包，見 `phases/5-implement.md`「主親跑閘」）；全閘（整合全包、lint、audit、前端整包＋production build、契約 lint）只在第 5 階段末與第 7 階段末各跑一次。寫出每個閘的既存紅基線與判準（「不新增」而非「全綠」）。
 7. **風險與回滾**（含混版部署時序）、**部署後驗收**、**不做清單**（列在這裡的東西第 6 階段不算缺陷）。
 8. **本任務用到的 skills／MCP／agents 清單**與各自用途、使用時機。
 9. 範圍面：沒有讀者的表不單獨先建，與第一個讀者同批做。
