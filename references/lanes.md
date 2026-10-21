@@ -47,7 +47,7 @@
   - security 只用 `security-reviewer`：`ab-security-reviewer-v2` 在碰鑽石／18+ 的大包（`character-dual-portrait` 第 6 階段）跑完最後一次兩臂後 10-14 併入原版（owner 定：v2 正文取代原版正文，name／description 不變）。兩臂各 7 條、都抓到兩條最重要的（18禁 job 混版、回填字表），v2 便宜約 15%（$8.21 vs $9.64）；原版獨家 2 LOW、v2 獨家 1 LOW。v2 原文備份在 `character-dual-portrait` worktree 的 `tmp/character-dual-portrait/post/agents-backup/`。多臂比較時合併前仍由主 session 跑交叉突變（同一語義突變、各臂自己的程式碼、`go test -overlay`），不信各臂自報。
 - 文件片：`doc-slice`（high，每句先回程式碼確認）；codemap／README 生成才用 doc-updater。
 - 探索／定位：code-explorer（high）；判斷性探索用 general-purpose／Explore（effort 跟主 session）。
-- 組材料包、批次文字改寫、graphify 抽取：quick-task（high）。
+- 組材料包、批次文字改寫：quick-task（high）。graphify 抽取：quick-task 傳 `model: "sonnet"`，或 agy Flash 細切（repo `docs/graphify.md`）。
 - 三取向架構對照（第 2 階段簡報前，觸發條件見 `phases/2-discuss.md`）：`code-architect`（xhigh）三顆、任務書只差取向一行。
 - 丟棄式原型（第 2／3 階段，觸發條件見 `phases/2-discuss.md` 第 3 步）：general-purpose，照 §模型與 agent 不傳 `model`。原型雖然會丟，做工粗糙會讓 owner 因「醜」否決對的方向，做工就是判斷的一部分，不降模型。
 - 真瀏覽器走一趟（第 5／7 階段末）：`ui-lane-reviewer`（xhigh），與全閘同時跑、交件附走一趟套件（`phases/5-implement.md`「主 session 的驗收」、`assets/walk-kit.md`）。不拆給多顆同時走：共用 dev DB 與測試帳號會互踩，每顆都重付起環境與讀碼，還會切斷「重整後狀態」這類跨流程的接縫。

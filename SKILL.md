@@ -87,8 +87,9 @@ owner 吃過「一路衝到底、末端才發現前提錯」的虧，也要自�
   - Sonnet／Haiku 的延遲優勢不構成換模型的理由。
 - 主 session：簡報、訪談、規劃、委派協調、**親跑測試與閘**、一切最終裁決。subagent 只回結論與證據，**不代表 owner 做任何決定**。
 - subagent 一律 opus-5.5，**effort 只能由 agent frontmatter 決定**（`~/.claude/agents/*.md` 的 `model:`／`effort:`；prompt 寫 effort 是安慰劑；Agent 工具的 `model` 參數勿傳）。
+  - **唯一例外：graphify 語意抽取**派 quick-task 時傳 `model: "sonnet"`（Sonnet 5.5 high），或改走 agy `gemini-3.8-flash` 細切；不用 Haiku。配方與量測在 repo `docs/graphify.md`。
   - **xhigh（要判斷）**：planner、database-reviewer、security-reviewer、pr-test-analyzer、`lane-reviewer`（關注面 lane）、`ui-lane-reviewer`（真瀏覽器的 UI lane 與走一趟）、`converge-verifier`（收斂驗證）、`blind-judge`（盲評，不載 CLAUDE.md）。
-  - **high（範圍已定，或 A/B／laneyield 證實不掉品質）**：tdd-guide、comment-analyzer、go-reviewer、silent-failure-hunter、typescript-reviewer、python-reviewer（見 `references/lanes.md` §effort）、`doc-slice`（文件片）、doc-updater（codemap／README）、code-explorer、quick-task（含 graphify 抽取）。
+  - **high（範圍已定，或 A/B／laneyield 證實不掉品質）**：tdd-guide、comment-analyzer、go-reviewer、silent-failure-hunter、typescript-reviewer、python-reviewer（見 `references/lanes.md` §effort）、`doc-slice`（文件片）、doc-updater（codemap／README）、code-explorer、quick-task（graphify 抽取除外，見上）。
   - **內建 agent（general-purpose、Explore、Plan）沒有 frontmatter，effort 跟著主 session 走**：主 session 開 max 它就跑 max，開 medium 就跑 medium。有固定用途的工作一律派上面的專用 agent，general-purpose 只留給不屬於任何一類的雜務。
   - agent 檔改動不必重啟：改既有檔的 frontmatter，下一次派工就生效；新建或刪除的檔，下一個使用者回合才出現在可用清單（同回合派會 not found）；已在跑的那顆維持舊設定跑完。驗證看 `~/.claude/projects/<proj>/<sid>/subagents/*.jsonl` 的 `"model"` 與 `"effort"`。內建 agent 的模型靠 `~/.claude/settings.json` 的 `CLAUDE_CODE_SUBAGENT_MODEL`；`fork` 永遠跑主 session 的模型與 effort。花費用 `scripts/agentcost.py` 量。
 - **派工前確認 agent 的工具集**：comment-analyzer／planner 等沒有 Write（交付要主 session 落檔或改用有 Write 的 agent）；沒 Bash 的跑不了測試；lane-reviewer、quick-task 只有 Read／Write／Bash／Grep／Glob（少背約 15k token 的工具定義），要瀏覽器的派 `ui-lane-reviewer`。有 `tools:` 白名單的 agent 只拿得到列出的工具——10-07 起 reviewer／tdd-guide／code-explorer 都列了 `LSP`（符號導航先用它、grep 只找字串；10-07 前 subagent 的 LSP 呼叫是 0）；每顆都有 `maxTurns`（約 1.3–1.5 × 實測最大回合數，失控保險，到頂會硬停、hand-back 可能不完整）。
