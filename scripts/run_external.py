@@ -8,7 +8,8 @@ Usage:
 A log is written next to --out as ext-<lane>.log, and a status file as <out stem>.status.json
 (lane-codex.md -> lane-codex.status.json) that reviewcov.py reads. The CLI writes to <out>.partial;
 only a zero-exit, non-blank report replaces <out>, so a failure never clobbers or impersonates a report.
-Exit: 0 ok; the CLI's exit code when it failed; 3 when it exited 0 without a report; 2 agy packet too big.
+Exit: 0 ok; the CLI's exit code when it failed; 3 when it exited 0 without a report; 2 agy packet too big;
+124 agy hit --print-timeout (partial output kept, never promoted).
 Pitfalls: references/external-review.md.
 """
 import argparse
@@ -23,7 +24,11 @@ from _lanes import write_status  # noqa: E402
 CODEX_MODEL, CODEX_EFFORT = "gpt-6-sol", "xhigh"
 GROK_MODEL = "grok-4.7"
 AGY_MODEL, AGY_EFFORT = "gemini-4-argon", "high"
-AGY_MAX_BYTES = 170_000
+# WHY: the CLI waits at most 5 min for the first streamed bytes (hard-coded, no flag), then restarts the
+# whole request; big packets keep tripping it (≤90KB 5/5 first-try in 5–8 min; 137–167KB mostly 30–80 min
+# of restarts). 90KB avoids the restarts; the print timeout turns a restart loop into a fast "didn't run".
+AGY_MAX_BYTES = 90_000
+AGY_PRINT_TIMEOUT = "20m"
 
 
 def main():
@@ -60,15 +65,21 @@ def main():
                                 "--output-format", "plain"], stdout=fout, stderr=log, cwd=str(snap))
     else:
         if size > AGY_MAX_BYTES:
-            err = f"agy packet is {size} bytes (> {AGY_MAX_BYTES}); input truncates around 190KB - trim it"
+            err = (f"agy packet is {size} bytes (> {AGY_MAX_BYTES}); bigger packets keep tripping the CLI's 5-min "
+                   "first-output timeout and restart - trim or split it (references/external-review.md)")
             write_status(status_file, **base, rc=2, ok=False, secs=0, report=None, error=err)
             print(err, file=sys.stderr)
             sys.exit(2)
         with open(partial, "w") as fout, open(log_path, "w") as log:
-            r = subprocess.run(["agy", "--model", AGY_MODEL, "--effort", AGY_EFFORT, "--print", packet.read_text()],
+            r = subprocess.run(["agy", "--model", AGY_MODEL, "--effort", AGY_EFFORT,
+                                "--print-timeout", AGY_PRINT_TIMEOUT, "--print", packet.read_text()],
                                stdout=fout, stderr=log, cwd=str(snap))
     secs = int(time.time() - t0)
     rc = r.returncode
+    # INVARIANT: agy's print timeout exits 0 and leaves the partial answer on stdout (marker on stderr only);
+    # without this a cut-off report would be promoted as complete. 124 = timeout, like coreutils timeout.
+    if a.lane == "agy" and rc == 0 and "print timeout after" in log_path.read_text(errors="replace"):
+        rc = 124
     has_text = partial.exists() and partial.read_text(errors="replace").strip() != ""
     ok = rc == 0 and has_text
     if ok:
