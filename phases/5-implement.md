@@ -22,6 +22,7 @@
 - **主親跑閘**：每片跑「受影響包」的 build／vet／單元＋該片具名整合；**不採信 subagent 自報**（已知失敗模式：只跑窄範圍 `-run` 就報綠，漏掉命名不同的連帶紅）。輸出重導向到檔案再 grep（接 `tail` 會藏掉前面的包並把 exit code 歸零）。
   - 前端片的「受影響包」＝片改到的 project 整包（`ng test frontend --watch=false`，整包 424 支約 60 秒；`admin` 同理），不是只 `--include` 片自己改到的 spec。為什麼：`--include` 只是不跑其他 spec、仍會編譯它們，型別錯本來就會現形；漏掉的是沒跑到的 spec 在執行期紅，例如經 page／store 間接 import，或 spec 之間不隔離造成的全域汙染。以前這類要到階段末全閘才抓到（10-19 洞察報告：修片弄壞自己沒跑的 spec）。照 import 關係挑子集的工具試過，每片只省約 50 秒，又抓不到全域汙染，不採。
 - diff 生產碼對快照，確認只動該片範圍；改完一律 `git status --porcelain`（不帶 pathspec）對帳。
+- **改語義的片收件時，舊語義字樣全樹 grep**（改了欄位意義、狀態定義、推翻某個宣稱過的保證；第 7 階段修片同樣適用）：主 session 拿舊語義的關鍵字樣（舊欄名、舊狀態詞、「已關閉」「不送欄位」這類宣稱）對整棵樹 `git grep`，範圍含 migration 檔頭與 `COMMENT`、`db/queries` 註解、`ops/` 腳本、程式碼的 WHY／INVARIANT（含不帶 slug 的），命中逐條改掉或寫明為何保留；不只 grep 任務包列出的文件。為什麼：journey-revamp 第 6 階段審出十條跨層文字漂移（R10–R19），全落在文件片列出的範圍外；slug 閘只 grep 固定 slug，不帶 slug 的 `INVARIANT:` 看不到。
 - 全閘（整合全包、lint、audit、前端整包＋production build、契約 lint）只在本階段末跑一次，判準是「對既存紅基線零新增」。
 - 涉 UI 的包，階段末的真瀏覽器走一趟派 `ui-lane-reviewer`（步驟、樹與 dev server、證據目錄寫在任務包）；主 session 讀結論、開它點名的一兩張截圖。為什麼：瀏覽器輸出很大，留在主 session 會讓之後每一回合都重付（owner 10-05 定）。
   - **與全閘同時跑**：最後一片合回主樹後，立刻用 `mkpatch.py`＋`mkworktree.py` 建走一趟專用的快照樹並派出，主 session 同時在主樹跑全閘。全閘期間主樹又改了檔：`checktree.py --baseline <走一趟快照的 baseline.sha256> <主 checkout>` 列出變動，有走一趟碰得到的執行期檔（前端非 spec 檔、handler／service／SQL）就只重驗涉及的步驟（用套件）；只動測試、文件、lint 樣式的不必重驗。為什麼：走一趟不等全閘，每趟省約 15–20 分。
