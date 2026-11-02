@@ -10,7 +10,7 @@ import unittest
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1]))
 
-from _mdtable import pick_col, row_ids, tables  # noqa: E402
+from _mdtable import id_class, id_prefix, pick_col, row_ids, tables  # noqa: E402
 
 
 class MdTableTest(unittest.TestCase):
@@ -30,6 +30,19 @@ class MdTableTest(unittest.TestCase):
         }
         for cell, want in cases.items():
             self.assertEqual(row_ids(cell), want, cell)
+
+    def test_package_tagged_ids_parse_and_keep_their_class(self):
+        # A second package in one REVIEW tags its ids P2R1／P2L3; before this they parsed to [] and the round vanished.
+        cases = {
+            "P2R1": ["P2R1"], "**P2L38**（低）": ["P2L38"], "P2L1–P2L3": ["P2L1", "P2L2", "P2L3"],
+            "P2R3、P2R12": ["P2R3", "P2R12"], "N1": ["N1"], "NL3": ["NL3"], "P2": ["P2"], "X1": ["X1"],
+        }
+        for cell, want in cases.items():
+            self.assertEqual(row_ids(cell, any_prefix=True), want, cell)
+        self.assertEqual(row_ids("P2R1"), [], "plain R/L tables still ignore tagged ids")
+        for rid, prefix, cls in [("P2R1", "P2R", "R"), ("P2L3", "P2L", "L"), ("NL3", "NL", "NL"), ("R3", "R", "R"),
+                                 ("P2", "P", "P")]:
+            self.assertEqual((id_prefix(rid), id_class(rid)), (prefix, cls), rid)
 
     def test_tables_carry_heading_path_and_drop_separators(self):
         text = "# A\n## B\n| x | y |\n|---|---|\n| 1 | 2 |\n\n### C\n| p |\n|:-:|\n| q |\n## D\ntext\n"

@@ -24,9 +24,11 @@ def _id_patterns(id_re):
 
 
 _RL_IDS = _id_patterns(r"(?:R|L)\d+(?:[-.]\d+)?")
-# WHY: incremental rounds number their maps N1…／NL1…; with R/L only, a whole round vanished without an error.
-_ANY_IDS = _id_patterns(r"[A-Z]{1,3}\d+(?:[-.]\d+)?")
-_PREFIX_NUM = re.compile(r"([A-Z]+)(\d+)$")
+# WHY: incremental rounds number their maps N1…／NL1…, and a second package in one REVIEW tags its ids
+# P2R1／P2L3; with R/L only (or without the optional package tag) a whole round vanished without an error.
+_ANY_IDS = _id_patterns(r"(?:[A-Z]\d+(?=[A-Z]))?[A-Z]{1,3}\d+(?:[-.]\d+)?")
+_PREFIX_NUM = re.compile(r"((?:[A-Z]\d+(?=[A-Z]))?[A-Z]+)(\d+)$")
+_ID_HEAD = re.compile(r"((?:[A-Z]\d+(?=[A-Z]))?)([A-Z]+)")
 _MAX_RANGE = 60
 _UNESCAPED_PIPE = re.compile(r"(?<!\\)\|")
 _FENCE = re.compile(r"^\s*(```|~~~)")
@@ -129,8 +131,15 @@ def row_ids(cell, any_prefix=False):
 
 
 def id_prefix(rid):
-    m = re.match(r"[A-Z]+", rid)
+    """Everything before the running number, package tag included: P2R1 → P2R, NL3 → NL, R3 → R."""
+    m = _ID_HEAD.match(rid)
     return m.group(0) if m else ""
+
+
+def id_class(rid):
+    """The R／L letters before the running number, package tag dropped: P2R1 → R, NL3 → NL, R3 → R."""
+    m = _ID_HEAD.match(rid)
+    return m.group(2) if m else ""
 
 
 def map_tables(text, discarded=None):

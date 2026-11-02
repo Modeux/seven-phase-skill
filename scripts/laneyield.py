@@ -53,7 +53,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from _usage import agent_files, cost_of, project_dirs, quality_line, read_messages  # noqa: E402
 from _common import toplevel  # noqa: E402
 from _lanes import LANE_ID, expected_lanes, lane_name  # noqa: E402
-from _mdtable import id_prefix, map_tables, pick_col, row_ids, tables, unfenced  # noqa: E402
+from _mdtable import id_class, id_prefix, map_tables, pick_col, row_ids, tables, unfenced  # noqa: E402
 
 _LANE = re.compile(LANE_ID)
 # WHY: ASCII lookbehind — `\w` matches CJK, so `go#2和ts#1` used to drop ts.
@@ -186,7 +186,7 @@ def _list_map(text, issues, known):
             cur["src"] = m.group(1)
     for e in entries:
         e["lanes"], e["by_id"], e["dropped"] = source_lanes(e.pop("src") or "", known)
-        e["cls"] = "R" if e["rid"].startswith("R") else "L"
+        e["cls"] = "R" if id_class(e["rid"]) == "R" else "L"
     if entries and not any(e["by_id"] for e in entries):
         issues.append(("error", f"list-style map ({len(entries)} items) has no <lane>#<n> sources — lane stats unavailable"))
         return []
@@ -242,7 +242,7 @@ def parse_review(path, issues=None, known=(), scopes=None):
                     issues.append(("error", f"duplicate map id {rid} (line {lineno}; first at line {seen[scope, rid]})"))
                     continue
                 seen[scope, rid] = lineno
-                cls = {"R": "R", "L": "L"}.get(id_prefix(rid)) or severity_class(_cell(cells, sevcol))
+                cls = {"R": "R", "L": "L"}.get(id_class(rid)) or severity_class(_cell(cells, sevcol))
                 if cls is None:
                     issues.append(("error", f"{rid}: neither an R/L id nor a severity cell — counted as R (line {lineno})"))
                 entries.append({"scope": scope, "rid": rid, "line": lineno, "lanes": lanes, "cls": cls or "R"})
@@ -314,7 +314,7 @@ def parse_progress(path, issues=None, known=()):
             if not lanes:
                 issues.append(("error", f"{rid}: 來源 cell names no lane (line {lineno})"))
             # WHY: a blank／— final severity on an L row falls back to the id prefix, not to R.
-            cls = severity_class(_cell(cells, cols["嚴重度"])) or {"R": "R", "L": "L"}.get(id_prefix(rid)) or "R"
+            cls = severity_class(_cell(cells, cols["嚴重度"])) or {"R": "R", "L": "L"}.get(id_class(rid)) or "R"
             findings[rid] = (cls, lanes)
             verdicts[rid] = _cell(cells, cols["裁決"])
     if not findings:
