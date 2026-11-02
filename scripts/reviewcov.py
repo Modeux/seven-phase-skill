@@ -15,7 +15,10 @@ With none of these the lane set is unknown and the check fails. Names work with 
 
 Each lane is classified, first match wins:
   waived      --waive NAME=REASON
-  failed      status file says rc != 0 or ok false (even when a lane-<name>.md exists: it is an older run's)
+  failed      status file says rc != 0 or ok false (even when a lane-<name>.md exists: it is an older run's);
+              also a renamed status (any top-level file named *status* with rc／ok JSON, e.g.
+              `codex-r2-failed-usage-limit.status.json.txt`), named after the file, unless a lane-*.status.json
+              with the same packet finished ok later (a rerun); excuse it with --waive <that name>=REASON
   missing     no lane-<name>.md
   empty       blank report
   stale       report older than baseline.sha256 (written when the review snapshot was frozen)
@@ -54,7 +57,8 @@ import re
 import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).parent))
-from _lanes import SEV_TAG, expected_lanes, lane_name, read_status, report_findings, stray_findings  # noqa: E402
+from _lanes import (LANE_ID, SEV_TAG, expected_lanes, lane_name, read_status, renamed_failed_statuses,  # noqa: E402
+                    report_findings, stray_findings)
 from _mdtable import cells, map_tables, pick_col, row_ids, tables, unfenced  # noqa: E402
 
 _PAREN = re.compile(r"[（(][^（）()]*[）)]")
@@ -65,7 +69,7 @@ _MD_HEAD = re.compile(r"^(#{1,6})\s+(.*)$")
 _SEV_TOKEN = re.compile(SEV_TAG, re.I)
 _SEP_CELL = re.compile(r":?-+:?")
 # WHY: ASCII lookbehind — `\w` matches CJK, so `go#2和ts#1` hid ts#1 (laneyield uses the same boundary).
-_SRC_TOKEN = re.compile(r"(?<![A-Za-z0-9_-])([a-z][a-z0-9]*(?:-[a-z0-9]+)*)#(\d+)(?!\d)")
+_SRC_TOKEN = re.compile(rf"(?<![A-Za-z0-9_-])({LANE_ID})#(\d+)(?!\d)")
 _SEVERITIES = ("CRITICAL", "HIGH", "MEDIUM", "LOW")
 _PASS = ("ok", "ok-zero", "acked", "waived")
 _ENUMERATED = ("ok", "ok-zero", "mixed", "count-mismatch")
@@ -298,6 +302,15 @@ def main():
         if state in ("acked", "mixed", "unformatted") and report_path.exists():
             lines = report_path.read_text(encoding="utf-8", errors="replace").splitlines()
             strays_by_lane[name] = [(n, lines[n - 1].strip()) for n in stray_findings("\n".join(lines))]
+    for name, p, st in renamed_failed_statuses(d):
+        if name in waived:
+            continue  # already a waived row from the loop above
+        if name in state_of:
+            name = p.name  # WHY: `lane-go.status.json.bak` must not hide behind lane go's own row.
+        detail = (f"renamed status {p.name}: {st.get('lane') or '?'} {pathlib.Path(str(st.get('packet') or '?')).name} "
+                  f"rc={st.get('rc')} {st.get('error') or ''}").strip()
+        rows.append((name, "failed", "renamed", detail))
+        heads_by_lane[name], state_of[name] = [], "failed"
 
     print(f"{'lane':16} {'state':14} {'expected via':12} detail")
     for name, state, via, detail in rows:

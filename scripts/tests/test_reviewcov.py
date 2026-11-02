@@ -453,6 +453,91 @@ class ReviewCovTest(_Base):
 PLAN_MAP = ("## PLAN 審查地圖\n| 編號 | 宣稱嚴重度 | 一句話 | 位置 | 來源 | 處置 |\n|---|---|---|---|---|---|\n")
 
 
+def _status(path, packet, finished, rc, ok):
+    """Same fields run_external.py writes."""
+    path.write_text(json.dumps({"lane": "codex", "packet": f"/r/{packet}", "rc": rc, "ok": ok,
+                                "report": None, "finished": finished}), encoding="utf-8")
+
+
+def _renamed_codex_r2(d):
+    """codex round 1 ok, round 2 failed and its status renamed (explore-revamp plan-review shape)."""
+    _status(d / "lane-codex.status.json", "packet-codex.md", "2026-10-30T07:23:34+00:00", 0, True)
+    (d / "lane-codex.md").write_text(report("LOW"), encoding="utf-8")
+    _status(d / "codex-r2-failed-usage-limit.status.json.txt", "packet-codex-r2.md",
+            "2026-10-30T07:50:44+00:00", 1, False)
+
+
+class RenamedStatusTest(_Base):
+    """A failed lane whose status file was renamed (any name containing `status`) still fails the lane gate."""
+
+    def setUp(self):
+        super().setUp()
+        self.task("go")
+        self.lane("go", report("HIGH"))
+        self.review(MAP + "| R1 | a | go#1、codex#1 |\n")
+
+    def test_fails_review_mode_and_lane_only_mode_naming_the_lane(self):
+        _renamed_codex_r2(self.dir)
+        for with_md in (True, False):
+            r, out = self.run_cov(with_md=with_md)
+            self.assertEqual(r.returncode, 1, out)
+            self.assertRegex(out, r"codex-r2-failed-usage-limit\s+failed")
+            self.assertIn("codex-r2-failed-usage-limit.status.json.txt", out)
+
+    def test_later_success_of_the_same_packet_supersedes_it(self):
+        _renamed_codex_r2(self.dir)
+        _status(self.dir / "lane-codex-r2.status.json", "packet-codex-r2.md", "2026-10-30T08:10:00+00:00", 0, True)
+        (self.dir / "lane-codex-r2.md").write_text(report("LOW"), encoding="utf-8")
+        self.review(MAP + "| R1 | a | go#1、codex#1、codex-r2#1 |\n")
+        r, out = self.run_cov()
+        self.assertEqual(r.returncode, 0, out)
+
+    def test_earlier_success_of_another_round_does_not_supersede_it(self):
+        _renamed_codex_r2(self.dir)
+        # Same packet, but finished before the failure: that success is not a rerun of the failed round.
+        _status(self.dir / "lane-codex-r2.status.json", "packet-codex-r2.md", "2026-10-30T07:40:00+00:00", 0, True)
+        (self.dir / "lane-codex-r2.md").write_text(report("LOW"), encoding="utf-8")
+        self.review(MAP + "| R1 | a | go#1、codex#1、codex-r2#1 |\n")
+        r, out = self.run_cov()
+        self.assertEqual(r.returncode, 1, out)
+        self.assertRegex(out, r"codex-r2-failed-usage-limit\s+failed")
+
+    def test_waive_names_the_renamed_lane(self):
+        _renamed_codex_r2(self.dir)
+        r, out = self.run_cov("--waive", "codex-r2-failed-usage-limit=quota; covered by grok-r2")
+        self.assertEqual(r.returncode, 0, out)
+        self.assertIn("covered by grok-r2", out)
+
+    def test_renamed_status_of_a_present_lane_keeps_that_lanes_findings(self):
+        # `lane-go.status.json.bak` (an older failed go run) must fail the gate without erasing go's findings.
+        _status(self.dir / "lane-go.status.json.bak", "packet-go.md", "2026-10-30T07:00:00+00:00", 1, False)
+        self.review(MAP + "| R1 | a | go#1 |\n")
+        idx = self.dir / "idx.md"
+        r, out = self.run_cov("--index", str(idx))
+        self.assertEqual(r.returncode, 1, out)
+        self.assertRegex(out, r"lane-go\.status\.json\.bak\s+failed")
+        self.assertIn("go#1", [i["id"] for i in json.loads(idx.with_suffix(".json").read_text(encoding="utf-8"))])
+
+    def test_status_named_files_that_are_not_failed_status_json_are_ignored(self):
+        (self.dir / "status-notes.md").write_text("# status\nall fine\n", encoding="utf-8")
+        _status(self.dir / "old.status.json.bak", "packet-go.md", "2026-10-30T07:00:00+00:00", 0, True)
+        (self.dir / "run.status.json.txt").write_text(json.dumps({"lane": "go", "note": "x"}), encoding="utf-8")
+        self.review(MAP + "| R1 | a | go#1 |\n")
+        r, out = self.run_cov()
+        self.assertEqual(r.returncode, 0, out)
+
+
+class CapitalizedLaneTest(_Base):
+    def test_dangling_source_on_a_capitalized_lane_is_caught(self):
+        # explore-revamp: lanes agy-A／agy-B; `agy-B#9` when agy-B has 1 finding used to be invisible.
+        self.task("agy-B")
+        self.lane("agy-B", report("HIGH"))
+        self.review(MAP + "| R1 | a | agy-B#1 |\n| R2 | b | agy-B#9 |\n")
+        r, out = self.run_cov()
+        self.assertEqual(r.returncode, 1, out)
+        self.assertIn("agy-B#9 (agy-B has 1)", out)
+
+
 class PlanTestsTest(_Base):
     """--plan-tests: a PLAN review map's 改 PLAN disposition must name a test the PLAN actually has."""
 
@@ -483,6 +568,22 @@ class PlanTestsTest(_Base):
         self.assertEqual(r.returncode, 1, out)
         self.assertIn("T99", out)
         self.assertNotIn("unknown test T7", out)
+
+    def test_renamed_failed_status_fails_plan_mode(self):
+        # explore-revamp PLAN review: codex-r2 hit its usage limit, its status file was renamed and the gate passed.
+        self.plan("改 PLAN（P3；測試 T7）")
+        _renamed_codex_r2(self.dir)
+        renamed = self.dir / "codex-r2-failed-usage-limit.status.json.txt"
+        renamed_text = renamed.read_text(encoding="utf-8")
+        renamed.unlink()
+        with self.md.open("a", encoding="utf-8") as f:
+            f.write("| R2 | LOW | b | f.go:1 | codex#1 | 不採：`a.go:3` 已處理 |\n")
+        r, out = self.run_plan()
+        self.assertEqual(r.returncode, 0, out)
+        renamed.write_text(renamed_text, encoding="utf-8")
+        r, out = self.run_plan()
+        self.assertEqual(r.returncode, 1, out)
+        self.assertRegex(out, r"codex-r2-failed-usage-limit\s+failed")
 
     def test_test_listed_only_in_plan_appendix_passes(self):
         self.plan("改 PLAN（測試 H1-14）")

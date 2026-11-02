@@ -512,6 +512,103 @@ class LaneYieldTest(unittest.TestCase):
         self.assertEqual(p.returncode, 1, p.stdout)
         self.assertIn("lane stats unavailable", p.stdout)
 
+    # explore-revamp: lanes agy-A／agy-B made `--strict` report R5, L10, L20 as "來源 cell names no lane".
+    def test_capitalized_lane_suffix_is_read_by_table_list_and_lean_maps(self):
+        cases = {
+            "table map": ("REVIEW.md", "## 去重地圖\n| 編號 | 一句話 | 來源 |\n|---|---|---|\n| R1 | a | agy-B#1、go#2 |\n"),
+            "list map": ("REVIEW.md", "## 去重地圖\n**R1【HIGH】a**\n- 來源：agy-B#1、go#2\n"),
+            "lean progress": ("PROGRESS.md", "## 審查\n| 編號 | 來源 | 宣稱嚴重度 | 裁決 |\n|---|---|---|---|\n"
+                                             "| R1 | agy-B#1、go#2 | HIGH | confirmed |\n"),
+        }
+        for name, (fname, doc) in cases.items():
+            with self.subTest(name):
+                path = self.write(f".claude/PRPs/plans/s/{fname}", doc)
+                issues = []
+                findings, _ = laneyield.parse(str(path), issues, ("go", "agy-B"))
+                self.assertEqual(findings["R1"][1], ["agy-B", "go"])
+                self.assertEqual([m for _, m in issues if "lane" in m], [])
+
+    def test_capitalized_bare_lane_word_counts_but_severity_ids_and_symbols_stay_out(self):
+        doc = "## 去重地圖\n| 編號 | 一句話 | 來源 |\n|---|---|---|\n| R1 | a | go#1、agy-A(HIGH)、R5、HIGH、parseExploreBool |\n"
+        findings, _, issues = self.review_issues(doc, known=("go", "agy-A"))
+        self.assertEqual(findings["R1"][1], ["go", "agy-A"])
+        self.assertNotIn("not lane ids", issues)
+
+    def test_capitalized_lane_cost_by_workflow_label_and_named_report(self):
+        sess = self.proj / "sid1"
+        write_agent(sess, "w1", "review s: snapshot tmp/s/review/", M,
+                    {"agentType": "lane-reviewer", "description": "lane-agy-A"}, workflow="wf_1")
+        write_agent(sess, "a1", "write tmp/s/review/lane-agy-B.md for s", 5 * M,
+                    {"agentType": "lane-reviewer", "description": "agy-B lane"})
+        path = self.write(".claude/PRPs/plans/s/REVIEW.md", REVIEW)
+        _, costs = laneyield.collect("s", [str(path)], [self.proj])
+        self.assertEqual(costs, {"agy-A": 4.0, "agy-B": 20.0})
+
+    TWO_ROUNDS = """# REVIEW 包 1
+## 去重地圖
+| 編號 | 一句話 | 來源 |
+|---|---|---|
+| R1 | a | go#1 |
+## 收斂裁決
+| 編號 | 裁決 |
+|---|---|
+| R1 | confirmed |
+# REVIEW 包 2
+## 包 2 去重地圖
+| 編號 | 一句話 | 來源 |
+|---|---|---|
+| R1 | b | ts#1 |
+| R2 | c | {r2} |
+## 包 2 收斂裁決
+| 編號 | 裁決 |
+|---|---|
+| R1 | confirmed |
+| R2 | confirmed |
+"""
+
+    def two_round_dirs(self):
+        self.write("tmp/s/review/tasks/go.md", "x")
+        self.write("tmp/s/review2/tasks/ts.md", "x")
+        return self.root / "tmp/s/review", self.root / "tmp/s/review2"
+
+    # explore-revamp: package 2's lanes live in tmp/<slug>/review2; one review dir per doc flagged one round or the other.
+    def test_each_review_round_checks_lanes_against_its_own_dir(self):
+        d1, d2 = self.two_round_dirs()
+        path = self.write(".claude/PRPs/plans/s/REVIEW.md", self.TWO_ROUNDS.format(r2="go#1"))
+        issues = []
+        laneyield.collect("s", [str(path)], [self.proj], issues=issues, review_dir=d1, with_cost=False,
+                          round_dirs=[("包 1", d1), ("包 2", d2)])
+        stray = [m for _, m in issues if "lanes not in" in m]
+        # go is a round-1 lane: credited in round 2 it is flagged against review2 only; ts (round 2) is not flagged.
+        self.assertEqual(len(stray), 1, issues)
+        self.assertIn(str(d2), stray[0])
+        self.assertIn("go", stray[0])
+        self.assertNotIn("ts", stray[0].split(":")[-1])
+
+    def test_round_dir_whose_text_matches_no_round_is_an_error(self):
+        d1, d2 = self.two_round_dirs()
+        path = self.write(".claude/PRPs/plans/s/REVIEW.md", self.TWO_ROUNDS.format(r2="ts#2"))
+        issues = []
+        laneyield.collect("s", [str(path)], [self.proj], issues=issues, review_dir=d1, with_cost=False,
+                          round_dirs=[("包 1", d1), ("包 3", d2)])
+        self.assertTrue(any("包 3" in m and "no review round" in m for _, m in issues), issues)
+
+    def test_cli_repeatable_review_dir_per_round_passes_strict(self):
+        d1, d2 = self.two_round_dirs()
+        path = self.write(".claude/PRPs/plans/s/REVIEW.md", self.TWO_ROUNDS.format(r2="ts#2"))
+        base = [sys.executable, str(SCRIPTS / "laneyield.py"), "--review", str(path), "--slug", "s", "--no-cost", "--strict"]
+        p = subprocess.run(base + ["--review-dir", str(d1)], capture_output=True, text=True, timeout=60)
+        self.assertEqual(p.returncode, 1, p.stdout)  # one dir for both rounds: ts is "not in review"
+        p = subprocess.run(base + ["--review-dir", f"包 1={d1}", "--review-dir", f"包 2={d2}"],
+                           capture_output=True, text=True, timeout=60)
+        self.assertEqual(p.returncode, 0, p.stdout + p.stderr)
+        self.assertNotIn("DATA", p.stdout)
+        self.write(".claude/PRPs/plans/s/REVIEW.md", self.TWO_ROUNDS.format(r2="go#1"))
+        p = subprocess.run(base + ["--review-dir", f"包 1={d1}", "--review-dir", f"包 2={d2}"],
+                           capture_output=True, text=True, timeout=60)
+        self.assertEqual(p.returncode, 1, p.stdout)
+        self.assertIn(f"lanes not in {d2}: go", p.stdout)
+
     def test_lanes_missing_from_the_review_dir_are_flagged(self):
         review = self.root / "tmp" / "s" / "review"
         self.write("tmp/s/review/tasks/go.md", "x")

@@ -58,8 +58,54 @@ def stray_findings(text):
             if _STRAY_HEAD.match(line) and not _FINDING_HEAD.match(line)]
 
 
+# Lane id in a 來源 cell or file name: `go`, `comments-code`, `agy-A`.
+# WHY: later segments take capitals (explore-revamp lanes agy-A／agy-B were unreadable); the first stays
+# lowercase so severity words (HIGH), map ids (R5) and camelCase symbols in a 來源 cell never read as lanes.
+# INVARIANT: reviewcov._SRC_TOKEN and laneyield._LANE／_SRC_ID／lane-cost patterns all build on this.
+LANE_ID = r"[a-z][a-z0-9]*(?:-[A-Za-z0-9]+)*"
+
+
 def lane_name(name):
     return name.removeprefix("lane-")
+
+
+def _finished(st):
+    try:
+        t = datetime.datetime.fromisoformat(str(st.get("finished")))
+    except ValueError:
+        return None
+    return t if t.tzinfo else t.replace(tzinfo=datetime.timezone.utc)
+
+
+def renamed_failed_statuses(review_dir):
+    """[(lane id, path, status)] for failed status files not named `lane-<name>.status.json`.
+
+    WHY: explore-revamp's PLAN review renamed codex-r2's failed status to `codex-r2-failed-usage-limit.status.json.txt`
+    and the lane gate never saw that round. Any top-level file whose name contains `status` and whose JSON has rc／ok
+    is read. INVARIANT: only a canonical status with the same `packet`, ok, and finished later (a rerun of that
+    round) supersedes it — round 1's earlier success of the same CLI does not; anything else needs --waive <id>."""
+    d = pathlib.Path(review_dir)
+    canonical = [read_status(d, n) for n, via in expected_lanes(d).items() if via == "status"]
+    out = []
+    for p in sorted(d.iterdir()) if d.is_dir() else []:
+        low = p.name.lower()
+        if not p.is_file() or "status" not in low or re.fullmatch(r"lane-.+\.status\.json", p.name):
+            continue
+        try:
+            st = json.loads(p.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        if not isinstance(st, dict) or not ({"rc", "ok"} & set(st)):
+            continue
+        if st.get("rc") == 0 and st.get("ok") is not False:
+            continue
+        when = _finished(st)
+        rerun_ok = any(c.get("rc") == 0 and c.get("ok") is not False and st.get("packet")
+                       and c.get("packet") == st.get("packet") and when and (cw := _finished(c)) and cw > when
+                       for c in canonical if c)
+        if not rerun_ok:
+            out.append((lane_name(p.name[:low.index("status")].rstrip(".-_")) or p.name, p, st))
+    return out
 
 
 def status_path(review_dir, name):

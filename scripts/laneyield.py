@@ -7,6 +7,8 @@ Usage:
   python3 laneyield.py --review path/to/REVIEW.md --slug <slug>
   python3 laneyield.py --review path/to/PROGRESS.md --slug <slug>
   python3 laneyield.py <slug> --project-dir ~/.claude/projects/<dir>
+  python3 laneyield.py <slug> --review-dir '包 1=tmp/<slug>/review' --review-dir '包 2=tmp/<slug>/review2'
+                                                 # one doc, several rounds: each round's lanes from its own dir
 
 Columns are found by header name, never by position (exact name, else prefix, else substring:
 `嚴重度（宣稱→裁決）` is a severity column, not 裁決).
@@ -50,13 +52,13 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from _usage import agent_files, cost_of, project_dirs, quality_line, read_messages  # noqa: E402
 from _common import toplevel  # noqa: E402
-from _lanes import expected_lanes, lane_name  # noqa: E402
+from _lanes import LANE_ID, expected_lanes, lane_name  # noqa: E402
 from _mdtable import id_prefix, map_tables, pick_col, row_ids, tables, unfenced  # noqa: E402
 
-_LANE = re.compile(r"[a-z][a-z0-9]*(?:-[a-z0-9]+)*")
+_LANE = re.compile(LANE_ID)
 # WHY: ASCII lookbehind — `\w` matches CJK, so `go#2和ts#1` used to drop ts.
-_SRC_ID = re.compile(r"(?<![A-Za-z0-9_-])([a-z][a-z0-9]*(?:-[a-z0-9]+)*)#\d+")
-_SRC_ID_FULL = re.compile(r"(?<![A-Za-z0-9_-])[a-z][a-z0-9]*(?:-[a-z0-9]+)*#\d+")
+_SRC_ID = re.compile(rf"(?<![A-Za-z0-9_-])({LANE_ID})#\d+")
+_SRC_ID_FULL = re.compile(rf"(?<![A-Za-z0-9_-]){LANE_ID}#\d+")
 _PAREN = re.compile(r"[（(][^（）()]*[）)]")
 _STOP = {"vs", "and", "or", "see", "main", "session"}
 _COUNT = re.compile(r"(?:—|-{1,2}|（|\()\s*\d+\s*(?:）|\))?\s*$")
@@ -195,9 +197,10 @@ def _list_map(text, issues, known):
     return entries
 
 
-def parse_review(path, issues=None, known=()):
+def parse_review(path, issues=None, known=(), scopes=None):
     """Return (findings {id: (severity_class, [lanes])}, verdicts {id: text}); problems go to `issues`.
-    `known` = lane names from the review dir (lets a bare lane word next to <lane>#<n> ids count).
+    `known` = lane names from the review dir (lets a bare lane word next to <lane>#<n> ids count);
+    `scopes`, when given, is filled with {id: heading titles down to its 地圖 heading} (its review round).
 
     A doc holding several review rounds (one 地圖 per package) numbers each from R1; ids repeated across
     rounds are returned as `R1@2` (2nd round), and each verdict table attaches to the round whose heading
@@ -259,6 +262,8 @@ def parse_review(path, issues=None, known=()):
     for e in entries:
         e["key"] = e["rid"] if len(owners[e["rid"]]) == 1 else f"{e['rid']}@{rounds.index(e['scope']) + 1}"
     findings = {e["key"]: (e["cls"], e["lanes"]) for e in entries}
+    if scopes is not None:
+        scopes.update((e["key"], e["scope"]) for e in entries)
     prefixes = {id_prefix(e["rid"]) for e in entries}
     verdicts = {}
     for vscope, rid, text_, final in vrows:
@@ -317,10 +322,10 @@ def parse_progress(path, issues=None, known=()):
     return findings, verdicts
 
 
-def parse(path, issues=None, known=()):
+def parse(path, issues=None, known=(), scopes=None):
     if pathlib.Path(path).name.startswith("PROGRESS"):
         return parse_progress(path, issues, known)
-    return parse_review(path, issues, known)
+    return parse_review(path, issues, known, scopes)
 
 
 def verdict_issues(findings, verdicts, issues):
@@ -401,13 +406,13 @@ def _named_lane(jsonl, slug, pat):
 def lane_costs(dirs, slug, quality=None):
     """{lane: $} over every subagent transcript in dirs."""
     costs = {}
-    pat = re.compile(rf"tmp/{re.escape(slug)}/review/lane-([a-z0-9-]+)\.md")
+    pat = re.compile(rf"tmp/{re.escape(slug)}/review/lane-({LANE_ID})\.md")
     # WHY: a plain substring test credits `w3` with every `w3-recipe-ship-pins` lane.
     mentions = re.compile(rf"(?<![A-Za-z0-9_-]){re.escape(slug)}(?![A-Za-z0-9_-])")
     for d in dirs:
         for af in agent_files(d):
             if af.is_workflow:
-                m = re.fullmatch(r"lane-([a-z0-9-]+)", af.label)
+                m = re.fullmatch(rf"lane-({LANE_ID})", af.label)
                 lane = m.group(1) if m and mentions.search(_dispatch_text(af.path)) else None
             else:
                 lane = _named_lane(af.path, slug, pat)
@@ -424,19 +429,39 @@ def known_lanes(review_dir):
     return set(expected_lanes(d)) | {lane_name(f.stem) for f in d.glob("lane-*.md")}
 
 
-def collect(slug, paths, dirs, quality=None, issues=None, review_dir=None, with_cost=True):
-    """Return ({lane: Counter(R, Rok, uR, uRok, unver, L, uL)}, {lane: $}); data problems go to `issues`."""
+def _stray_lanes(findings, scopes, review_dir, known, rounds, matched, mine):
+    """`lanes not in <dir>` per review dir: a finding is checked against the --review-dir whose TEXT is in one of
+    its round's headings, else against `review_dir`. Records which TEXTs matched a round in `matched`."""
+    stray = collections.defaultdict(set)
+    for key, (_, lanes) in findings.items():
+        hits = [r for r in rounds if any(r[0] in title for title in scopes.get(key, ()))]
+        matched.update(r[0] for r in hits)
+        if len(hits) > 1:
+            mine.append(("error", f"{key}: its round matches several --review-dir texts ({', '.join(r[0] for r in hits)})"))
+            continue
+        d, k = (hits[0][1], hits[0][2]) if hits else (review_dir, known)
+        if k:
+            stray[d] |= set(lanes) - k
+    for d, lanes in stray.items():
+        if lanes:
+            mine.append(("error", f"lanes not in {d}: {', '.join(sorted(lanes))}"))
+
+
+def collect(slug, paths, dirs, quality=None, issues=None, review_dir=None, with_cost=True, round_dirs=()):
+    """Return ({lane: Counter(R, Rok, uR, uRok, unver, L, uL)}, {lane: $}); data problems go to `issues`.
+    `round_dirs` = [(TEXT, dir)]: the review round under a heading containing TEXT takes its lanes from dir."""
     issues = [] if issues is None else issues
     stats = collections.defaultdict(collections.Counter)
     known = known_lanes(review_dir)
+    rounds = [(text, d, known_lanes(d)) for text, d in round_dirs]
+    issues.extend(("error", f"--review-dir {text}={d}: not a directory") for text, d, k in rounds if k is None)
+    vocab = frozenset(set(known or ()).union(*(k or () for _, _, k in rounds)))
+    matched = set()
     for path in paths:
-        mine = []
-        findings, verdicts = parse(path, mine, frozenset(known or ()))
+        mine, scopes = [], {}
+        findings, verdicts = parse(path, mine, vocab, scopes)
         verdict_issues(findings, verdicts, mine)
-        if known:
-            stray = sorted({x for _, lanes in findings.values() for x in lanes} - known)
-            if stray:
-                mine.append(("error", f"lanes not in {review_dir}: {', '.join(stray)}"))
+        _stray_lanes(findings, scopes, review_dir, known, rounds, matched, mine)
         issues.extend((sev, f"{os.path.basename(path)}: {msg}") for sev, msg in mine)
         for rid, (cls, lanes) in findings.items():
             verdict = verdict_class(verdicts.get(rid))
@@ -451,13 +476,16 @@ def collect(slug, paths, dirs, quality=None, issues=None, review_dir=None, with_
                     s["Rok"] += 1
                 if cls == "R" and verdict == "unverified":
                     s["unver"] += 1
+    # INVARIANT: checked over all paths — a slug's REVIEW-2.md may hold the round that REVIEW.md lacks.
+    issues.extend(("error", f"--review-dir {text}={d}: no review round under a heading containing {text!r}")
+                  for text, d, _ in rounds if text not in matched)
     return dict(stats), (lane_costs(dirs, slug, quality) if with_cost else {})
 
 
-def report(slug, paths, dirs, review_dir=None, with_cost=True):
+def report(slug, paths, dirs, review_dir=None, with_cost=True, round_dirs=()):
     """Print the lane table and every data problem; return the number of problems."""
     quality, issues = {}, []
-    stats, costs = collect(slug, paths, dirs, quality, issues, review_dir, with_cost)
+    stats, costs = collect(slug, paths, dirs, quality, issues, review_dir, with_cost, round_dirs)
     print(f"== {slug}  ({', '.join(os.path.basename(p) for p in paths)})")
     print(f"{'lane':18}{'R':>4}{'R ok':>6}{'uniqR':>7}{'uniqR ok':>10}{'unver':>7}{'L':>5}{'uniqL':>7}{'$':>8}{'$/uniqR ok':>12}")
     for lane, s in sorted(stats.items(), key=lambda kv: (-kv[1]["uRok"], -kv[1]["uR"], -kv[1]["R"])):
@@ -481,15 +509,32 @@ def main():
     ap.add_argument("--review", default=None, help="explicit REVIEW.md or PROGRESS.md path (use with one --slug)")
     ap.add_argument("--slug", default=None)
     ap.add_argument("--project-dir", default=None)
-    ap.add_argument("--review-dir", default=None,
-                    help="tmp/<slug>/review to check lane names against (default: that dir in the repo, if present)")
+    ap.add_argument("--review-dir", action="append", default=[], metavar="[TEXT=]DIR",
+                    help="tmp/<slug>/review to check lane names against (default: that dir in the repo, if present); "
+                         "TEXT=DIR (repeatable) gives the review round under a heading containing TEXT its own dir, "
+                         "e.g. '包 2=tmp/<slug>/review2'")
     ap.add_argument("--no-cost", action="store_true", help="parse and check only; skip the transcript scan")
     ap.add_argument("--strict", action="store_true", help="exit 1 when any data problem is printed")
     a = ap.parse_args()
+    bare, round_dirs = [], []
+    for v in a.review_dir:
+        # WHY: TEXT=DIR mirrors reviewcov --section TEXT (one review round per heading); a real dir whose path
+        # contains `=` stays a plain dir.
+        text, sep, d = v.partition("=")
+        if sep and not os.path.isdir(v):
+            if not text.strip() or not d.strip():
+                ap.error(f"--review-dir TEXT=DIR needs both parts, got {v!r}")
+            round_dirs.append((text.strip(), pathlib.Path(d.strip())))
+        else:
+            bare.append(v)
+    if len(bare) > 1:
+        ap.error("one plain --review-dir at most; give the other rounds as TEXT=DIR")
+    a.review_dir = bare[0] if bare else None
     dirs = [] if a.no_cost else project_dirs(a.project_dir, all_worktrees=True)
     problems = 0
     if a.review:
-        problems += report(a.slug or pathlib.Path(a.review).parent.name, [a.review], dirs, a.review_dir, not a.no_cost)
+        problems += report(a.slug or pathlib.Path(a.review).parent.name, [a.review], dirs, a.review_dir, not a.no_cost,
+                           round_dirs)
     else:
         repo = toplevel()
         for slug in a.slugs:
@@ -498,7 +543,8 @@ def main():
                 print(f"== {slug}: no REVIEW*.md or PROGRESS.md")
                 problems += 1
                 continue
-            problems += report(slug, paths, dirs, a.review_dir or repo / "tmp" / slug / "review", not a.no_cost)
+            problems += report(slug, paths, dirs, a.review_dir or repo / "tmp" / slug / "review", not a.no_cost,
+                               round_dirs)
     sys.exit(1 if a.strict and problems else 0)
 
 

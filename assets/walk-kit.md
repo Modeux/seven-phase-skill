@@ -8,6 +8,28 @@
 - `login.js`：一支 `async (page) => {...}`，登入並回傳帳號。
 - `step-<n>.js`：每步一支 `async (page) => {...}`：操作、量 DOM（附本包獨有的 DOM 指紋）、截圖到 `<證據目錄>/<輪次>/step-<n>.png`、回傳量測 JSON。捲動位置、視窗寬、主題寫死在腳本裡。探索時用 `browser_run_code_unsafe` 跑（有 `filename` 參數就帶絕對路徑，沒有就貼檔案內容）；重走用 `scripts/run_kit.mjs`（下節）。
   - **runner 相容**：每輪會變的參數集中在**單行** `const CFG = { round: '…', … };`（runner 在這行後面注入覆寫；寫成多行就只能跑預設值）；截圖路徑由 `CFG.round` 組；回傳物件帶 `ok: true|false`（沒帶的步驟 runner 只能標 DONE，等於沒判）；不靠 `require`／Node 全域。
+  - **焦點探針（每支 step 必帶）**：每個走到的狀態呼叫一次下面的 `focusProbe`，結果放進回傳的 `focusDrops`、非空就 `ok: false`；報告列出每顆的可讀名稱與狀態，`navigated: true`（按了換頁）的另外判。它對每顆可見、可按的按鈕先重進該狀態、按 Enter、等兩幀（讓 Angular 先渲染），`document.activeElement` 是 `<body>` 或 null 就記一筆。為什麼：「按下即自我移除、焦點掉到 body」在 explore-revamp 包 2 已是第七個面再現（REVIEW「包 2 流出分析」R9），逐面靠人想到要按太晚。
+```js
+// enter：把頁面帶回這個狀態的 async 函式——每按一顆都會改變狀態，所以每顆前都重進。
+const focusProbe = async (page, state, enter) => {
+  const sel = 'button:visible:enabled, [role="button"]:visible:not([aria-disabled="true"])';
+  await enter();
+  const names = await page.locator(sel).evaluateAll((els) => els.map((e) =>
+    (e.getAttribute('aria-label') || e.textContent || e.title || '').trim().replace(/\s+/g, ' ')));
+  const drops = [];
+  for (let i = 0; i < names.length; i++) {
+    if (i) await enter();
+    const url = page.url();
+    await page.locator(sel).nth(i).focus();
+    await page.keyboard.press('Enter');
+    await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
+    const active = await page.evaluate(() => (document.activeElement && document.activeElement !== document.body
+      ? null : document.activeElement ? 'BODY' : 'null'));
+    if (active) drops.push({ state, button: names[i] || `#${i}`, active, navigated: page.url() !== url });
+  }
+  return drops;
+};
+```
 - `checks.sql`：每步要對的 DB 查詢，只 SELECT。
 - `repro-<條目>.js`（任何一趟回報「中」以上的行為 bug 時都要附）：runner 相容、會在回報的那個症狀上回 `ok: false` 的重現步驟，交件前用 `run_kit.mjs --steps` 跑過一次；另附觸發表草稿（會影響同一塊的狀態×動作、在途×另一動作、0／>0、失敗、到底），每列一支步驟或寫「套件測不到＋理由」。這是修片的會紅指令與觸發表（SKILL.md「修片進場門檻」），主 session 審過才派修片。
 
