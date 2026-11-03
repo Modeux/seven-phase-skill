@@ -105,6 +105,10 @@ let setupFailed = false;
 try {
   if (arg('base-url')) await page.goto(String(arg('base-url')));
   summary.login = await run('login.js', {});
+  // WHY: the agent's own probe scripts reuse this instead of logging in again (history 11-03).
+  // INVARIANT: holds a dev session token — stays under the evidence dir (repo tmp/, gitignored).
+  summary.storageState = path.join(runDir, 'storage-state.json');
+  await context.storageState({ path: summary.storageState });
   if (arg('fingerprint')) {
     const fp = String(arg('fingerprint'));
     summary.fingerprint = { selector: fp, found: (await page.locator(fp).count()) > 0, url: page.url() };

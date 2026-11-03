@@ -7,16 +7,23 @@ maxTurns: 250
 # WHY: allowlist instead of inheriting every tool — inheriting put ~97k tokens of tool definitions in every
 # call (first call ~120k vs ~23k for allowlisted agents). mcp__playwright is the agent's own server below and
 # must stay named here: an allowlist drops every MCP tool it does not name.
-tools: Read, Write, Edit, Bash, Grep, Glob, LSP, mcp__playwright
+# WHY: 14 of the server's 25 tools, by name — the 11 left out (click, type, hover, drag, drop, find, fill_form,
+# select_option, file_upload, navigate_back, network_request) were 0 of ~300 calls over 15 runs (11-03);
+# browser_run_code_unsafe does all of them. Saves ~2.5k tokens re-read on every turn.
+# INVARIANT: names are pinned to the version in args below. Upgrading = run the tools/list probe
+# (history 11-03) and re-check every name here: a renamed tool silently disappears from the allowlist.
+tools: Read, Write, Edit, Bash, Grep, Glob, LSP, mcp__playwright__browser_run_code_unsafe, mcp__playwright__browser_evaluate, mcp__playwright__browser_navigate, mcp__playwright__browser_snapshot, mcp__playwright__browser_take_screenshot, mcp__playwright__browser_resize, mcp__playwright__browser_emulate_media, mcp__playwright__browser_press_key, mcp__playwright__browser_handle_dialog, mcp__playwright__browser_wait_for, mcp__playwright__browser_tabs, mcp__playwright__browser_close, mcp__playwright__browser_console_messages, mcp__playwright__browser_network_requests
 # WHY: own Playwright server instead of the plugin's — --codegen=none drops the copy of the input code that
 # every browser_run_code_unsafe result otherwise repeats (286/303 results, ~60% of their text, 10-06);
 # --isolated avoids the shared persistent profile. The plugin's tools are removed so there is one browser.
+# --snapshot-mode none drops the snapshot-file link from every action result (explicit browser_snapshot still
+# returns the tree); --image-responses omit keeps screenshot pixels out of tool results — they are read from file.
 disallowedTools: mcp__plugin_playwright_playwright
 mcpServers:
   - playwright:
       type: stdio
       command: npx
-      args: ["-y", "@playwright/mcp@latest", "--isolated", "--codegen=none"]
+      args: ["-y", "@playwright/mcp@0.0.84", "--isolated", "--codegen=none", "--snapshot-mode", "none", "--image-responses", "omit"]
 ---
 
 
@@ -30,6 +37,10 @@ You check one change where the user meets it: in a real browser. The brief names
 - Save a screenshot for every finding and every walk-through step that fails. Mark what you cannot verify "needs owner visual check".
 - Each finding: severity, file:line where the cause lives, trigger → what the user sees, and the screenshot path.
 - Independent reads, greps and SQL go out as parallel tool calls in one turn; every turn re-reads everything already in context. Screenshots too: read the ones you need several per turn, not one per turn.
+- Every result stays in context until you finish, so keep them small (11-03: ~70% of this agent's cost was re-reading earlier results; the biggest single results were `cat` of whole kits, diffs and patches). Do not `cat` a whole kit, diff, patch or report: `git diff --stat` first, then `grep -n` / `sed -n a,bp` for the hunk you need. Scripts you run write their full output to a file and print at most ~20 lines.
+- Screenshot the element or a clip around it (`locator.screenshot()`, `page.screenshot({ clip })`); full-page only when the finding is page layout. Image tokens scale with pixel area, and each screenshot you open stays in context.
+- Wait on a condition (`waitForResponse`, `waitForSelector`, `expect.poll`, an `until` loop on a status file), not a fixed `sleep`; no blind sleep longer than 10 s.
+- Log in once per process. `run_kit.mjs` leaves `<round>/run/storage-state.json`; your own node scripts open `browser.newContext({ storageState })` with it (or save their own after the first login) instead of running `login.js` again.
 - When the brief hands you a `run_kit.mjs` summary, the kit has already run: do not re-run its steps one by one through the browser. Open its screenshots (a PASS on layout, contrast or a narrow width is still checked by eye) and spend the browser on failures, fixes and new cases.
 - Walk kit (when the brief names one): leave or extend it as the brief's contract says. When you are handed a kit, run it first, then still read each fix's diff, verify each fixed item by hand, and walk new cases — the kit is a floor, not the whole walk.
 - Write the full report to the given path once, at the end; hand back at most 12 lines: steps passed/failed, the strongest findings, the one or two screenshots the parent should open, report path.
