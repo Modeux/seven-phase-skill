@@ -28,6 +28,7 @@
 | 規格忠實度＋case walk | lane-reviewer | 必開 |
 | 異源外審 | codex（gpt-6-sol xhigh） | 必開 |
 | 安全／隱私 | security-reviewer | 碰使用者輸入、log／錯誤外洩、權限時 |
+| 無障礙 | a11y-architect（lane 名 `a11y`；沒有 Bash 與瀏覽器：讀碼查語意、鍵盤、焦點，真瀏覽器量測仍歸 `ui-lane-reviewer`） | 涉 UI 時必開（10-19～11-04 只跑 2 輪、獨家已確認 10 條，每條約 $2；owner 11-04 定） |
 | UI/UX | `ui-lane-reviewer`＋瀏覽器截圖（工具白名單、自帶 Playwright server（版本釘住、`--codegen=none`、白名單 14 個瀏覽器工具）取代 plugin 那套；lane-reviewer 已限縮工具、開不了瀏覽器） | 涉 UI 時；驗不了的標「需人工目視」 |
 
 ## 大包或高風險包：完整路數

@@ -22,7 +22,7 @@
 - lane 死掉或外審跑不了：記清楚是「沒跑」還是「空跑」，**換一個不同鏡頭替補**，不同質重跑（常被漏的鏡頭見 `references/lanes.md`）；跑不了的原因（例如缺金鑰）屬 owner 的設定，主 session 不改 owner 的 CLI 設定、也不去讀它的憑證。
 - 規格忠實度 lane 要主動列「本節沒處理的 3 個情境」——fan-out 抓錯誤行為，case walk-through 才抓缺少的行為。
 - 註解 lane 分「該刪（複述程式碼）／該補（非直覺處沒寫）／該修（與行為不符或過時）」。
-- 測試 lane 用突變驗證 PLAN 記的閘指令（`-run` regex、`--include`）真的跑得到本包測試——否則 PROGRESS 的「全綠」可能是空集合全綠。
+- 測試 lane 用突變驗證 PLAN 記的閘指令（`-run` regex、`--include`）真的跑得到本包測試——否則 PROGRESS 的「全綠」可能是空集合全綠。有維度表的另做兩個突變：在取值來源加一個新值、讓一個出口繞過單一閘點，窮舉表測都必須紅。
 - 涉 UI 的 UI/UX lane（`ui-lane-reviewer`）以 SPEC 的 UI/UX 條目驗收：design system 一致性、無障礙（語意標籤、鍵盤、焦點）、loading／empty／error 狀態、響應式；用瀏覽器實際渲染、截圖為證，每次量測附 DOM 指紋證明量的是本包。驗不了的標「需人工目視」交 owner。第 5 階段的走一趟套件只給起環境的部分（`env.sh`、`login.js`、種資料），不給量測腳本與上一輪結果（`assets/walk-kit.md`「誰能用哪部分」）。
 - 吃 Docker 的指令（測試 lane 的整合突變等）照第 5 階段「共用資源」包 `scripts/dockerslot.py`；內審各路同一個 Workflow 一次扇出，不分波。
 - 突變只在突變樹做；主 session 在審查期間起的 dev server／`go run` 記下啟動時間——「檔案已還原」不等於「跑著的程序已還原」。
