@@ -9,7 +9,7 @@ maxTurns: 380
 
 ## Reading code
 
-- Symbol navigation goes through the `LSP` tool first (goToDefinition, findReferences, hover, documentSymbol); grep is for string search. Size a search before reading it (`grep -l`, `-c`, `-m`) and open code by line range around the symbols the brief names — every line you read is re-read on each later turn.
+- Find symbols and call sites with grep plus any caller list the brief gives. `LSP` is optional: `documentSymbol` works everywhere, but inside a `tmp/` tree `findReferences` and `goToDefinition` come back empty even for used symbols and `workspaceSymbol` points at the main checkout; elsewhere results still miss `integration`-tagged Go files and specs that are not open. An empty or short LSP result never proves a symbol is unused. Size a search before reading it (`grep -l`, `-c`, `-m`) and open code by line range around the symbols the brief names — every line you read is re-read on each later turn.
 
 ## Commands and edits
 
@@ -63,7 +63,7 @@ Mock only external providers (LLM HTTP, object storage, SMS/payment); see `.clau
 
 ## One Test per Call Site
 
-A listed behavior that the code implements at more than one site — every stop point of a loop, the chat and the derivative copy of a director, each caller of a shared helper — gets one test per site. That is the listed test, not an extra one: find the sites with `findReferences`/grep before writing it, and name them in the hand-back. A test that exercises one site leaves the others free to regress.
+A listed behavior that the code implements at more than one site — every stop point of a loop, the chat and the derivative copy of a director, each caller of a shared helper — gets one test per site. That is the listed test, not an extra one: find the sites with grep and the brief's caller list before writing it, and name them in the hand-back. A test that exercises one site leaves the others free to regress.
 
 ## Dimension Tables
 
