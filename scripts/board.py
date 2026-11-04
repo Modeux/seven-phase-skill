@@ -46,6 +46,9 @@ RETRO_EVERY = 5
 # WHY: the 10-05／10-06 slimming (24 CLAUDE.md 1.35MB → 0.68MB) regrew to 1.12MB in 11 days under a text-only
 # 「合併改寫、不往後追加」rule; a nested CLAUDE.md is reloaded every turn once read, so size is recurring cost.
 DOC_CAP, DOC_GROWTH, DOC_GROWTH_MIN = 40_000, 0.20, 2_000
+# WHY: these three load on nearly every run, so the shared 40KB cap never flags them; the 11-04 slimming took them
+# to 11.7／18.4／14.0KB and this keeps a fourth slimming from being the way anyone notices (owner 11-04).
+DOC_HOT_CAPS = {"CLAUDE.md": 12_000, "backend-golang/CLAUDE.md": 20_000, "angular-workspace/CLAUDE.md": 20_000}
 DOC_RE = re.compile(r"(^|/)CLAUDE\.md$|^\.claude/rules/.+\.md$")
 DOC_SKIP = ("tmp/", ".claude/worktrees/")
 
@@ -309,7 +312,7 @@ def doc_report(main, base, since_day):
         old = then.get(p)
         grew = old is not None and now - old > max(old * DOC_GROWTH, DOC_GROWTH_MIN)
         rows.append({"path": p, "now": now, "head": head.get(p), "then": old,
-                     "flag": "過大" if now > DOC_CAP else ("長太快" if grew else "")})
+                     "flag": "過大" if now > DOC_HOT_CAPS.get(p, DOC_CAP) else ("長太快" if grew else "")})
     return {"rows": rows, "since": since_day, "total": sum(r["now"] for r in rows),
             "total_then": sum(then.values()) if then else None, "flagged": [r for r in rows if r["flag"]]}
 
@@ -466,7 +469,7 @@ def process_lines(b):
                    " → 回報時跟 owner 提一句可以檢討（phases/retro.md）")
     if b["docs"]["flagged"]:
         fl = sorted(b["docs"]["flagged"], key=lambda r: -r["now"])
-        out.append(f"■ 說明檔過大 {len(fl)}（上限 {kb(DOC_CAP)}，board.py --docsize）：" + "、".join(
+        out.append(f"■ 說明檔過大 {len(fl)}（上限 {kb(DOC_CAP)}；根檔與兩份母檔另有上限，board.py --docsize）：" + "、".join(
             f"{short_doc(r['path'])} {kb(r['now'])}" + ("" if r["flag"] == "過大" else "↑") for r in fl[:5])
             + (f"…另 {len(fl) - 5} 份" if len(fl) > 5 else ""))
     return out
@@ -482,7 +485,8 @@ def render_docsize(d):
         lines.append(f"{r['path']:{width}} {r['now']:9,} {delta(r['now'], r['head']):>9} "
                      f"{delta(r['now'], r['then']) if d['since'] else '-':>9}  {r['flag']}")
     then = f"，上次檢討（{since}）{d['total_then']:,}" if d["total_then"] else ""
-    lines.append(f"total {len(d['rows'])} 份 {d['total']:,} bytes{then}；過大＝>{DOC_CAP:,}，長太快＝比上次檢討"
+    hot = "、".join(f"{k} {v:,}" for k, v in DOC_HOT_CAPS.items())
+    lines.append(f"total {len(d['rows'])} 份 {d['total']:,} bytes{then}；過大＝>{DOC_CAP:,}（{hot}），長太快＝比上次檢討"
                  f" +{DOC_GROWTH:.0%} 且 +{DOC_GROWTH_MIN:,} bytes 以上")
     return "\n".join(lines)
 

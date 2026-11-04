@@ -69,7 +69,7 @@ owner 吃過「一路衝到底、末端才發現前提錯」的虧，也要自�
   - **同一塊（同一元件或行為）修了兩輪、重走仍冒「中」以上的新 bug＝迴圈**：停開修片；把這塊歷輪的走查發現與量測、相關程式碼、觸發表組成一份證據包（與 reviewer 手上的同一份事實），交 codex／grok／agy 並行討論「做法本身對不對、該換什麼設計、哪些要真引擎測」（`run_external.py`）；收件合成後用 AskUserQuestion 問 owner「採用收斂出的做法（附預估時間）／停損（記 BACKLOG）」，答之前不開下一片。
   - 為什麼：journey-scene-layer 第 5 階段修片 FX3～FX13、重走十輪、每輪約 1 小時，後幾輪的新 bug 都是上一輪修法帶出來的，低項也走完整循環（owner：「我被你的行為卡了好幾小時」「主要重工的浪費」）。進場門檻借自 `mattpocock-skills:diagnosing-bugs`：等修第二次才列觸發表會晚一輪，第一次修就跑過整張表，才擋得到修法在別的觸發情況帶出的新 bug；那份 skill 在 transcript 裡從沒被呼叫過（修片 agent 沒有 Skill 工具），所以要點直接寫進任務包。
 - **改流程就登記驗收**：改本 skill、repo 的 hook／agent 檔／settings，或 CLAUDE.md 結構，同一次就在 `ACCEPTANCE.md`「待驗」加一列（到期日、指令、判準＋基線、出處）；驗收指令不准指向 `tmp/`。看板在 SessionStart 列出到期的列；看到「驗收到期」，在下一次回報時跟 owner 提一句。為什麼：10-17 檢討時，5 筆流程驗收有 2 筆腳本被清掉、2 筆過期沒跑，規則一直加卻不知道哪些有用。
-- **說明檔大小**：看板列出超過 40KB 或比上次檢討長 20% 以上的 CLAUDE.md／`.claude/rules/` 檔。第 7 階段搬耐久結論後跑 `scripts/board.py --docsize`，checkpoint 回報淨增減；把一份推過 40KB 的，同一包內合併改寫或依「全程規則」拆規則檔。為什麼：10-06 瘦身後 11 天，指示檔總量 730KB → 1,119KB，文字規則「合併改寫、不往後追加」沒守住。
+- **說明檔大小**：看板列出超過 40KB（根 `CLAUDE.md` 12KB、`backend-golang`／`angular-workspace` 母檔 20KB）或比上次檢討長 20% 以上的 CLAUDE.md／`.claude/rules/` 檔。第 7 階段搬耐久結論後跑 `scripts/board.py --docsize`，checkpoint 回報淨增減；把一份推過 40KB 的，同一包內合併改寫或依「全程規則」拆規則檔。為什麼：10-06 瘦身後 11 天，指示檔總量 730KB → 1,119KB，文字規則「合併改寫、不往後追加」沒守住。
 - **graphify 只准查詢**，改完 docs／sql／openapi 只提醒圖過期，沒 owner 指示不跑 `--update`。
 - **prod**：**任何 prod 查詢（DB、Langfuse 等量測 API）都先用 AskUserQuestion 問 owner**，附確切查詢、它要回答什麼、答案會怎麼改變決定；只看聚合數字也一樣要問（owner 09-28 定）。核准後由主 session 跑，subagent 一律禁打。DB 只下 SELECT；Langfuse 額度與 prod 警報輪詢器共用。不讀使用者對話內容、不印任何金鑰。
 
