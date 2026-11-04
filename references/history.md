@@ -83,6 +83,7 @@
 | 11-03 | 只有真瀏覽器看得到的行為 bug：修片准**唯讀**用走一趟環境跑 repro 與自寫探針、在頁面注入候選邏輯驗做法（禁 env.sh、重啟、寫 DB／Redis、改套件與樹），瀏覽器側的「修完重跑」＝注入與程式碼同一份邏輯；沒給環境時瀏覽器行為的宣稱一律標「未量」；報告列「主 session 要量的點」，**逐條有腳本跑過才算收件**（`assets/fixplan.md`、SKILL.md 修片進場門檻） | explore-revamp 包 3 流出分析「R7 沒修完」：第二波橫欄修片只有 jsdom，把沒量過的 `scroll-padding-inline` 行為寫成 WHY；報告列了要主 session 量的點，收件時沒有腳本、只重跑既有步驟，走一趟才量到。第三波 HR3／HF3 照本做法一次過。owner 在 AskUserQuestion 選「採用」 |
 | 11-04 | PLAN 的跨狀態規則列維度、不列格子：維度表＋單一閘點＋取值來源活的窮舉表測，只逐格列例外；第 5 階段排在該規則第一片，第 6 階段測試 lane 加「新值」「繞過閘點」兩個突變（`phases/4-plan.md` 第 5 條、`5-implement.md`、`6-review.md`、`assets/plan-review-brief.md`） | 第三次檢討（`retros/2026-11-04.md`）：77 列流出約 77% 指向 PLAN（基線 79%），三項 PLAN 閘加上去沒降；48 列落成機械閘。取代的是「把狀態組合逐格寫進 PLAN」這個做法。owner 在 AskUserQuestion 選 A |
 | 11-04 | 涉 UI 的包必開 a11y lane（`a11y-architect`，`references/lanes.md`）；grok 第 6 階段保留 | 同一次檢討：a11y 只跑 2 輪、獨家已確認 10 條、每條約 $2；grok 7 輪獨家已確認 0 條。主 session 推薦同時停 grok，owner 選「只加 a11y，grok 保留」，所以這條沒有對應的刪除 |
+| 11-04 | tdd-guide 定義修正：刪掉與「沒有覆蓋率目標」矛盾的三條清單（public 函式、API、E2E 全覆蓋）；補 red-run 與紅跑後不改測試（要改就列偏離）、守衛測試的突變證明、維度表、fixture 時序與 stub 反模式、改檔與 worktree 指令形狀；`maxTurns` 300→380（`agents/tdd-guide.md`） | 197 顆 tdd-guide 審計：TDD 紀律良好（165 份 red-run 有 164 份是斷言失敗），但 71% 撞 py-edit-guard、87 顆撞 worktree 守衛 197 次；實作後改斷言 47 顆，20 顆刪斷言的片有 8 顆回報沒提（粗判）；最高 287 回合，只剩 1.05 倍餘裕。LSP 指令 0 次呼叫，這輪沒處理。owner 在 AskUserQuestion 選「修 agent 定義」 |
 
 ## 更早就存在、仍有效的教訓
 - **審查數量 vs 收斂**（04-28，owner）：「reviewer 多是可以的，有些 bug 會因為角度不同才會浮現；真正要關心的是如何收斂，less is more」→ 槓桿在 intake gate：只有嚴重技術債或潛在 bug 風險才進地圖。09-28 的分級只縮小包的路數，不取消多角度。
