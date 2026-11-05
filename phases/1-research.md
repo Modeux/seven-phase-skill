@@ -9,6 +9,7 @@
    - **圖 → 任務書，主 session 自己跑**：code-explorer／planner／architect 沒有 Bash，跑不了 graphify；worktree 裡的 subagent 也 cd 不到主 checkout。所以派探索 agent **之前**主 session 先跑上面的 query／affected，把 `Start:` 候選檔清單與 caller 清單貼進派工 prompt（「圖給的起點：…；圖不含本包新符號，回碼確認」），agent 從這些檔開始讀而不是從 grep 起手。worktree 裡跑 graphify 不要 cd，加 `--graph <主 checkout>/graphify-out/graph.json`（`graphify-query-guard` hook 會擋沒帶 `--context` 的 query 並印這條）。派 code-explorer 的 prompt 沒有「圖給的起點」節會被 repo 的 `explorer-graph-seed-guard` hook 擋下；確實用不上圖（新符號、`tmp/` 腳本）寫「圖給的起點：不適用——<理由>」。code-explorer 回報的 `### Graph Seeds` 節逐條標起點證實／無關與 grep 獨有的發生點，彙整 RESEARCH 的來源欄直接用它；
    - 關聯測試與環境設定盤點；可沿用的既有模式；
    - 需要時一路上網佐證：**學術論文／官方文件／規範／權威文章優先**，引用附連結＋一句「它如何支撐設計決策」；找不到可靠來源就明說，不得杜撰。
+   - **查資料庫、函式庫、框架的行為或設定，先走 context7**（`resolve-library-id` → `query-docs`；探索 agent 沒有這組工具就主 session 自己查），查不到才直接讀官方網站。除了確認行為，再問一次「官方對這件事的建議做法是什麼」，和我們的做法比一遍；差異與依賴的前提（設定值、版本）寫進 RESEARCH，部署時要驗的帶進 SPEC 部署節。為什麼：db-statement-timeout 第 1 階段直接引 postgresql.org、只查語義，到第 7 階段補查才發現部署驗收依賴 `log_min_error_statement`、卻沒驗過。
    - 需要 prod 數據時：先寫好確切查詢，**用 AskUserQuestion 問 owner 能不能跑**（它要回答什麼、答案會怎麼改變結論）；核准後主 session 自己跑，不交 subagent。沒核准就把查詢寫進 RESEARCH，標「待 owner 決定」。
 3. 探索**一律以程式碼本體與測試為準**，註解與行為不符處記入現況摘要（後面要一併修）。程式碼是「現在發生什麼」，不是「應該發生什麼」：錢、權限、年齡、保留期這類規則另記**政策出處**（成文政策或 owner 拍板）；只有程式碼與照現況寫的測試撐著的記「無出處」，進第 5 步挑戰結論。為什麼：付費訊息 90 天清理的整合測試把反過來的行為釘成預期，程式碼與測試互相印證、卻沒有政策可對（message-retention-restore 流出分析）。探索 agent 只回結論、關鍵證據與檔案位置，不回大量原始碼。
 4. 主 session 彙整後**用程式碼搜尋抽查交叉驗證**、補足 graph 沒涵蓋處。
