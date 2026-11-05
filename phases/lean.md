@@ -14,6 +14,7 @@
 ## 2. 紅→綠
 - 先寫紅、跑出紅（輸出存 `tmp/<slug>/`），再實作到綠；1–3 檔主 session 直接做，多片才派 tdd-guide（`phases/5-implement.md` 的私有樹與單一 writer 規則照用）。
 - 碰到的層各跑一次 targeted 測試＋build（deepweave 的指令與收尾閘見 `references/project-deepweave.md`）。
+- 從 `phases/bug.md` 來的：不論誰實作，首版修完重跑會紅的指令與整張觸發表，寫下修後預期與實際，不符就處理完才進 §3。
 
 ## 3. 審查（不省）
 照 `phases/6-review.md` §1–§4 做：`numstat.py` 確認規模、凍結快照、共用任務書、派 lane（小包表的必開項全開，含 codex；條件項依觸發）。收件照 §5，但去重地圖寫進 PROGRESS.md 的 `## 審查` 表（編號 R1…／L1…、來源 `<lane>#<n>`、宣稱嚴重度、最終嚴重度、裁決、處置；裁決詞照 `phases/7-converge.md` §3），用 `reviewcov.py tmp/<slug>/review .claude/PRPs/plans/<slug>/PROGRESS.md` 核對涵蓋；裁決填完跑 `laneyield.py <slug> --no-cost --strict`。

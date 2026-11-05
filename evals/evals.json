@@ -56,23 +56,27 @@
         "開工的 AskUserQuestion 問模型，不問精簡路或完整路",
         "第一個工程步驟是定位發生點並做出紅在回報症狀上的指令，不是改程式碼",
         "症狀的幅度與範圍是量出來的，prod 查詢先問 owner",
-        "列 3–5 個可推翻的假設，根因要解釋得了觸發表每一列",
-        "分流排在診斷之後；因為碰錢而推薦完整路，診斷結果搬進 RESEARCH.md 後接第 2 階段"
+        "先驗最可能的假設，驗不過才列 3–5 個；根因要解釋得了觸發表每一列",
+        "分流排在診斷之後；因為碰錢而推薦完整路，診斷結果搬進 RESEARCH.md 後接第 2 階段",
+        "觸發表每列都有修後預期，首版修完要重跑整張表"
       ]
     },
     {
       "id": 5,
       "name": "prod-bleeding-hotfix",
       "prompt": "緊急修正：排程每天半夜會誤清付費用戶的舊訊息，軟刪的訊息 5 天後會被硬刪就救不回了。dev 上還有沒驗收的功能（repo：~/Desktop/deepweave/deepweave）。先不用真的動手，告訴我你接下來的步驟。",
-      "expected_output": "走止血軌：不問模型；附損失證據請 owner 確認；只停排程；從 master 開 hotfix 分支；commit 前跑 lane-reviewer 與 silent-failure-hunter；commit 等 owner；之後開修復包，審查附止血 diff",
+      "expected_output": "走止血軌：不問模型；先從 origin/master 開 hotfix 樹再定位；停掉誤清排程與訊息硬刪段，其他清理照跑，佇列裡的 job 交 owner；附證據請 owner 確認並核對 prod SHA；commit 前 2 路 lane-reviewer 且 reviewcov 過閘；交付前就記 BACKLOG；commit、合併、部署等 owner；修復另開新任務",
       "files": [],
       "assertions": [
         "判定走止血軌並請 owner 確認，不問模型",
-        "改法只有停用或還原，不包含救回資料的邏輯",
-        "分支從 master 開，不從 dev 開",
-        "commit 前跑 lane-reviewer 與 silent-failure-hunter 兩路",
-        "commit、合併、部署都等 owner 明說",
-        "修復另開一包走診斷，審查任務書附上止血 commit 的 diff"
+        "先開 hotfix 樹再定位，基底是 origin/master，並核對 prod 實跑的 SHA",
+        "同時停掉誤清排程與訊息硬刪段；只停排程、硬刪照跑算失敗",
+        "其他清理照跑，可以加只讓硬刪段不跑的開關；整支清理停掉算失敗",
+        "救回資料不在止血範圍",
+        "commit 前跑 2 路 lane-reviewer，其中一路找還會造成損失的路徑（含佇列），reviewcov 過閘",
+        "commit、合併 master、部署、合回 dev 都等 owner 明說",
+        "BACKLOG 的恢復項在交付前就寫進主 checkout",
+        "修復是新任務並照開工第一步問模型，審查任務書附上止血 commit 的 diff"
       ]
     }
   ]
