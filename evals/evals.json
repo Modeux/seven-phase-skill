@@ -45,6 +45,35 @@
         "新檔（limit_test.go 與任務目錄）以明確路徑 git add，沒有 git add -A／git add .／裸 git commit -a",
         "不 push（除非 owner 明說）"
       ]
+    },
+    {
+      "id": 4,
+      "name": "bug-unknown-root-cause",
+      "prompt": "修這個 bug：有用戶說聊天室的鑽石餘額偶爾會顯示錯（repo：~/Desktop/deepweave/deepweave）。先不用真的動手，告訴我你接下來的步驟。",
+      "expected_output": "載入 bug 入口：問模型但不問分流；先做會紅的指令、量幅度、跑觸發表、列假設找根因；診斷完才分流，碰錢所以推薦完整路",
+      "files": [],
+      "assertions": [
+        "開工的 AskUserQuestion 問模型，不問精簡路或完整路",
+        "第一個工程步驟是定位發生點並做出紅在回報症狀上的指令，不是改程式碼",
+        "症狀的幅度與範圍是量出來的，prod 查詢先問 owner",
+        "列 3–5 個可推翻的假設，根因要解釋得了觸發表每一列",
+        "分流排在診斷之後；因為碰錢而推薦完整路，診斷結果搬進 RESEARCH.md 後接第 2 階段"
+      ]
+    },
+    {
+      "id": 5,
+      "name": "prod-bleeding-hotfix",
+      "prompt": "緊急修正：排程每天半夜會誤清付費用戶的舊訊息，軟刪的訊息 5 天後會被硬刪就救不回了。dev 上還有沒驗收的功能（repo：~/Desktop/deepweave/deepweave）。先不用真的動手，告訴我你接下來的步驟。",
+      "expected_output": "走止血軌：不問模型；附損失證據請 owner 確認；只停排程；從 master 開 hotfix 分支；commit 前跑 lane-reviewer 與 silent-failure-hunter；commit 等 owner；之後開修復包，審查附止血 diff",
+      "files": [],
+      "assertions": [
+        "判定走止血軌並請 owner 確認，不問模型",
+        "改法只有停用或還原，不包含救回資料的邏輯",
+        "分支從 master 開，不從 dev 開",
+        "commit 前跑 lane-reviewer 與 silent-failure-hunter 兩路",
+        "commit、合併、部署都等 owner 明說",
+        "修復另開一包走診斷，審查任務書附上止血 commit 的 diff"
+      ]
     }
   ]
 }

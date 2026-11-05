@@ -113,6 +113,7 @@ Once installed, just talk to Claude Code normally:
 | You say | What happens |
 |---|---|
 | 「這個功能走七階段：……」 ("take this feature through seven-phase: …") | Starts a new task. It first asks which model to use and whether to go full or lean |
+| 「修這個 bug：……」／「緊急修正……」 ("fix this bug: …" / "urgent fix: …") | Reproduces it and finds the root cause, and only then asks which path to take; stops the bleeding first if production is actively losing data or money, or leaking adult content or permissions |
 | 「繼續」／「下一階段」 ("continue" / "next phase") | You've read the report; let it move to the next step |
 | 「繼續 <task name>」 ("continue <task name>") | Pick up a task you left half done (works even from a new chat window) |
 | 「進度」 ("progress") | Show the board of all tasks |
@@ -134,13 +135,15 @@ Everything is recorded in your project under `.claude/PRPs/plans/<task name>/`. 
 
 **Small tasks can take the lean path**, but only if all three are true: the fix is already clear, it doesn't touch money / permissions / sensitive content, and it's roughly 300 lines or less. The lean path skips the discussion, the interview and the stops in between — **but never skips review**.
 
+**Reported bugs get their own entry**: reproduce it, list the situations it affects, find the root cause, and only then pick a path. If production is actively losing data or money, or leaking adult content or permissions, stop the bleeding first: disabling or reverting only, 2 reviewers before the commit, and the full review travels with the repair that follows.
+
 ## What's in the folder
 
 ```
 SKILL.md       Entry point: how to start, full vs. lean, stop rules, rules for the whole run, who does what
 agents/        Setup files for the helpers (reviewers, test writers, verifiers); ~/.claude/agents is a shortcut to here
 ACCEPTANCE.md  Checklist for process changes (what changed, when to check it, what counts as working)
-phases/        One how-to per step (1-research.md … 7-converge.md), lean path in lean.md, retro in retro.md
+phases/        One how-to per step (1-research.md … 7-converge.md), lean path in lean.md, bug entry in bug.md, retro in retro.md
 retros/        Report from each retro
 references/    Read only when needed: how reviewers are picked, outside reviews, where each rule came from, project settings
 assets/        Templates: review briefs, fix packets, the stop-report format, browser walk-through kit

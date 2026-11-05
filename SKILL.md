@@ -1,6 +1,6 @@
 ---
 name: seven-phase
-description: owner 的七階段開發工作流（research → 討論 → interview → plan → TDD 實作 → 多方審查 → 收斂），含每階段做法、審查／驗證路數分級、checkpoint 協定、commit 規則與可重用腳本。Use this whenever the owner wants a feature or fix taken through the seven-phase workflow (七階段、七階段工作流、走完整流程), pastes the workflow text, says 「繼續」／「下一階段」 at a checkpoint, asks to review／converge／commit a task that has a task directory under `.claude/PRPs/plans/`, or when resuming such a task after a /compact or a new session — compaction drops details like model names and lane rules, so reload it rather than working from the summary. Also use it when the owner says 「檢討」 (cross-task retro over quality／cost／speed, `phases/retro.md`) or when a process change needs an acceptance row in `ACCEPTANCE.md`.
+description: owner 的七階段開發工作流（research → 討論 → interview → plan → TDD 實作 → 多方審查 → 收斂），含每階段做法、審查／驗證路數分級、checkpoint 協定、commit 規則與可重用腳本。Use this whenever the owner wants a feature or fix taken through the seven-phase workflow (七階段、七階段工作流、走完整流程), reports a behavior bug to fix or asks for an urgent prod fix (修 bug、緊急修正、止血), pastes the workflow text, says 「繼續」／「下一階段」 at a checkpoint, asks to review／converge／commit a task that has a task directory under `.claude/PRPs/plans/`, or when resuming such a task after a /compact or a new session — compaction drops details like model names and lane rules, so reload it rather than working from the summary. Also use it when the owner says 「檢討」 (cross-task retro over quality／cost／speed, `phases/retro.md`) or when a process change needs an acceptance row in `ACCEPTANCE.md`.
 ---
 
 # 七階段工作流
@@ -9,9 +9,9 @@ owner 是產品負責人不是工程師。這套流程把方向控制權與 toke
 
 ## 開工第一步
 1. **問模型**：新任務開工前用 AskUserQuestion 問 owner 要不要 `/model` 切到 fable（或當時更強的模型）當主 session，**問句附成本與判準**：fable 輸入／輸出單價約 opus-5.5 的 2.5 倍，主 session 的輸出大半是思考，換模型會直接放大這筆；官方說 fable 適合目標模糊、找根因、架構決策、長時間自主工作，範圍明確的實作與收斂用 opus-5.5。推薦項依任務類型給。owner 選維持就用當前模型（預設 opus-5.5），**中途不切換**（換模型的下一回合整段重讀、沒有快取）。續接既有任務不必再問。
-   - 同一則 AskUserQuestion 第二題問**分流**（精簡路／完整七階段，推薦項第一＋一句理由，判準見「分流」）。
+   - 同一則 AskUserQuestion 第二題問**分流**（精簡路／完整七階段，推薦項第一＋一句理由，判準見「分流」）。回報的行為 bug 這題改到診斷完才問；prod 正在損失時連模型也不問、沿用當前模型（`phases/bug.md`）。
 2. 找現況：`.claude/PRPs/plans/<slug>/PROGRESS.md` 存在就讀它開頭的分流、階段表與「下一步」，從那裡接。不知道是哪個任務、或 owner 問「進度」：看 SessionStart 注入的進度看板，沒有就跑 `scripts/board.py`。
-3. 讀當前階段的檔案：`phases/<n>-*.md`；精簡路讀 `phases/lean.md`（只讀當前這一份，別一次全讀）。
+3. 讀當前階段的檔案：`phases/<n>-*.md`；精簡路讀 `phases/lean.md`；回報的行為 bug 讀 `phases/bug.md`（只讀當前這一份，別一次全讀）。
 
 | 階段 | 檔案 | 產出 |
 |---|---|---|
@@ -23,13 +23,14 @@ owner 是產品負責人不是工程師。這套流程把方向控制權與 toke
 | 6 多方審查 | `phases/6-review.md` | REVIEW.md 去重地圖 |
 | 7 收斂 | `phases/7-converge.md` | 裁決表、修復、全閘、總結 |
 | 精簡路 | `phases/lean.md` | 一份 PROGRESS.md（計畫、審查地圖、結果） |
+| Bug 入口（診斷後接精簡路或完整路；含止血軌） | `phases/bug.md` | PROGRESS.md `## 診斷`／`## 止血` |
 | 跨任務檢討（owner 說「檢討」） | `phases/retro.md` | `retros/<日期>.md`、`ACCEPTANCE.md` 結案與新列 |
 
 參考檔**用得到時才讀**，開工時不要全讀（評測時多讀兩份參考檔，除了多花 token 沒有好處）：`references/lanes.md`（第 4 階段定路數、第 6／7 階段派工時）、`references/external-review.md`（第 6 階段派外審、大包第 4 階段 PLAN 審查時）、`references/history.md`（想推翻或放寬某條規則時）、`references/project-deepweave.md`（在 deepweave repo 要跑測試、閘或碰 prod 時）。
 範本：`assets/`（審查任務書、PLAN 審查任務書、收斂驗證任務書、修復任務包、checkpoint 回報、走一趟套件）。腳本：`scripts/`（見下）。
 
 ## 分流：精簡路或完整七階段
-開工判一次，寫進 PROGRESS.md 開頭。**審查不分流**：兩條路都照「依規模分級」派該派的 reviewer，含外審（owner 10-05、10-06：「唯獨 review 不能省」）。
+開工判一次（回報的行為 bug 診斷完才判，見 `phases/bug.md`），寫進 PROGRESS.md 開頭。**審查不分流**：兩條路都照「依規模分級」派該派的 reviewer，含外審（owner 10-05、10-06：「唯獨 review 不能省」）。止血 commit 前跑 2 路，完整審查併進修復包（owner 11-05）。
 - **精簡路**——三條都成立才走：
   1. **需求明確**：修法已定或只有一種合理做法，不需要 owner 做設計／文案取捨（backlog 寫好修法的條目、根因已定位的 bug、補測試、一行級 UI 修正）。
   2. **不碰重要面**：credits、權限、18+／未成年、跨層不變式、prod 資料、全站可用性（斷路器、retry、逾時預算）。
@@ -61,7 +62,7 @@ owner 吃過「一路衝到底、末端才發現前提錯」的虧，也要自�
 - **修→重走的迴圈要停損**（owner 10-19；第 5／7 階段與精簡路的「修片→重走」都適用）：
   - 走查找到的「低」不開修片：寫進 BACKLOG，或在 checkpoint 交 owner 目視；「中」以上才修。
   - 重走只量剛修的條目、沿用既有腳本（套件用 `run_kit.mjs`）；抽樣回歸只在 checkpoint 前跑一次。
-  - **修片進場門檻**（「中」以上的行為 bug，第一次修就適用；註解、文件、守衛測試不適用）：派修片前，主 session 把兩樣東西寫進該片 `<片號>-brief.md`：
+  - **修片進場門檻**（「中」以上的行為 bug，第一次修就適用；註解、文件、守衛測試不適用）：派修片前，主 session 把兩樣東西寫進該片 `<片號>-brief.md`（回報的 bug 同樣要這兩樣，診斷時就做，`phases/bug.md` 依編號引用）：
     1. **會紅的指令**：已經跑過、紅在回報的**那個症狀**上（不是附近另一個失敗），附指令與紅的輸出。只有真引擎重現得出來就用真引擎：套件步驟（`run_kit.mjs --steps`）、真執行的 curl／整合測試；走一趟找到的，`ui-lane-reviewer` 交件時已附重現步驟（`assets/walk-kit.md`「repro」）。做不出來就不派修片：寫下試過什麼，向 owner 要能重現的環境或錄下的證據（HAR、log、附時間點的螢幕錄影）。
     2. **觸發表**：會影響同一塊的觸發情況（狀態×動作、在途×另一動作、0／>0、失敗、到底）逐列用同一種指令跑過，記下現在紅或綠。
     agent 照 `assets/fixplan.md`「行為 bug 的回饋迴圈」做；收件時主 session 重跑那條指令與整張觸發表，PROGRESS 該片紀錄寫一行：指令、觸發表幾列、修後幾列符合預期。
