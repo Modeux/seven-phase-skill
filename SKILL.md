@@ -87,6 +87,7 @@ owner 吃過「一路衝到底、末端才發現前提錯」的虧，也要自�
   - 要判斷的工作（審查、收斂驗證、規劃、實作片）不降模型；不為了讓小模型接手而把片切得更細——本專案的 bug 多在接縫（跨層漂移、三處對齊），切細等於把接縫切掉，錯誤只是移到整合與收斂才被抓。
   - 降檔／換模型的 A/B 除了正確性，必驗**完整性**（以原設定產出為答案，比檔案清單／命中數／節點數，不得少）與**下游**（同一份產出餵同一顆 reviewer，已確認 findings 不得變少）；任一不過就維持原設定。sha 對上不代表沒漏。
   - Sonnet／Haiku 的延遲優勢不構成換模型的理由。
+  - **不開 fast mode**（owner 11-06：「我會破產」）：單價 2 倍、走 usage credits；要快從少回合與工具下手。
 - 主 session：簡報、訪談、規劃、委派協調、**親跑測試與閘**、一切最終裁決。subagent 只回結論與證據，**不代表 owner 做任何決定**。
 - subagent 一律 opus-5.5，**effort 只能由 agent frontmatter 決定**（`~/.claude/agents/*.md` 的 `model:`／`effort:`；prompt 寫 effort 是安慰劑；Agent 工具的 `model` 參數勿傳）。
   - **唯一例外：graphify 語意抽取**派 quick-task 時傳 `model: "sonnet"`（Sonnet 5.5 high），或改走 agy `gemini-3.8-flash` 細切；不用 Haiku。配方與量測在 repo `docs/graphify.md`。
@@ -115,6 +116,8 @@ owner 吃過「一路衝到底、末端才發現前提錯」的虧，也要自�
 - `reviewcov.py`：第 6 階段收件（第 4 階段 PLAN 審查地圖另加 `--plan-tests`：「改 PLAN」要點名 PLAN 裡有的測試編號）。核對預期的每一路都交件（失敗、缺件、空檔、舊報告、標題形狀混雜、`counts` 對不上都擋），每條發現都在去重地圖的「來源」欄或未收錄節、地圖編號不重複、來源不指向不存在的條目（`--ack-manual`／`--waive`／`--section` 見 `phases/6-review.md` §5）；`--index` 產生給合成用的計數表與逐條清單（md＋json）。
 - `claudemdcost.py`：子目錄 CLAUDE.md 與限定範圍規則（讀到才載入）的花費，依檔案彙總、worktree 副本併回原路徑。
 - `wallclock.py`：每種 subagent 的牆鐘（中位／p90／最大）與時間花在哪類工具；檢討與排程改動的驗收用。
+- `uilane_audit.py`：`ui-lane-reviewer` 每次的生成／等工具切分（平行呼叫不重算）、腳本重複率、自寫基礎腳本數、等失敗執行的佔比、峰值 context。
+- `run_kit.mjs`、`walk_lib.mjs`、`walk_env.sh`：走一趟的 runner、共用瀏覽器函式庫、起環境（`assets/walk-kit.md`）。
 - `board.py`：跨任務進度看板（另含「流程」區：`ACCEPTANCE.md` 到期的驗收、上次檢討後記錄了幾個任務、過大的說明檔；`--docsize` 印每份說明檔的大小與增減）——掃主 checkout 與所有掛分支的 worktree 的 PROGRESS.md，讀 frontmatter、git 狀態當場算，寫 `<主 checkout>/tmp/progress/board.html` 並印摘要；HTML 下半部是 `.claude/PRPs/BACKLOG.md` 的 Backlog 四欄。每次跑都把未完成任務的「下一步」快照進 `tmp/progress/ledger.json`，目錄刪了仍以「目錄已刪・待部署」顯示，owner 說部署完了 → 確認是哪幾個後 `--deployed <slug…|all>` 清掉；`~/.claude/settings.json` 的 SessionStart hook（startup／clear／compact）以 `--hook session-start` 跑它，把摘要注入 context。
 - `taskcost.py`／`laneyield.py`：每個任務、每個階段目錄的花費；每一路審查的獨家發現與花費（調路數、檢討流程前先跑；精簡路讀 PROGRESS.md 的 `## 審查` 表）。`laneyield.py` 依表頭欄名讀地圖與裁決表，讀不懂的資料（認不出的裁決詞、來源不是 lane、編號重複、找不到地圖）一律印成 `DATA error`、不當零；`--no-cost --strict` 是第 7 階段裁決表的格式閘；一份 REVIEW 放多包、各包審查目錄不同時加 `--review-dir '<輪標題字>=tmp/<slug>/review2'`（可重複）。`agentcost.py`／`taskcost.py`／`laneyield.py`／`claudemdcost.py` 共用 `_usage.py`：含 Workflow agent，同一訊息多筆 usage 取各欄最大值，依每筆時間戳過濾，cache write 分 5m／1h 計價；`--all-worktrees` 連 worktree 的 session 一起算。金額是 API 等價、不是帳單，沒有價格的模型列為 unpriced、不算 $0。
 Bash 一律絕對路徑或 `git -C`／`go test -C`，**不要 `cd`**（工作目錄會殘留，下一個 bridge 或 pathspec 會跑錯樹）。

@@ -5,15 +5,16 @@
 //   node run_kit.mjs --kit <kit dir> --round round5 [--steps step-01-drawer.js,step-13-...js | --plan plan.json]
 //                    [--cfg '{"step-03-depart-threshold.js":{"motion":"reduce"}}'] [--base-url http://localhost:4312]
 //                    [--fingerprint '<css selector>'] [--viewport 1280x800] [--headed] [--trace] [--step-timeout 240]
+//                    [--action-timeout 10] [--engine chromium|webkit|firefox] [--device 'iPhone 14'] [--api <origin>]
 //                    [--repo <repo root>] [--evidence <dir>]
 //
 // plan.json: [{"step": "step-03-depart-threshold.js", "cfg": {"motion": "reduce"}}, ...] — the same step may repeat.
-// Output: <evidence>/<round>/run/{summary.json,<n>-<step>.json,console.log[,trace.zip]}; stdout one line per step.
-// Exit: 0 every step ok; 1 a step failed, threw, or returned ok:false; 2 setup failed (login, fingerprint, files).
-import { createRequire } from 'node:module';
+// Output: <evidence>/<round>/run/{summary.json,<n>-<step>.json,console.log[,trace.zip]}; stdout one line per step,
+// ending with a `rerun: --steps a,b` line when any failed.
+// Exit: 0 every step ok; 1 a step failed, threw, or returned ok:false; 2 setup failed (browser, login, fingerprint, files).
 import fs from 'node:fs';
 import path from 'node:path';
-import { execFileSync } from 'node:child_process';
+import { DEFAULT_ACTION_TIMEOUT_MS, PLAYWRIGHT_DEFAULT_TIMEOUT_MS, launch } from './walk_lib.mjs';
 
 function arg(name, def) {
   const i = process.argv.indexOf(`--${name}`);
@@ -28,7 +29,6 @@ if (!arg('kit') || !round) {
   console.error('usage: --kit <dir> --round <name> [--steps a,b | --plan plan.json] (see header)');
   process.exit(2);
 }
-const repo = path.resolve(arg('repo', '') || execFileSync('git', ['rev-parse', '--show-toplevel'], { encoding: 'utf8' }).trim());
 // WHY: evidence defaults to the kit's parent because the kit scripts already write screenshots to
 // <walk dir>/<round>/ — the summary must sit next to the pictures it points at.
 const evidence = path.resolve(arg('evidence', path.dirname(kit)));
@@ -51,9 +51,9 @@ for (const p of [{ step: 'login.js' }, ...plan]) {
   if (!fs.existsSync(path.join(kit, p.step))) { console.error(`missing ${p.step} in ${kit}`); process.exit(2); }
 }
 
-// INVARIANT: kit scripts stay `async (page) => {...}` expressions so the same file still runs through
-// browser_run_code_unsafe in exploration. The runner only appends an Object.assign after the
-// single-line `const CFG = {...};`; a multi-line CFG is left alone (the step then runs on its defaults).
+// INVARIANT: kit scripts stay single function expressions, `async (page, walk) => {...}`; `async (page) => {...}`
+// from kits older than walk_lib.mjs still runs. The runner only appends an Object.assign after the single-line
+// `const CFG = {...};`; a multi-line CFG is left alone (the step then runs on its defaults).
 function load(file, cfg) {
   let src = fs.readFileSync(path.join(kit, file), 'utf8').trim().replace(/;\s*$/, '');
   src = src.replace(/^(\s*const CFG = \{.*\};.*)$/m, '$1\n  Object.assign(CFG, globalThis.__WALK_CFG__ || {});');
@@ -80,27 +80,44 @@ function brief(v, n = 220) {
   return s && s.length > n ? `${s.slice(0, n)}…` : s;
 }
 
-const req = createRequire(path.join(repo, 'angular-workspace', 'package.json'));
-const { chromium } = req('@playwright/test');
-const [vw, vh] = String(arg('viewport', '1280x800')).split('x').map(Number);
-const browser = await chromium.launch({ headless: !arg('headed') });
-const context = await browser.newContext({ viewport: { width: vw, height: vh }, deviceScaleFactor: 1 });
-if (arg('trace')) await context.tracing.start({ screenshots: true, snapshots: true });
-const page = await context.newPage();
 const consoleLog = fs.createWriteStream(path.join(runDir, 'console.log'));
-page.on('console', (m) => { if (['error', 'warning'].includes(m.type())) consoleLog.write(`[${m.type()}] ${m.text()}\n`); });
-page.on('pageerror', (e) => consoleLog.write(`[pageerror] ${e.message}\n`));
+const actionTimeoutMs = arg('action-timeout') ? Number(arg('action-timeout')) * 1000 : DEFAULT_ACTION_TIMEOUT_MS;
+let session;
+try {
+  session = await launch({
+    kit,
+    roundDir,
+    repo: arg('repo') ? path.resolve(arg('repo')) : undefined,
+    engine: arg('engine'),
+    device: arg('device'),
+    viewport: arg('viewport', '1280x800'),
+    headed: !!arg('headed'),
+    // INVARIANT: login.js is what proves the session works, so a replay never starts from a saved one.
+    storageState: false,
+    actionTimeoutMs,
+    config: { app: arg('base-url'), api: arg('api') },
+    onLog: (line) => consoleLog.write(`${line}\n`),
+  });
+} catch (e) {
+  console.error(`SETUP FAILED: ${e.message}`);
+  process.exit(2);
+}
+const { browser, context, page, walk } = session;
+if (arg('trace')) await context.tracing.start({ screenshots: true, snapshots: true });
 
 const timeoutMs = Number(arg('step-timeout', 240)) * 1000;
 async function run(file, cfg) {
   const fn = load(file, { round, ...cfg });
+  // WHY by signature: a step that declares `walk` was written for the short default and names its long waits.
+  // Older kits have soft waits (`.catch(() => null)`) tuned to 30 s, and shortening those flips results silently.
+  context.setDefaultTimeout(fn.length >= 2 ? actionTimeoutMs : PLAYWRIGHT_DEFAULT_TIMEOUT_MS);
   let timer;
   try {
-    return await Promise.race([fn(page), new Promise((_, rej) => { timer = setTimeout(() => rej(new Error(`timeout ${timeoutMs / 1000}s`)), timeoutMs); })]);
+    return await Promise.race([fn(page, walk), new Promise((_, rej) => { timer = setTimeout(() => rej(new Error(`timeout ${timeoutMs / 1000}s`)), timeoutMs); })]);
   } finally { clearTimeout(timer); }
 }
 
-const summary = { round, kit, startedAt: new Date().toISOString(), steps: [] };
+const summary = { round, kit, engine: browser.browserType().name(), device: arg('device') || null, startedAt: new Date().toISOString(), steps: [] };
 let setupFailed = false;
 try {
   if (arg('base-url')) await page.goto(String(arg('base-url')));
@@ -155,4 +172,5 @@ const bad = summary.steps.filter((s) => s.status === 'FAIL' || s.status === 'ERR
 const done = summary.steps.filter((s) => s.status === 'DONE');
 if (setupFailed) console.log(`SETUP FAILED: ${brief(summary.setupError, 400)}`);
 console.log(`summary ${path.join(runDir, 'summary.json')}  pass=${summary.steps.length - bad.length - done.length} done(no ok field)=${done.length} fail=${bad.length}`);
+if (bad.length) console.log(`rerun: --steps ${[...new Set(bad.map((s) => s.step))].join(',')}`);
 process.exit(setupFailed ? 2 : bad.length ? 1 : 0);

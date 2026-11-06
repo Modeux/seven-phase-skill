@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-"""The focus probe pasted from assets/walk-kit.md, run in headless Chromium (Playwright from the deepweave checkout).
+"""The focus probe from walk_lib.mjs in headless Chromium, and the API table in assets/walk-kit.md against the code
+(Playwright from the deepweave checkout).
 
 Usage:
   python3 -m unittest discover -s scripts/tests -p 'test_walk_kit.py' -v
@@ -14,7 +15,9 @@ import subprocess
 import tempfile
 import unittest
 
-KIT = pathlib.Path(__file__).resolve().parents[2] / "assets" / "walk-kit.md"
+SKILL = pathlib.Path(__file__).resolve().parents[2]
+KIT = SKILL / "assets" / "walk-kit.md"
+WALK_LIB = SKILL / "scripts" / "walk_lib.mjs"
 PW_FROM = pathlib.Path(os.environ.get("SEVEN_PHASE_PLAYWRIGHT_FROM",
                                       "~/Desktop/deepweave/deepweave/angular-workspace")).expanduser()
 
@@ -30,46 +33,43 @@ PAGE = """<!doctype html><body>
 </body>"""
 
 HARNESS = r"""
-import { createRequire } from 'node:module';
 import fs from 'node:fs';
-const [pwFrom, snippetFile, pageFile] = process.argv.slice(2);
-const { chromium } = createRequire(pwFrom + '/package.json')('@playwright/test');
-const focusProbe = new Function(fs.readFileSync(snippetFile, 'utf8') + '\nreturn focusProbe;')();
-const browser = await chromium.launch();
-const page = await browser.newPage();
+const [lib, repo, pageFile, roundDir] = process.argv.slice(2);
+const { launch } = await import(lib);
+const { page, walk, close } = await launch({ repo, roundDir, storageState: false });
 const html = fs.readFileSync(pageFile, 'utf8');
-const drops = await focusProbe(page, '提示列', () => page.setContent(html));
-await browser.close();
-console.log(JSON.stringify(drops));
+const drops = await walk.focusProbe('提示列', () => page.setContent(html), []);
+await close();
+console.log(JSON.stringify({ drops, api: Object.keys(walk) }));
 """
 
 
-def snippet():
-    """The ```js block under the focus-probe rule in walk-kit.md."""
-    m = re.search(r"```js\n(.*?const focusProbe\b.*?)```", KIT.read_text(encoding="utf-8"), re.S)
-    return m and m.group(1)
-
-
-class FocusProbeTest(unittest.TestCase):
-    def test_walk_kit_has_a_pasteable_focus_probe(self):
-        self.assertIsNotNone(snippet(), "walk-kit.md has no ```js block defining focusProbe")
-
-    def test_probe_reports_only_the_button_that_drops_focus_to_body(self):
-        src = snippet()
-        if src is None:
-            self.fail("walk-kit.md has no ```js block defining focusProbe")
-        if not shutil.which("node") or not (PW_FROM / "node_modules" / "@playwright" / "test").is_dir():
-            self.skipTest(f"no node or @playwright/test under {PW_FROM}")
+@unittest.skipUnless(shutil.which("node") and (PW_FROM / "node_modules" / "@playwright" / "test").is_dir(),
+                     f"no node or @playwright/test under {PW_FROM}")
+class WalkLibTest(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
         with tempfile.TemporaryDirectory() as td:
             d = pathlib.Path(td)
             (d / "h.mjs").write_text(HARNESS, encoding="utf-8")
-            (d / "probe.js").write_text(src, encoding="utf-8")
             (d / "page.html").write_text(PAGE, encoding="utf-8")
-            p = subprocess.run(["node", str(d / "h.mjs"), str(PW_FROM), str(d / "probe.js"), str(d / "page.html")],
+            p = subprocess.run(["node", str(d / "h.mjs"), str(WALK_LIB), str(PW_FROM.parent), str(d / "page.html"), str(d)],
                                capture_output=True, text=True, timeout=120)
-        self.assertEqual(p.returncode, 0, p.stderr)
-        drops = json.loads(p.stdout.strip().splitlines()[-1])
-        self.assertEqual(drops, [{"state": "提示列", "button": "關閉提示", "active": "BODY", "navigated": False}])
+        if p.returncode != 0:
+            raise AssertionError(p.stderr)
+        cls.result = json.loads(p.stdout.strip().splitlines()[-1])
+
+    def test_probe_reports_only_the_button_that_drops_focus_to_body(self):
+        self.assertEqual(self.result["drops"], [{"state": "提示列", "button": "關閉提示", "active": "BODY", "navigated": False}])
+
+    def test_every_call_the_walk_kit_documents_exists(self):
+        # Agents write steps from this table instead of reading the library, so a stale name costs a failed run.
+        text = KIT.read_text(encoding="utf-8")
+        section = text[text.index("## 函式庫"):text.index("## 重走怎麼用")]
+        table = [ln.split("|")[1] for ln in section.splitlines() if ln.startswith("| `")][1:]  # the first is the header
+        documented = {name for cell in table for name in re.findall(r"`(\w+)(?:\(|`)", cell)}
+        self.assertGreater(len(documented), 8, "the API table was not found")
+        self.assertEqual(documented - set(self.result["api"]), set())
 
 
 if __name__ == "__main__":
