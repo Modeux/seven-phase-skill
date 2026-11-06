@@ -99,7 +99,7 @@ owner 吃過「一路衝到底、末端才發現前提錯」的虧，也要自�
 - **主 session 的模型與等待**：Fable 每次呼叫約 Opus 5.5 的 3 倍，閒置失效在 700–800k context 一次 $7–10；派出一批要等 10 分鐘以上的 subagent 之前先縮 context（checkpoint ＋ `/compact` 或 `/clear`）；切模型只在 `/clear` 之後（切了就是全量重寫）；effort 在 Fable／Opus 5.5 切換不打斷快取，派工／收件／寫記錄階段可降 `high`。
 - 專案專用 agent 優先於通用 agent；語言專門 reviewer 不能用 general-purpose＋好 prompt 取代（內建清單打的是別的方向）。
 - 委派：自足任務包（目標、輸入路徑、環境規則、交付格式）；**長交付一律寫檔**，hand-back 只要 ≤12 行摘要＋檔案路徑；並行 agent 的中間檔／交付檔名帶片號或 lane 名（共用 scratchpad 會互截）。
-- **任務包瘦身**：派工訊息分「必讀」與「需要時再讀」兩欄。必讀只放這片用得到的段落，從原文**逐字摘錄**進 `<片號>-brief.md` 並附出處路徑（用 `scripts/extract.py`，不手抄、不每次現寫摘錄腳本），不改寫成摘要（摘要會引入錯誤，也不是證據）；全文路徑一律留在「需要時再讀」。必讀合計 ≤ 約 90KB（`wc -c`，約 3 萬 token），超過要在派工訊息寫理由。不算在內的：審查對象本身（diff、程式碼）、agent 自己決定去讀的程式碼。為什麼：subagent 的花費七成以上是每一回合重讀累積的上下文，前面多讀一段，後面每一回合都再付一次；逐字摘錄加上保留全文路徑，品質不會因此下降。
+- **任務包瘦身**：派工訊息分「必讀」與「需要時再讀」兩欄。必讀只放這片用得到的段落，從原文**逐字摘錄**進 `<片號>-brief.md` 並附出處路徑（用 `scripts/mkbrief.py`，不手抄、不每次現寫摘錄腳本），不改寫成摘要（摘要會引入錯誤，也不是證據）；全文路徑一律留在「需要時再讀」。必讀合計 ≤ 約 90KB（`wc -c`，約 3 萬 token），超過要在派工訊息寫理由。不算在內的：審查對象本身（diff、程式碼）、agent 自己決定去讀的程式碼。為什麼：subagent 的花費七成以上是每一回合重讀累積的上下文，前面多讀一段，後面每一回合都再付一次；逐字摘錄加上保留全文路徑，品質不會因此下降。
 - **>5 顆 agent 共用一份沒實測過的處方 → 先派一顆探針**。
 
 ## 腳本（`python3 ~/.claude/skills/seven-phase/scripts/<name>.py --help`）
@@ -107,11 +107,16 @@ owner 吃過「一路衝到底、末端才發現前提錯」的虧，也要自�
 - `mkpatch.py`：產 `change.patch`（含 untracked 新檔）、`change-src/-tests/-docs.patch`、`baseline.sha256`、`files.txt`，以及 `outside.sha256`（被 `--exclude` 排除的既有改動，給 checktree 分辨「本來就髒」）。
 - `mkworktree.py`：`git worktree add --detach HEAD` ＋ 套 patch ＋ 對 baseline 驗 sha（快照／突變樹／修復樹都用它）。
 - `checktree.py`：對 baseline 驗一棵或多棵樹的 sha（不符 exit 1）；清單外的變動另列 warning（`--strict` 才 fail）。`tmp/`、任務目錄與 gitignored 檔不在檢查內，所以它不是「整棵樹沒人寫過」的證明。
-- `merge_back.py`：把工作樹相對快照改過的檔複製回主 checkout。候選＝修復樹與快照兩邊 `git status` 的聯集（改回 HEAD、刪掉快照新檔都抓得到）；兩棵 HEAD 不同、主樹那些檔不等於快照、片與片重疊都會停；刪除只回報不套用；把檔改回 HEAD 一律先停（分不出是刻意還原還是 agent 誤 reset），確認是裁決要的才加 `--allow-revert <片>:<路徑>`。
+- `merge_back.py`：把工作樹相對快照改過的檔複製回主 checkout。候選＝修復樹與快照兩邊 `git status` 的聯集（改回 HEAD、刪掉快照新檔都抓得到）；兩棵 HEAD 不同、主樹那些檔不等於快照、片與片重疊都會停；刪除只回報不套用；把檔改回 HEAD 一律先停（分不出是刻意還原還是 agent 誤 reset），確認是裁決要的才加 `--allow-revert <片>:<路徑>`；`--only-files F` 要求候選恰等於那份清單，多或少都停（`recv.py` 用它）。
 - `run_external.py`：跑 codex／grok／agy 外審（背景跑，見 `references/external-review.md`）。失敗 exit 非零、舊報告不動，每次寫 `lane-<x>.status.json`。
 - `dockerslot.py`：`-- <cmd>` 拿到全機 N 個槽位之一才跑（預設 3，flock 檔，持有者死掉自動釋放）；`--all` 拿全部且讓後到的排在它後面（全量整合）、`--pool <名> --slots 1`（sqlc）、`--status` 看誰佔著；等超過 `--max-wait`（預設 300 秒）exit 75 並印出持有者。讓 agent 一波派完、只在吃 Docker 的那一刻排隊。
 - `wf_reports.py`：Workflow 扇出（第 6 階段內審、第 7 階段驗證）的報告全文從 run 的 `journal.jsonl` 抽出、依 label 落檔（subagent 在 Workflow 內寫不了檔）；每路寫 status 檔（含 schema 的 `counts`），`tasks/` 有派工單卻沒啟動的列 MISSING。
-- `extract.py`：markdown 依標題或行號逐字切段、附出處（組任務包）。
+- `extract.py`：markdown 依標題或行號逐字切段、附出處。組任務包用下面的 `mkbrief.py`。
+- `mkbrief.py`：一份純文字 manifest 組好每片的 `<片號>-brief.md`（手寫開頭＋逐字摘錄附出處＋該片會載入的規則＋需要時再讀），超過 90KB 沒寫理由就拒絕；`--check` 比對有沒有過期。
+- `gate.py`：跑閘（Go、Angular、ai-service），一行判定，紅、編譯失敗、零支、沒跑完不會被讀成綠；自動讀樹裡的既存紅名單。用法與 exit code 見 `references/project-deepweave.md`。
+- `mutate.py`：一份 manifest 跑多個突變，判 KILLED／SURVIVED／INVALID（沒編譯過不算殺死）；Go 走 overlay 不碰樹，其他保證還原（kill -9 後 `--recover`）。
+- `recv.py`：收一片交件的機械步驟（交付檔、範圍、閘的覆蓋、跑閘、閘跑的就是要合的、`merge_back`、PROGRESS 骨架、board），不帶 `--apply` 只預演。改 `.go` 自動多跑全 repo vet；主線動了、沒還原的 mutate、新增 skip 都拒收。判斷（紅的原因、偏離、抽突變）仍由主 session 做。用法見 `references/project-deepweave.md`。
+- `dbq.py`：本機 Docker DB 查詢與 clone、`scripts/fixtures/` 固定角色資料；預設唯讀（見 `references/project-deepweave.md`）。
 - `rulesfor.py`：依 PLAN 檔案矩陣路徑列出命中的 `.claude/rules/` 檔與子目錄 `CLAUDE.md`，產生 `## 規則對照` 骨架；`--check PLAN.md` 會擋缺列，也擋處置不是「套用：」或「不相關：」開頭的（第 4 階段第 11 條）。
 - `reviewcov.py`：第 6 階段收件（第 4 階段 PLAN 審查地圖另加 `--plan-tests`：「改 PLAN」要點名 PLAN 裡有的測試編號）。核對預期的每一路都交件（失敗、缺件、空檔、舊報告、標題形狀混雜、`counts` 對不上都擋），每條發現都在去重地圖的「來源」欄或未收錄節、地圖編號不重複、來源不指向不存在的條目（`--ack-manual`／`--waive`／`--section` 見 `phases/6-review.md` §5）；`--index` 產生給合成用的計數表與逐條清單（md＋json）。
 - `claudemdcost.py`：子目錄 CLAUDE.md 與限定範圍規則（讀到才載入）的花費，依檔案彙總、worktree 副本併回原路徑。

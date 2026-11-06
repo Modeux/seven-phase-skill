@@ -21,7 +21,7 @@ def g(cwd, *args):
                           check=True, capture_output=True, text=True).stdout
 
 
-class MergeBackTest(unittest.TestCase):
+class MergeBackBase(unittest.TestCase):
     def setUp(self):
         self._tmp = tempfile.TemporaryDirectory()
         self.base = pathlib.Path(self._tmp.name).resolve()
@@ -56,16 +56,20 @@ class MergeBackTest(unittest.TestCase):
         self.apply_change(path)
         return path
 
-    def run_cli(self, *trees, apply=False, allow=()):
+    def run_cli(self, *trees, apply=False, allow=(), only_files=None):
         cmd = [sys.executable, str(SCRIPT), "--root", str(self.repo), "--snapshot", str(self.snap)]
         for label, path in trees:
             cmd += ["--tree", f"{label}={path}"]
         for spec in allow:
             cmd += ["--allow-revert", spec]
+        if only_files is not None:
+            cmd += ["--only-files", str(only_files)]
         if apply:
             cmd.append("--apply")
         return subprocess.run(cmd, capture_output=True, text=True)
 
+
+class MergeBackTest(MergeBackBase):
     def test_ordinary_fix_is_found_and_applied(self):
         fix = self.tree("fix")
         self.write(fix, "a.txt", "C\n")
@@ -180,6 +184,64 @@ class MergeBackTest(unittest.TestCase):
         self.write(fix, "tmp/scratch.txt", "s\n")
         self.write(fix, "web/node_modules/x.js", "x\n")
         self.assertEqual(merge_back.tree_changes(fix, self.snap), ([], []))
+
+
+class OnlyFilesTest(MergeBackBase):
+    """--only-files: the copy step takes exactly the list the caller checked, however the tree moved since."""
+
+    def setUp(self):
+        super().setUp()
+        self.fix = self.tree("fix")
+        self.write(self.fix, "a.txt", "C\n")
+        self.listing = self.base / "files.txt"
+
+    def listed(self, *paths):
+        self.listing.write_text("".join(p + "\n" for p in paths), encoding="utf-8")
+        return self.listing
+
+    def test_exact_list_is_copied(self):
+        self.write(self.fix, ODD, "Z\n")
+        r = self.run_cli(("F", self.fix), apply=True, only_files=self.listed("a.txt", ODD))
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertEqual((self.repo / "a.txt").read_text(), "C\n")
+        self.assertEqual((self.repo / ODD).read_text(encoding="utf-8"), "Z\n")
+
+    def test_candidate_outside_the_list_stops_and_copies_nothing(self):
+        self.write(self.fix, "secrets/late.txt", "landed\n")
+        r = self.run_cli(("F", self.fix), apply=True, only_files=self.listed("a.txt"))
+        self.assertEqual(r.returncode, 1, r.stdout + r.stderr)
+        self.assertIn("STOP", r.stdout)
+        self.assertIn("secrets/late.txt", r.stdout)
+        self.assertNotIn("copied", r.stdout)
+        self.assertFalse((self.repo / "secrets/late.txt").exists())
+        self.assertEqual((self.repo / "a.txt").read_text(), "B\n")
+
+    def test_listed_file_that_is_not_a_candidate_stops_and_copies_nothing(self):
+        r = self.run_cli(("F", self.fix), apply=True, only_files=self.listed("a.txt", "b.txt"))
+        self.assertEqual(r.returncode, 1, r.stdout + r.stderr)
+        self.assertIn("STOP", r.stdout)
+        self.assertIn("b.txt", r.stdout)
+        self.assertEqual((self.repo / "a.txt").read_text(), "B\n")
+
+    def test_the_dry_run_stops_on_the_same_mismatch(self):
+        self.write(self.fix, "late.txt", "x\n")
+        r = self.run_cli(("F", self.fix), only_files=self.listed("a.txt"))
+        self.assertEqual(r.returncode, 1, r.stdout + r.stderr)
+        self.assertIn("late.txt", r.stdout)
+
+    def test_unreadable_or_empty_list_is_a_tool_error_not_a_clean_stop(self):
+        for bad in (self.base / "missing.txt", self.listed()):
+            with self.subTest(bad=bad):
+                r = self.run_cli(("F", self.fix), apply=True, only_files=bad)
+                self.assertEqual(r.returncode, 2, r.stdout + r.stderr)
+                self.assertNotIn("STOP:", r.stdout)
+                self.assertEqual((self.repo / "a.txt").read_text(), "B\n")
+
+    def test_without_the_flag_a_late_file_is_still_copied(self):
+        self.write(self.fix, "late.txt", "x\n")
+        r = self.run_cli(("F", self.fix), apply=True)
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertTrue((self.repo / "late.txt").exists())
 
 
 if __name__ == "__main__":

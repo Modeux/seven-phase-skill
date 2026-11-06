@@ -1,0 +1,13 @@
+{"Time":"2026-11-06T22:06:59.692561+08:00","Action":"start","Package":"deepweave/backend-golang/internal/logger"}
+{"Time":"2026-11-06T22:07:00.045865+08:00","Action":"run","Package":"deepweave/backend-golang/internal/logger","Test":"TestA"}
+{"Time":"2026-11-06T22:07:00.045909+08:00","Action":"output","Package":"deepweave/backend-golang/internal/logger","Test":"TestA","Output":"=== RUN   TestA\n","OutputType":"frame"}
+{"Time":"2026-11-06T22:07:00.045948+08:00","Action":"output","Package":"deepweave/backend-golang/internal/logger","Test":"TestA","Output":"--- PASS: TestA (0.00s)\n","OutputType":"frame"}
+{"Time":"2026-11-06T22:07:00.045953+08:00","Action":"pass","Package":"deepweave/backend-golang/internal/logger","Test":"TestA","Elapsed":0}
+{"Time":"2026-11-06T22:07:00.045957+08:00","Action":"run","Package":"deepweave/backend-golang/internal/logger","Test":"TestB"}
+{"Time":"2026-11-06T22:07:00.045958+08:00","Action":"output","Package":"deepweave/backend-golang/internal/logger","Test":"TestB","Output":"=== RUN   TestB\n","OutputType":"frame"}
+{"Time":"2026-11-06T22:07:00.045959+08:00","Action":"output","Package":"deepweave/backend-golang/internal/logger","Test":"TestB","Output":"    z_test.go:4: no\n"}
+{"Time":"2026-11-06T22:07:00.045964+08:00","Action":"output","Package":"deepweave/backend-golang/internal/logger","Test":"TestB","Output":"--- SKIP: TestB (0.00s)\n","OutputType":"frame"}
+{"Time":"2026-11-06T22:07:00.045965+08:00","Action":"skip","Package":"deepweave/backend-golang/internal/logger","Test":"TestB","Elapsed":0}
+{"Time":"2026-11-06T22:07:00.045965+08:00","Action":"output","Package":"deepweave/backend-golang/internal/logger","Output":"PASS\n","OutputType":"frame"}
+{"Time":"2026-11-06T22:07:00.046272+08:00","Action":"output","Package":"deepweave/backend-golang/internal/logger","Output":"ok  \tdeepweave/backend-golang/internal/logger\t0.353s\n"}
+{"Time":"2026-11-06T22:07:00.046292+08:00","Action":"pass","Package":"deepweave/backend-golang/internal/logger","Elapsed":0.354}

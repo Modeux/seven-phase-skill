@@ -1,0 +1,6 @@
+{"ImportPath":".","Action":"build-output","Output":"# .\n"}
+{"ImportPath":".","Action":"build-output","Output":"no Go files in /SP/repo-smoke/backend-golang\n"}
+{"ImportPath":".","Action":"build-fail"}
+{"Time":"2026-11-06T17:42:58.694177+08:00","Action":"start","Package":"."}
+{"Time":"2026-11-06T17:42:58.694255+08:00","Action":"output","Package":".","Output":"FAIL\t. [setup failed]\n","OutputType":"frame"}
+{"Time":"2026-11-06T17:42:58.694262+08:00","Action":"fail","Package":".","Elapsed":0,"FailedBuild":"."}

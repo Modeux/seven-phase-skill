@@ -1,0 +1,13 @@
+{"Time":"2026-11-06T22:06:57.164863+08:00","Action":"start","Package":"deepweave/backend-golang/internal/logger"}
+{"Time":"2026-11-06T22:06:57.511688+08:00","Action":"run","Package":"deepweave/backend-golang/internal/logger","Test":"TestTarget"}
+{"Time":"2026-11-06T22:06:57.511726+08:00","Action":"output","Package":"deepweave/backend-golang/internal/logger","Test":"TestTarget","Output":"=== RUN   TestTarget\n","OutputType":"frame"}
+{"Time":"2026-11-06T22:06:57.51176+08:00","Action":"output","Package":"deepweave/backend-golang/internal/logger","Test":"TestTarget","Output":"    z_test.go:3: not today\n"}
+{"Time":"2026-11-06T22:06:57.511767+08:00","Action":"output","Package":"deepweave/backend-golang/internal/logger","Test":"TestTarget","Output":"--- SKIP: TestTarget (0.00s)\n","OutputType":"frame"}
+{"Time":"2026-11-06T22:06:57.511779+08:00","Action":"skip","Package":"deepweave/backend-golang/internal/logger","Test":"TestTarget","Elapsed":0}
+{"Time":"2026-11-06T22:06:57.511784+08:00","Action":"run","Package":"deepweave/backend-golang/internal/logger","Test":"TestPlain"}
+{"Time":"2026-11-06T22:06:57.511785+08:00","Action":"output","Package":"deepweave/backend-golang/internal/logger","Test":"TestPlain","Output":"=== RUN   TestPlain\n","OutputType":"frame"}
+{"Time":"2026-11-06T22:06:57.511787+08:00","Action":"output","Package":"deepweave/backend-golang/internal/logger","Test":"TestPlain","Output":"--- PASS: TestPlain (0.00s)\n","OutputType":"frame"}
+{"Time":"2026-11-06T22:06:57.511788+08:00","Action":"pass","Package":"deepweave/backend-golang/internal/logger","Test":"TestPlain","Elapsed":0}
+{"Time":"2026-11-06T22:06:57.511789+08:00","Action":"output","Package":"deepweave/backend-golang/internal/logger","Output":"PASS\n","OutputType":"frame"}
+{"Time":"2026-11-06T22:06:57.512244+08:00","Action":"output","Package":"deepweave/backend-golang/internal/logger","Output":"ok  \tdeepweave/backend-golang/internal/logger\t0.347s\n"}
+{"Time":"2026-11-06T22:06:57.512255+08:00","Action":"pass","Package":"deepweave/backend-golang/internal/logger","Elapsed":0.347}

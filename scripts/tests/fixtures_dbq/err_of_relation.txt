@@ -1,0 +1,3 @@
+ERROR:  column "nope" of relation "characters" does not exist
+LINE 1: UPDATE characters SET nope = 1 WHERE false;
+                              ^

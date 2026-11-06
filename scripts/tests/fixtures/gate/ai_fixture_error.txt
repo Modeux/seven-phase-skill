@@ -1,0 +1,13 @@
+E.                                                                       [100%]
+==================================== ERRORS ====================================
+__________________________ ERROR at setup of test_ok ___________________________
+
+    @pytest.fixture
+    def f():
+>       raise RuntimeError('fx')
+E       RuntimeError: fx
+
+tests/test_zz_probe.py:5: RuntimeError
+=========================== short test summary info ============================
+ERROR tests/test_zz_probe.py::test_ok - RuntimeError: fx
+1 passed, 1 error in 0.02s

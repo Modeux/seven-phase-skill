@@ -1,0 +1,9 @@
+{"Time":"2026-11-06T22:06:56.134016+08:00","Action":"start","Package":"deepweave/backend-golang/internal/logger"}
+{"Time":"2026-11-06T22:06:56.495581+08:00","Action":"run","Package":"deepweave/backend-golang/internal/logger","Test":"TestListed"}
+{"Time":"2026-11-06T22:06:56.495628+08:00","Action":"output","Package":"deepweave/backend-golang/internal/logger","Test":"TestListed","Output":"=== RUN   TestListed\n","OutputType":"frame"}
+{"Time":"2026-11-06T22:06:56.495662+08:00","Action":"output","Package":"deepweave/backend-golang/internal/logger","Test":"TestListed","Output":"    z_test.go:3: known\n","OutputType":"error"}
+{"Time":"2026-11-06T22:06:56.495667+08:00","Action":"output","Package":"deepweave/backend-golang/internal/logger","Test":"TestListed","Output":"--- FAIL: TestListed (0.00s)\n","OutputType":"frame"}
+{"Time":"2026-11-06T22:06:56.495673+08:00","Action":"fail","Package":"deepweave/backend-golang/internal/logger","Test":"TestListed","Elapsed":0}
+{"Time":"2026-11-06T22:06:56.495676+08:00","Action":"output","Package":"deepweave/backend-golang/internal/logger","Output":"FAIL\n","OutputType":"frame"}
+{"Time":"2026-11-06T22:06:56.495958+08:00","Action":"output","Package":"deepweave/backend-golang/internal/logger","Output":"FAIL\tdeepweave/backend-golang/internal/logger\t0.362s\n","OutputType":"frame"}
+{"Time":"2026-11-06T22:06:56.495966+08:00","Action":"fail","Package":"deepweave/backend-golang/internal/logger","Elapsed":0.362}

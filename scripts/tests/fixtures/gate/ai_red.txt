@@ -1,0 +1,12 @@
+.F                                                                       [100%]
+=================================== FAILURES ===================================
+___________________________________ test_bad ___________________________________
+
+    def test_bad():
+>       assert 1 == 2
+E       assert 1 == 2
+
+tests/test_zz_probe.py:5: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_zz_probe.py::test_bad - assert 1 == 2
+1 failed, 1 passed in 0.02s

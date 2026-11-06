@@ -50,6 +50,14 @@ const { page, walk, close } = await launch({ kit: '<套件>', round: 'r1' });  /
 | `hit(target)` | 點元素中心點得到它嗎，點不到是誰蓋住 |
 | `focusProbe(state, enter, breakpoints?)` | 見上面的焦點探針 |
 | `settle()`、`errors`、`cfg` | 等兩幀；console error 與 pageerror；設定值 |
+| `at(widths, fn, { height })` | 依序切每個寬度、`settle` 後跑 `fn(width)`，回 `[{ width, result }]`，結束一定還原視窗。`fn` 丟錯時該列是 `{ width, error }`，後面照跑，**step 要自己檢查 `error`**。`at(fn)` 用每個斷點 ±1 加原寬度。空清單或非正整數直接丟錯 |
+| `tabOrder({ from, max, shift })` | 連按 Tab，回 `{ start, stops: [{ i, el, name, visible, rect }], invisible, ariaHidden }` 加結束原因（下表）。`from` 不算停點，找不到、多於一個或拿不到焦點都丟錯；`invisible`、`ariaHidden` 是有問題的停點 index；`shift` 要帶 `from` |
+| `net({ match })` | 從現在開始記錄，回控制物件：`list(match?)` 回 `[{ method, url, status, ms, failed, pending }]`；`count(match?)` 含未回應和失敗；`wait(match, { timeout })` 回呼叫後的下一筆回應，**要在動作之前呼叫**，`.response` 可取 body；`stop()` 移除監聽。`match` 可寫 `'/x'`、`'POST /x'`、regex 或 `(row) => bool`。500 算回應（`failed: false`）；請求失敗不提早丟錯，逾時訊息會帶原因 |
+| `scroll(target, to)` | `to` 是 `'top'`、`'bottom'` 或數字時先捲再 `settle`，省略只量；`target` 省略或 `null` 量 document。回 `{ found, scrollable, overflowY, top, height, client, max, atTop, atBottom }`。找不到是 `found: false`、不等待；不可捲動是 `scrollable: false`、`atTop`／`atBottom` 為 `null`，不要當成 true |
+
+`tabOrder` 的結束原因：`leftDocument`（走過文件結尾，正常）、`droppedToBody`（焦點掉到 body，疑似 bug，到此結束）、`cycled`＋`cycledTo`（回到第幾個停點）、`stuck`（Tab 沒移動焦點）、`truncated`（碰到 `max`）。
+
+帳號與基本資料用固定角色，不要再手寫：`python3 ~/.claude/skills/seven-phase/scripts/dbq.py --fixture all --db deepweave_walk_<slug>`（`--list-fixtures` 列出成年創作者、成年、未成年、未回答年齡閘、零點數帳號與一般／18+ 角色；只寫進走查自己的 DB，`deepweave` 一律拒絕）。只有這包獨有的資料才寫 `seed.sql`。
 
 其他引擎與裝置：`run_kit.mjs --engine webkit`、`--device 'iPhone 14'`（觸控、視窗跟著裝置）。有步驟失敗時，stdout 最後一行是可以直接接回去的 `rerun: --steps a,b`。
 

@@ -1,0 +1,8 @@
+An exception occurred while getting runner-specific build options:
+Error: No tests found matching the following patterns:
+- Included: projects/frontend/src/app/zz-does-not-exist.spec.ts
+
+Please check the 'test' target configuration in your project's 'angular.json' file.
+    at getVitestBuildOptions (/SP/repo-smoke/angular-workspace/node_modules/.pnpm/@angular+build@22.2.1_@angular+compiler-cli@22.2.1_@angular+compiler@22.2.1_typescript@_83ef460208c81947de7b6697b76b9ac3/node_modules/@angular/build/src/builders/unit-test/runners/vitest/build-options.js:187:15)
+    at async execute (/SP/repo-smoke/angular-workspace/node_modules/.pnpm/@angular+build@22.2.1_@angular+compiler-cli@22.2.1_@angular+compiler@22.2.1_typescript@_83ef460208c81947de7b6697b76b9ac3/node_modules/@angular/build/src/builders/unit-test/builder.js:305:13)
+    at async handleAsyncIterator (/SP/repo-smoke/angular-workspace/node_modules/.pnpm/@angular-devkit+architect@0.2202.1_chokidar@5.0.0/node_modules/@angular-devkit/architect/src/api.js:38:28)

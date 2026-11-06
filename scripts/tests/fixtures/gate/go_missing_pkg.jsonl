@@ -1,0 +1,6 @@
+{"ImportPath":"./internal/nope","Action":"build-output","Output":"# ./internal/nope\n"}
+{"ImportPath":"./internal/nope","Action":"build-output","Output":"stat /SP/repo-smoke/backend-golang/internal/nope: directory not found\n"}
+{"ImportPath":"./internal/nope","Action":"build-fail"}
+{"Time":"2026-11-06T17:42:58.702627+08:00","Action":"start","Package":"./internal/nope"}
+{"Time":"2026-11-06T17:42:58.702708+08:00","Action":"output","Package":"./internal/nope","Output":"FAIL\t./internal/nope [setup failed]\n","OutputType":"frame"}
+{"Time":"2026-11-06T17:42:58.702716+08:00","Action":"fail","Package":"./internal/nope","Elapsed":0,"FailedBuild":"./internal/nope"}

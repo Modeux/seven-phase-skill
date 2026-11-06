@@ -37,6 +37,34 @@ def section(lines, heads, idx):
     return start, end
 
 
+class SelectorError(ValueError):
+    pass
+
+
+def parse_range(sel):
+    """(start, end) as a slice for `L94`, `94`, `L1-L9`, `1-9`; None when sel is heading text."""
+    # WHY: L94 is the one-line range L94-L94. Before this, a bare line number fell through to the
+    # heading matcher, matched nothing and aborted the whole run — every selector after it was
+    # silently missing from the brief.
+    rng = re.fullmatch(r"L?(\d+)(?:-L?(\d+))?", sel)
+    return (int(rng.group(1)) - 1, int(rng.group(2) or rng.group(1))) if rng else None
+
+
+def resolve_heading(lines, heads, sel, first=False, shown=""):
+    """(start, end, label) of the one heading containing sel; SelectorError otherwise."""
+    hits = [k for k, (_, _, text) in enumerate(heads) if sel in text]
+    if not hits or (len(hits) > 1 and not first):
+        found = "; ".join(f"L{heads[k][0] + 1} {heads[k][2]}" for k in hits) or "none"
+        raise SelectorError(f"selector {sel!r} matched {len(hits)} headings in {shown}: {found}")
+    start, end = section(lines, heads, hits[0])
+    return start, end, heads[hits[0]][2]
+
+
+def render(lines, start, end, label, shown, level=2):
+    tag = "#" * level
+    return f"\n{tag} {label}（逐字摘自 `{shown}` L{start + 1}–L{end}）\n\n" + "\n".join(lines[start:end]).rstrip() + "\n"
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("file")
@@ -52,23 +80,25 @@ def main():
             print(f"L{i + 1:<5} {'#' * lv} {text}")
         return
     shown = str(path)
+    # WHY: nothing is written until every selector resolves; callers append stdout to a brief, so a failure
+    # after partial output left a brief that looked complete.
+    out = []
     for sel in a.selectors:
-        # L94 is the one-line range L94-L94. Before this, a bare line number fell
-        # through to the heading matcher, matched nothing and aborted the whole
-        # run — every selector after it was silently missing from the brief.
-        rng = re.fullmatch(r"L?(\d+)(?:-L?(\d+))?", sel)
+        rng = parse_range(sel)
         if rng:
-            start, end = int(rng.group(1)) - 1, int(rng.group(2) or rng.group(1))
+            start, end = rng
+            # WHY: slicing past the end is silently valid, so a stale line number printed an empty or
+            # mislabelled excerpt with exit 0.
+            if start < 0 or start >= len(lines) or end > len(lines) or end <= start:
+                sys.exit(f"extract.py: selector {sel!r} is outside {shown} ({len(lines)} lines)")
             label = f"L{start + 1}–L{end}"
         else:
-            hits = [k for k, (_, _, text) in enumerate(heads) if sel in text]
-            if not hits or (len(hits) > 1 and not a.first):
-                found = "; ".join(f"L{heads[k][0] + 1} {heads[k][2]}" for k in hits) or "none"
-                sys.exit(f"extract.py: selector {sel!r} matched {len(hits)} headings in {shown}: {found}")
-            start, end = section(lines, heads, hits[0])
-            label = heads[hits[0]][2]
-        print(f"\n## {label}（逐字摘自 `{shown}` L{start + 1}–L{end}）\n")
-        print("\n".join(lines[start:end]).rstrip())
+            try:
+                start, end, label = resolve_heading(lines, heads, sel, a.first, shown)
+            except SelectorError as e:
+                sys.exit(f"extract.py: {e}")
+        out.append(render(lines, start, end, label, shown))
+    sys.stdout.write("".join(out))
 
 
 if __name__ == "__main__":

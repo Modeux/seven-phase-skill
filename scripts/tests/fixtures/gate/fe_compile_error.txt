@@ -1,0 +1,11 @@
+❯ Building...
+✔ Building...
+Application bundle generation failed. [0.333 seconds] - 2026-11-06T09:43:55.579Z
+
+[31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mTS2322: Type 'string' is not assignable to type 'number'.[0m [1m[35m[plugin angular-compiler][0m
+
+    /SP/repo-smoke/angular-workspace/projects/frontend/src/app/zz-probe-fe_compile_error.spec.ts:1:45:
+[37m      1 │ ..., () => { it('x', () => { const [32mn[37m: number = 'nope'; expect(n).to...
+        ╵                                    [32m^[0m
+
+

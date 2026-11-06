@@ -1,0 +1,3 @@
+{"Time":"2026-11-06T17:42:51.689544+08:00","Action":"start","Package":"deepweave/backend-golang/internal/db/sqlc"}
+{"Time":"2026-11-06T17:42:51.689729+08:00","Action":"output","Package":"deepweave/backend-golang/internal/db/sqlc","Output":"?   \tdeepweave/backend-golang/internal/db/sqlc\t[no test files]\n"}
+{"Time":"2026-11-06T17:42:51.689753+08:00","Action":"skip","Package":"deepweave/backend-golang/internal/db/sqlc","Elapsed":0}

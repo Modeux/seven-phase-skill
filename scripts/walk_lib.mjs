@@ -90,7 +90,7 @@ export async function launch({
   });
 
   const cfg = readConfig(kit, config);
-  const walk = makeWalk(page, { roundDir: resolvedRoundDir, cfg, errors });
+  const walk = makeWalk(page, { roundDir: resolvedRoundDir, cfg, errors, actionTimeoutMs });
   return { pw, browser, context, page, walk, errors, cfg, roundDir: resolvedRoundDir, close: () => browser.close() };
 }
 
@@ -104,7 +104,100 @@ const describe = (el) => {
 };
 const inPage = (fn, arg) => `(() => { const describe = ${describe}; return (${fn})(${JSON.stringify(arg ?? null)}); })()`;
 
-function makeWalk(page, { roundDir, cfg, errors }) {
+// WHY state on window: identical-looking controls have the same describe() text, so stops are compared by identity,
+// and that needs the element references to stay in the page.
+const tabLanding = ({ reset }) => {
+  let el = document.activeElement;
+  let dx = 0;
+  let dy = 0;
+  let opaque = false;
+  while (el) {
+    if (el.shadowRoot?.activeElement) { el = el.shadowRoot.activeElement; continue; }
+    if (el.tagName !== 'IFRAME' && el.tagName !== 'FRAME') break;
+    let inner = null;
+    try { inner = el.contentDocument; } catch { /* cross-origin: same as null */ }
+    if (!inner) { opaque = true; break; }
+    const active = inner.activeElement;
+    if (!active || active === inner.body) break;
+    const f = el.getBoundingClientRect();
+    dx += f.left;
+    dy += f.top;
+    el = active;
+  }
+  const atBody = !el || el === document.body || el === document.documentElement;
+  if (reset) {
+    window.__walkTab = { seen: [], prev: atBody ? null : el };
+    return { start: atBody ? null : describe(el) };
+  }
+  const state = window.__walkTab;
+  // INVARIANT: this order. Leaving the document also lands on <body>; only a <body> landing while the document keeps
+  // focus is the focus-loss bug.
+  if (!document.hasFocus()) return { kind: 'left' };
+  if (atBody) return { kind: 'body' };
+  if (el === state.prev) return { kind: 'stuck' };
+  const earlier = state.seen.indexOf(el);
+  if (earlier >= 0) return { kind: 'cycle', to: earlier };
+  state.seen.push(el);
+  state.prev = el;
+
+  const r = el.getBoundingClientRect();
+  const clipped = () => {
+    if (getComputedStyle(el).position === 'fixed') return false;
+    for (let p = el.parentElement; p; p = p.parentElement) {
+      const cs = getComputedStyle(p);
+      if (cs.overflowX !== 'visible' || cs.overflowY !== 'visible') {
+        const c = p.getBoundingClientRect();
+        if (r.right <= c.left || r.left >= c.right || r.bottom <= c.top || r.top >= c.bottom) return true;
+      }
+      if (cs.position === 'fixed') return false;
+    }
+    return false;
+  };
+  const view = el.ownerDocument.defaultView;
+  // WHY more than checkVisibility: visually-hidden 1px elements, off-canvas panels and collapsed sections all render
+  // by its rules, and they are the invisible focus targets a keyboard user actually loses track of.
+  const visible = el.checkVisibility({ opacityProperty: true, visibilityProperty: true, checkOpacity: true, checkVisibilityCSS: true })
+    && r.width > 1 && r.height > 1
+    && r.right > 0 && r.bottom > 0 && r.left < view.innerWidth && r.top < view.innerHeight
+    && !clipped();
+  const clean = (t) => (t || '').trim().replace(/\s+/g, ' ').slice(0, 80);
+  const labelledBy = (el.getAttribute('aria-labelledby') || '').split(/\s+/).filter(Boolean)
+    .map((id) => el.ownerDocument.getElementById(id)?.textContent || '').join(' ');
+  const name = clean(el.getAttribute('aria-label')) || clean(labelledBy)
+    || clean([...(el.labels || [])].map((l) => l.textContent).join(' ')) || clean(el.textContent)
+    || clean(el.querySelector('img[alt]')?.alt) || clean(el.title) || clean(el.placeholder);
+  return {
+    kind: opaque ? 'frame' : 'stop',
+    el: describe(el),
+    name,
+    visible,
+    ariaHidden: !!el.closest('[aria-hidden="true"]'),
+    rect: { x: r.left + dx, y: r.top + dy, width: r.width, height: r.height },
+  };
+};
+
+// WHY three candidates: agents write '/x', 'POST /x', ':7522' and /^\/x/ (corpus), and each should mean what it says.
+function netMatcher(match) {
+  if (match === undefined || match === null) return () => true;
+  if (typeof match === 'function') return (row) => !!match(row);
+  // WHY rebuilt: a /g or /y regex carries lastIndex between tests, so the same question would alternate answers.
+  const re = match instanceof RegExp ? new RegExp(match.source, match.flags.replace(/[gy]/g, '')) : null;
+  if (!re && (typeof match !== 'string' || !match)) throw new TypeError(`walk.net: matcher must be a non-empty string, RegExp or function, got ${String(match)}`);
+  const test = re ? (text) => re.test(text) : (text) => text.includes(match);
+  return ({ method, url, origin }) => test(`${method} ${url}`) || test(url) || test(`${origin}${url}`);
+}
+
+function splitUrl(raw) {
+  try {
+    const u = new URL(raw);
+    if (u.origin !== 'null') return { origin: u.origin, url: `${u.pathname}${u.search}${u.hash}` };
+  } catch { /* not parseable: keep the raw text below */ }
+  return { origin: '', url: raw.slice(0, 200) };
+}
+
+const failureText = (e) => String(e?.message ?? e).replace(/\x1b\[[0-9;]*m/g, '').slice(0, 500);
+
+function makeWalk(page, { roundDir, cfg, errors, actionTimeoutMs = DEFAULT_ACTION_TIMEOUT_MS }) {
   const locate = (target) => (typeof target === 'string' ? page.locator(target) : target);
   const round1 = (n) => Math.round(n * 10) / 10;
   const settle = () => page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
@@ -114,6 +207,224 @@ function makeWalk(page, { roundDir, cfg, errors }) {
     cfg,
     errors,
     settle,
+
+// WHY at, tabOrder, net, scroll: 38 to 44 of 54 ui-lane runs rewrote each of these in 14 days (250 to 459 scripts apiece).
+    async at(widths, fn, options) {
+      if (typeof widths === 'function') { options = fn; fn = widths; widths = null; }
+      const { height } = options || {};
+      const vp = page.viewportSize();
+      if (!vp) throw new Error('walk.at: this page has no fixed viewport to restore');
+      if (typeof fn !== 'function') throw new Error('walk.at: fn must be a function');
+      const isSize = (n) => Number.isInteger(n) && n > 0;
+      if (height !== undefined && !isSize(height)) throw new Error(`walk.at: invalid height ${height}`);
+      // WHY bp ± 1: frontend queries are written as both max-width: Npx and min-width: Npx, and only these two widths
+      // land on opposite sides of N for either form.
+      const list = widths ?? [...new Set([...cfg.breakpoints.flatMap((bp) => [bp - 1, bp + 1]), vp.width])].sort((a, b) => a - b);
+      // INVARIANT: an empty list fails here. Returning [] would let `rows.every(...)` pass with nothing measured.
+      if (!Array.isArray(list) || !list.length || !list.every(isSize)) throw new Error(`walk.at: widths must be a non-empty list of positive integers, got ${JSON.stringify(list)}`);
+      const rows = [];
+      for (const width of list) {
+        try {
+          await page.setViewportSize({ width, height: height ?? vp.height });
+          await settle();
+          rows.push({ width, result: await fn(width) });
+        } catch (e) {
+          rows.push({ width, error: failureText(e) });
+        }
+      }
+      try {
+        await page.setViewportSize(vp);
+        await settle();
+      } catch (e) {
+        // WHY throw: later steps would measure at the wrong width with nothing to say so. Rows travel on the error.
+        throw Object.assign(new Error(`walk.at: viewport not restored to ${vp.width}x${vp.height}: ${failureText(e)}; rows: ${JSON.stringify(rows).slice(0, 500)}`), { rows });
+      }
+      return rows;
+    },
+
+    async tabOrder({ from, max = 30, shift = false } = {}) {
+      if (!Number.isInteger(max) || max < 1) throw new Error(`walk.tabOrder: max must be a positive integer, got ${max}`);
+      if (from) {
+        const start = locate(from);
+        await start.focus();
+        // WHY: focus() on a non-focusable element is a silent no-op, and the walk would start from the top of the page.
+        if (!(await start.evaluate((el) => el.matches(':focus')))) throw new Error(`walk.tabOrder: from ${String(from)} did not take focus`);
+      }
+      // WHY Alt: plain Tab on macOS WebKit skips buttons and links, which would report a short order as the page's own.
+      const macWebkit = process.platform === 'darwin' && page.context().browser()?.browserType().name() === 'webkit';
+      const key = `${macWebkit ? 'Alt+' : ''}${shift ? 'Shift+' : ''}Tab`;
+      const out = { start: null, stops: [], leftDocument: false, cycled: false, cycledTo: null, droppedToBody: false, stuck: false, truncated: false, invisible: [], ariaHidden: [] };
+      try {
+        ({ start: out.start } = await page.evaluate(inPage(tabLanding, { reset: true })));
+        let ended = false;
+        for (let i = 0; i < max && !ended; i++) {
+          await page.keyboard.press(key);
+          await settle();
+          const hit = await page.evaluate(inPage(tabLanding, {}));
+          ended = hit.kind !== 'stop';
+          if (hit.kind === 'left') out.leftDocument = true;
+          if (hit.kind === 'body') out.droppedToBody = true;
+          if (hit.kind === 'stuck') out.stuck = true;
+          if (hit.kind === 'cycle') { out.cycled = true; out.cycledTo = hit.to; }
+          if (hit.kind === 'stop' || hit.kind === 'frame') {
+            const { el, name, visible, rect, ariaHidden } = hit;
+            out.stops.push({ i, el, name, visible, rect: { x: round1(rect.x), y: round1(rect.y), w: round1(rect.width), h: round1(rect.height) } });
+            if (!visible) out.invisible.push(i);
+            if (ariaHidden) out.ariaHidden.push(i);
+          }
+          if (hit.kind === 'frame') out.leftDocument = true;
+        }
+        out.truncated = !ended;
+      } finally {
+        await page.evaluate(() => { delete window.__walkTab; }).catch(() => {});
+      }
+      return out;
+    },
+
+    net({ match } = {}) {
+      const base = netMatcher(match);
+      const records = new Map();
+      const waiters = new Set();
+      let ended = page.isClosed() ? 'page closed' : null;
+      const record = (request, startedAt = null) => {
+        if (!records.has(request)) {
+          const { origin, url } = splitUrl(request.url());
+          records.set(request, { origin, startedAt, response: null, row: { method: request.method(), url, status: null, ms: null, failed: false, pending: true } });
+        }
+        return records.get(request);
+      };
+      const view = (r) => ({ ...r.row, origin: r.origin });
+      const query = (m) => {
+        const test = netMatcher(m);
+        return [...records.values()].filter((r) => base(view(r)) && test(view(r))).map((r) => ({ ...r.row }));
+      };
+      const elapse = (r) => (r.startedAt === null ? null : Date.now() - r.startedAt);
+      // INVARIANT: page events run these with nobody to catch a rejection, and a page can close at any point. So they
+      // stay synchronous and never call an async Playwright method; that keeps a closing page from crashing the process.
+      const onRequest = (request) => { record(request, Date.now()); };
+      const onResponse = (response) => {
+        const r = record(response.request());
+        Object.assign(r.row, { status: response.status(), pending: false, ms: elapse(r) });
+        r.response = response;
+        for (const w of [...waiters]) w.seen(r);
+      };
+      const onFailed = (request) => {
+        const r = record(request);
+        Object.assign(r.row, { failed: request.failure()?.errorText || 'failed', pending: false, ms: r.row.ms ?? elapse(r) });
+      };
+      const finish = (reason) => {
+        ended = ended || reason;
+        for (const w of [...waiters]) w.end(new Error(`walk.net wait: ${reason}`));
+        page.off('request', onRequest);
+        page.off('response', onResponse);
+        page.off('requestfailed', onFailed);
+        page.off('close', onClose);
+      };
+      const onClose = () => finish('page closed');
+      if (!ended) {
+        page.on('request', onRequest);
+        page.on('response', onResponse);
+        page.on('requestfailed', onFailed);
+        page.on('close', onClose);
+      }
+      return {
+        list: (m) => query(m),
+        count: (m) => query(m).length,
+        // WHY not reject on the first failure: switchMap and retry interceptors fail one request and answer the next.
+        // WHY not return an earlier response: it would pass a step whose action never fired.
+        wait(m, { timeout = actionTimeoutMs } = {}) {
+          const waiting = new Promise((resolve, reject) => {
+            const test = netMatcher(m);
+            if (!Number.isFinite(timeout) || timeout <= 0) throw new RangeError(`walk.net wait: timeout must be a positive number of ms, got ${timeout}`);
+            if (ended) throw new Error(`walk.net wait: ${ended}`);
+            const w = {
+              timer: setTimeout(() => {
+                // INVARIANT: a matcher can throw here too, and a throw from a timer ends the process.
+                try {
+                  const rows = query(m);
+                  const failed = rows.filter((r) => r.failed);
+                  const answered = rows.filter((r) => r.status !== null).length;
+                  const hint = answered ? ' (arm wait before the action)' : '';
+                  w.end(Object.assign(new Error(`walk.net wait(${String(m).slice(0, 80)}): no new response in ${timeout}ms; `
+                    + `${answered} answered before this wait${hint}, ${rows.filter((r) => r.pending).length} pending, `
+                    + `${failed.length} failed${failed.length ? ` (${failed[0].failed})` : ''}`), { rows }));
+                } catch (e) { w.end(e); }
+              }, timeout),
+              seen(r) {
+                try {
+                  if (!base(view(r)) || !test(view(r))) return;
+                } catch (e) { w.end(e); return; }
+                clearTimeout(w.timer);
+                waiters.delete(w);
+                resolve(Object.defineProperty({ ...r.row }, 'response', { value: r.response, enumerable: false }));
+              },
+              end(e) {
+                clearTimeout(w.timer);
+                waiters.delete(w);
+                reject(e);
+              },
+            };
+            waiters.add(w);
+          });
+          // INVARIANT: steps arm a wait before an action that can throw, and may never reach `await`. Node ends the
+          // process on an unhandled rejection; this marks it handled and an awaiting caller still gets the rejection.
+          waiting.catch(() => {});
+          return waiting;
+        },
+        stop() { finish('recording stopped'); },
+      };
+    },
+
+    async scroll(target, to) {
+      if (target === 'top' || target === 'bottom' || typeof target === 'number') {
+        throw new Error(`walk.scroll(${target}): the first argument is the target; for the document use walk.scroll(null, ${JSON.stringify(target)})`);
+      }
+      const named = to !== undefined && to !== null;
+      if (named && to !== 'top' && to !== 'bottom' && !(Number.isFinite(to) && to >= 0)) {
+        throw new Error(`walk.scroll: to must be 'top', 'bottom' or a number >= 0, got ${String(to)}`);
+      }
+      let handle;
+      if (target === undefined || target === null) {
+        handle = await page.evaluateHandle(() => document.scrollingElement || document.documentElement);
+      } else {
+        const found = locate(target);
+        const n = await found.count();
+        if (n > 1) throw new Error(`walk.scroll(${String(target)}): matched ${n} elements; a wrong scroller measures quietly, so narrow it`);
+        if (!n) return { found: false, scrollable: false, overflowY: null, top: null, height: null, client: null, max: null, atTop: null, atBottom: null };
+        handle = await found.elementHandle();
+      }
+      try {
+        if (named) {
+          // WHY instant: under CSS scroll-behavior: smooth the measure below would read the start of the animation.
+          await handle.evaluate((el, t) => el.scrollTo({ top: t === 'bottom' ? el.scrollHeight : t === 'top' ? 0 : t, behavior: 'instant' }), to);
+          await settle();
+        }
+        const m = await handle.evaluate((el) => {
+          const isRoot = el === (document.scrollingElement || document.documentElement);
+          const own = getComputedStyle(el).overflowY;
+          // WHY: <body>'s overflow propagates to the viewport, so a scroll-locked page shows it there and not on <html>.
+          const overflowY = isRoot && own === 'visible' && document.body ? getComputedStyle(document.body).overflowY : own;
+          return { overflowY, isRoot, top: el.scrollTop, height: el.scrollHeight, client: el.clientHeight };
+        });
+        const max = m.height - m.client;
+        // WHY isRoot aside: overflow:visible on anything else has content past its box and a non-zero max, yet cannot move.
+        const scrollable = max > 0 && (m.isRoot || !['visible', 'clip'].includes(m.overflowY));
+        return {
+          found: true,
+          scrollable,
+          overflowY: m.overflowY,
+          top: round1(m.top),
+          height: m.height,
+          client: m.client,
+          max,
+          atTop: scrollable ? m.top <= 0 : null,
+          // WHY 1px: scrollTop is fractional on high-density screens while scrollHeight is rounded.
+          atBottom: scrollable ? max - m.top <= 1 : null,
+        };
+      } finally {
+        await handle.dispose().catch(() => {});
+      }
+    },
 
     // target: selector, Locator, { clip }, { fullPage: true }, or nothing for the viewport.
     // WHY element by default: image tokens scale with area and every opened screenshot stays in the agent's context.

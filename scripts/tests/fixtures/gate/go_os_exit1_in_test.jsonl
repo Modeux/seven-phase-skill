@@ -1,0 +1,5 @@
+{"Time":"2026-11-06T17:42:56.291164+08:00","Action":"start","Package":"deepweave/backend-golang/internal/logger"}
+{"Time":"2026-11-06T17:42:56.667722+08:00","Action":"run","Package":"deepweave/backend-golang/internal/logger","Test":"TestZZExit"}
+{"Time":"2026-11-06T17:42:56.667794+08:00","Action":"output","Package":"deepweave/backend-golang/internal/logger","Test":"TestZZExit","Output":"=== RUN   TestZZExit\n","OutputType":"frame"}
+{"Time":"2026-11-06T17:42:56.668233+08:00","Action":"output","Package":"deepweave/backend-golang/internal/logger","Output":"FAIL\tdeepweave/backend-golang/internal/logger\t0.377s\n","OutputType":"frame"}
+{"Time":"2026-11-06T17:42:56.668261+08:00","Action":"fail","Package":"deepweave/backend-golang/internal/logger","Elapsed":0.377}

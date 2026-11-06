@@ -1,0 +1,31 @@
+❯ Building...
+✔ Building...
+Application bundle generation complete. [0.335 seconds] - 2026-11-06T09:43:58.196Z
+
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.5 [39m[90m/SP/repo-smoke/angular-workspace[39m
+
+[31m⎯⎯⎯⎯⎯⎯[39m[1m[41m Unhandled Errors [49m[22m[31m⎯⎯⎯⎯⎯⎯[39m
+[31m[1m
+Vitest caught 1 unhandled error during the test run.
+This might cause false positive tests. Resolve unhandled errors to make sure your tests are not affected.[22m[39m
+
+[31m⎯⎯⎯⎯⎯[39m[1m[41m Uncaught Exception [49m[22m[31m⎯⎯⎯⎯⎯[39m
+[31m[1mError[22m: late boom[39m
+[90m [2m❯[22m Timeout._onTimeout projects/frontend/src/app/zz-probe-fe_unhandled.spec.ts:[2m1:71[22m[39m
+[90m [2m❯[22m listOnTimeout node:internal/timers:[2m685:17[22m[39m
+[90m [2m❯[22m processTimers node:internal/timers:[2m618:7[22m[39m
+
+[31mThis error originated in "[1mprojects/frontend/src/app/zz-probe-fe_unhandled.spec.ts[22m" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.[39m
+[31mThe latest test that might've caused the error is "[1mx[22m". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.[39m
+[31m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[39m
+
+
+[2m Test Files [22m [1m[32m1 passed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[32m1 passed[39m[22m[90m (1)[39m
+[2m     Errors [22m [1m[31m1 error[39m[22m
+[2m   Start at [22m 17:43:58
+[2m   Duration [22m 407ms[2m (transform 16ms, setup 93ms, import 2ms, tests 53ms, environment 198ms)[22m
+

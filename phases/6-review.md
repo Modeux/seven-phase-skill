@@ -7,7 +7,7 @@
 
 ## 2. 準備審查對象（凍結快照）
 1. `scripts/mkpatch.py` 產 `change*.patch`、`baseline.sha256`、`files.txt`（排除無關的任務目錄與 `tmp/`）。
-2. `scripts/mkworktree.py` 建 **唯讀快照**（所有 lane 的 file:line 以它為準），需要突變的話再建一棵**突變樹**，指定唯一 writer（通常 pr-test-analyzer）。
+2. `scripts/mkworktree.py` 建 **唯讀快照**（所有 lane 的 file:line 以它為準），突變一律 `scripts/mutate.py`：Go 走 overlay，直接在快照上跑、不碰樹；前端或 Python 才要另建一棵**突變樹**，指定唯一 writer（通常 pr-test-analyzer）。
 3. 為什麼不讓 lane 直接看主樹：有 Bash 的 lane 遇到「想驗證」的衝動就會寫檔；快照的免疫力來自「沒有人寫它」。可寫的樹在**所有** lane 的共用任務書明寫「唯一 writer＝X」，不只寫在 X 的 prompt。
 4. 快照裡放一份 `tmp/review-input/`（SPEC、PLAN、patch、files.txt），給外審用。
 

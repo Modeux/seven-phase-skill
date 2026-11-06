@@ -1,0 +1,3 @@
+ERROR:  relation "charactrs" does not exist
+LINE 1: SELECT * FROM charactrs;
+                      ^

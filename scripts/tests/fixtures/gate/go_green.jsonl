@@ -1,0 +1,24 @@
+{"Time":"2026-11-06T17:42:50.232689+08:00","Action":"start","Package":"deepweave/backend-golang/internal/logger"}
+{"Time":"2026-11-06T17:42:50.597025+08:00","Action":"run","Package":"deepweave/backend-golang/internal/logger","Test":"TestNewHandler_TextAddSource"}
+{"Time":"2026-11-06T17:42:50.5971+08:00","Action":"output","Package":"deepweave/backend-golang/internal/logger","Test":"TestNewHandler_TextAddSource","Output":"=== RUN   TestNewHandler_TextAddSource\n","OutputType":"frame"}
+{"Time":"2026-11-06T17:42:50.597198+08:00","Action":"output","Package":"deepweave/backend-golang/internal/logger","Test":"TestNewHandler_TextAddSource","Output":"--- PASS: TestNewHandler_TextAddSource (0.00s)\n","OutputType":"frame"}
+{"Time":"2026-11-06T17:42:50.597208+08:00","Action":"pass","Package":"deepweave/backend-golang/internal/logger","Test":"TestNewHandler_TextAddSource","Elapsed":0}
+{"Time":"2026-11-06T17:42:50.597223+08:00","Action":"run","Package":"deepweave/backend-golang/internal/logger","Test":"TestNewCommunityLoggerWritesRoutineEventsAsReadableChineseText"}
+{"Time":"2026-11-06T17:42:50.597227+08:00","Action":"output","Package":"deepweave/backend-golang/internal/logger","Test":"TestNewCommunityLoggerWritesRoutineEventsAsReadableChineseText","Output":"=== RUN   TestNewCommunityLoggerWritesRoutineEventsAsReadableChineseText\n","OutputType":"frame"}
+{"Time":"2026-11-06T17:42:50.597801+08:00","Action":"output","Package":"deepweave/backend-golang/internal/logger","Test":"TestNewCommunityLoggerWritesRoutineEventsAsReadableChineseText","Output":"--- PASS: TestNewCommunityLoggerWritesRoutineEventsAsReadableChineseText (0.00s)\n","OutputType":"frame"}
+{"Time":"2026-11-06T17:42:50.597805+08:00","Action":"pass","Package":"deepweave/backend-golang/internal/logger","Test":"TestNewCommunityLoggerWritesRoutineEventsAsReadableChineseText","Elapsed":0}
+{"Time":"2026-11-06T17:42:50.597812+08:00","Action":"run","Package":"deepweave/backend-golang/internal/logger","Test":"TestNewCommunityLoggerKeepsSeriousErrorsAsJSONWithSource"}
+{"Time":"2026-11-06T17:42:50.597813+08:00","Action":"output","Package":"deepweave/backend-golang/internal/logger","Test":"TestNewCommunityLoggerKeepsSeriousErrorsAsJSONWithSource","Output":"=== RUN   TestNewCommunityLoggerKeepsSeriousErrorsAsJSONWithSource\n","OutputType":"frame"}
+{"Time":"2026-11-06T17:42:50.59828+08:00","Action":"output","Package":"deepweave/backend-golang/internal/logger","Test":"TestNewCommunityLoggerKeepsSeriousErrorsAsJSONWithSource","Output":"--- PASS: TestNewCommunityLoggerKeepsSeriousErrorsAsJSONWithSource (0.00s)\n","OutputType":"frame"}
+{"Time":"2026-11-06T17:42:50.598304+08:00","Action":"pass","Package":"deepweave/backend-golang/internal/logger","Test":"TestNewCommunityLoggerKeepsSeriousErrorsAsJSONWithSource","Elapsed":0}
+{"Time":"2026-11-06T17:42:50.598306+08:00","Action":"run","Package":"deepweave/backend-golang/internal/logger","Test":"TestNewHandler_JSONAddSource"}
+{"Time":"2026-11-06T17:42:50.598308+08:00","Action":"output","Package":"deepweave/backend-golang/internal/logger","Test":"TestNewHandler_JSONAddSource","Output":"=== RUN   TestNewHandler_JSONAddSource\n","OutputType":"frame"}
+{"Time":"2026-11-06T17:42:50.59831+08:00","Action":"output","Package":"deepweave/backend-golang/internal/logger","Test":"TestNewHandler_JSONAddSource","Output":"--- PASS: TestNewHandler_JSONAddSource (0.00s)\n","OutputType":"frame"}
+{"Time":"2026-11-06T17:42:50.598311+08:00","Action":"pass","Package":"deepweave/backend-golang/internal/logger","Test":"TestNewHandler_JSONAddSource","Elapsed":0}
+{"Time":"2026-11-06T17:42:50.598315+08:00","Action":"run","Package":"deepweave/backend-golang/internal/logger","Test":"TestNewHandler_RespectsLevel"}
+{"Time":"2026-11-06T17:42:50.598316+08:00","Action":"output","Package":"deepweave/backend-golang/internal/logger","Test":"TestNewHandler_RespectsLevel","Output":"=== RUN   TestNewHandler_RespectsLevel\n","OutputType":"frame"}
+{"Time":"2026-11-06T17:42:50.598349+08:00","Action":"output","Package":"deepweave/backend-golang/internal/logger","Test":"TestNewHandler_RespectsLevel","Output":"--- PASS: TestNewHandler_RespectsLevel (0.00s)\n","OutputType":"frame"}
+{"Time":"2026-11-06T17:42:50.598356+08:00","Action":"pass","Package":"deepweave/backend-golang/internal/logger","Test":"TestNewHandler_RespectsLevel","Elapsed":0}
+{"Time":"2026-11-06T17:42:50.598358+08:00","Action":"output","Package":"deepweave/backend-golang/internal/logger","Output":"PASS\n","OutputType":"frame"}
+{"Time":"2026-11-06T17:42:50.598873+08:00","Action":"output","Package":"deepweave/backend-golang/internal/logger","Output":"ok  \tdeepweave/backend-golang/internal/logger\t0.366s\n"}
+{"Time":"2026-11-06T17:42:50.598881+08:00","Action":"pass","Package":"deepweave/backend-golang/internal/logger","Elapsed":0.366}

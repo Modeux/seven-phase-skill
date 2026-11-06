@@ -134,6 +134,10 @@ def main():
     ap.add_argument("--root")
     a = ap.parse_args()
     root = pathlib.Path(a.root) if a.root else _common.toplevel(".")
+    # WHY: hits() reads a missing rules directory as "no rule applies", so a wrong --root passed the PLAN gate.
+    if not (root / ".claude/rules").is_dir():
+        print("rulesfor: {} 底下沒有 .claude/rules（--root 錯了？）".format(root), file=sys.stderr)
+        return 2
     if a.check:
         errs = check(root, pathlib.Path(a.check))
         for e in errs:

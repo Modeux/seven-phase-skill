@@ -1,0 +1,18 @@
+{"Time":"2026-11-06T22:06:54.475139+08:00","Action":"start","Package":"deepweave/backend-golang/internal/logger"}
+{"Time":"2026-11-06T22:06:54.917985+08:00","Action":"run","Package":"deepweave/backend-golang/internal/logger","Test":"TestParent"}
+{"Time":"2026-11-06T22:06:54.918044+08:00","Action":"output","Package":"deepweave/backend-golang/internal/logger","Test":"TestParent","Output":"=== RUN   TestParent\n","OutputType":"frame"}
+{"Time":"2026-11-06T22:06:54.918076+08:00","Action":"run","Package":"deepweave/backend-golang/internal/logger","Test":"TestParent/old"}
+{"Time":"2026-11-06T22:06:54.918078+08:00","Action":"output","Package":"deepweave/backend-golang/internal/logger","Test":"TestParent/old","Output":"=== RUN   TestParent/old\n","OutputType":"frame"}
+{"Time":"2026-11-06T22:06:54.918086+08:00","Action":"output","Package":"deepweave/backend-golang/internal/logger","Test":"TestParent/old","Output":"    z_test.go:4: known\n","OutputType":"error"}
+{"Time":"2026-11-06T22:06:54.918091+08:00","Action":"output","Package":"deepweave/backend-golang/internal/logger","Test":"TestParent/old","Output":"--- FAIL: TestParent/old (0.00s)\n","OutputType":"frame"}
+{"Time":"2026-11-06T22:06:54.918092+08:00","Action":"fail","Package":"deepweave/backend-golang/internal/logger","Test":"TestParent/old","Elapsed":0}
+{"Time":"2026-11-06T22:06:54.918097+08:00","Action":"run","Package":"deepweave/backend-golang/internal/logger","Test":"TestParent/new_regression"}
+{"Time":"2026-11-06T22:06:54.918102+08:00","Action":"output","Package":"deepweave/backend-golang/internal/logger","Test":"TestParent/new_regression","Output":"=== RUN   TestParent/new_regression\n","OutputType":"frame"}
+{"Time":"2026-11-06T22:06:54.918111+08:00","Action":"output","Package":"deepweave/backend-golang/internal/logger","Test":"TestParent/new_regression","Output":"    z_test.go:5: new\n","OutputType":"error"}
+{"Time":"2026-11-06T22:06:54.918112+08:00","Action":"output","Package":"deepweave/backend-golang/internal/logger","Test":"TestParent/new_regression","Output":"--- FAIL: TestParent/new_regression (0.00s)\n","OutputType":"frame"}
+{"Time":"2026-11-06T22:06:54.918118+08:00","Action":"fail","Package":"deepweave/backend-golang/internal/logger","Test":"TestParent/new_regression","Elapsed":0}
+{"Time":"2026-11-06T22:06:54.91812+08:00","Action":"output","Package":"deepweave/backend-golang/internal/logger","Test":"TestParent","Output":"--- FAIL: TestParent (0.00s)\n","OutputType":"frame"}
+{"Time":"2026-11-06T22:06:54.918122+08:00","Action":"fail","Package":"deepweave/backend-golang/internal/logger","Test":"TestParent","Elapsed":0}
+{"Time":"2026-11-06T22:06:54.918126+08:00","Action":"output","Package":"deepweave/backend-golang/internal/logger","Output":"FAIL\n","OutputType":"frame"}
+{"Time":"2026-11-06T22:06:54.918626+08:00","Action":"output","Package":"deepweave/backend-golang/internal/logger","Output":"FAIL\tdeepweave/backend-golang/internal/logger\t0.443s\n","OutputType":"frame"}
+{"Time":"2026-11-06T22:06:54.918638+08:00","Action":"fail","Package":"deepweave/backend-golang/internal/logger","Elapsed":0.443}

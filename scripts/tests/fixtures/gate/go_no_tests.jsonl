@@ -1,0 +1,5 @@
+{"Time":"2026-11-06T17:42:50.806972+08:00","Action":"start","Package":"deepweave/backend-golang/internal/logger"}
+{"Time":"2026-11-06T17:42:51.04893+08:00","Action":"output","Package":"deepweave/backend-golang/internal/logger","Output":"testing: warning: no tests to run\n"}
+{"Time":"2026-11-06T17:42:51.049035+08:00","Action":"output","Package":"deepweave/backend-golang/internal/logger","Output":"PASS\n","OutputType":"frame"}
+{"Time":"2026-11-06T17:42:51.049337+08:00","Action":"output","Package":"deepweave/backend-golang/internal/logger","Output":"ok  \tdeepweave/backend-golang/internal/logger\t0.242s [no tests to run]\n"}
+{"Time":"2026-11-06T17:42:51.049353+08:00","Action":"pass","Package":"deepweave/backend-golang/internal/logger","Elapsed":0.242}

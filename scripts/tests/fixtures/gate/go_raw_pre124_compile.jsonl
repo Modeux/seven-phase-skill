@@ -1,0 +1,6 @@
+go: downloading go1.23.4 (darwin/arm64)
+# old [old.test]
+./a_test.go:6:14: cannot use "nope" (untyped string constant) as int value in variable declaration
+{"Time":"2026-11-06T17:50:45.90845+08:00","Action":"start","Package":"old"}
+{"Time":"2026-11-06T17:50:45.908537+08:00","Action":"output","Package":"old","Output":"FAIL\told [build failed]\n"}
+{"Time":"2026-11-06T17:50:45.90854+08:00","Action":"fail","Package":"old","Elapsed":0}

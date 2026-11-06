@@ -1,0 +1,9 @@
+{"Time":"2026-11-06T17:42:58.29132+08:00","Action":"start","Package":"deepweave/backend-golang/internal/logger"}
+{"Time":"2026-11-06T17:42:58.673626+08:00","Action":"run","Package":"deepweave/backend-golang/internal/logger","Test":"TestZZLog"}
+{"Time":"2026-11-06T17:42:58.673695+08:00","Action":"output","Package":"deepweave/backend-golang/internal/logger","Test":"TestZZLog","Output":"=== RUN   TestZZLog\n","OutputType":"frame"}
+{"Time":"2026-11-06T17:42:58.673728+08:00","Action":"output","Package":"deepweave/backend-golang/internal/logger","Test":"TestZZLog","Output":"panic: recovered in middleware\n"}
+{"Time":"2026-11-06T17:42:58.673739+08:00","Action":"output","Package":"deepweave/backend-golang/internal/logger","Test":"TestZZLog","Output":"--- PASS: TestZZLog (0.00s)\n","OutputType":"frame"}
+{"Time":"2026-11-06T17:42:58.673747+08:00","Action":"pass","Package":"deepweave/backend-golang/internal/logger","Test":"TestZZLog","Elapsed":0}
+{"Time":"2026-11-06T17:42:58.673749+08:00","Action":"output","Package":"deepweave/backend-golang/internal/logger","Output":"PASS\n","OutputType":"frame"}
+{"Time":"2026-11-06T17:42:58.674148+08:00","Action":"output","Package":"deepweave/backend-golang/internal/logger","Output":"ok  \tdeepweave/backend-golang/internal/logger\t0.383s\n"}
+{"Time":"2026-11-06T17:42:58.674158+08:00","Action":"pass","Package":"deepweave/backend-golang/internal/logger","Elapsed":0.383}

@@ -10,12 +10,16 @@ Safety checks before anything is copied:
   - the main checkout's copy must still equal the snapshot's (someone else edited it -> stop, merge by hand);
   - a file the snapshot changed but a tree has back at HEAD ('<label>: reverts <path> to HEAD') stops
     unless named by --allow-revert LABEL:PATH (an accidental `git checkout -- f` / stash looks the same
-    as an intended revert); allowed reverts are copied and marked '[revert to HEAD]' in the file list.
+    as an intended revert); allowed reverts are copied and marked '[revert to HEAD]' in the file list;
+  - with --only-files F (one path per line), a candidate outside F or a line of F that is not a candidate stops.
 Deletions inside a tree are reported, never applied.
 
 Usage:
   python3 merge_back.py --snapshot tmp/<slug>/review/wt-snap --tree G1=<path> --tree P=<path>        # dry run
-  python3 merge_back.py ... --allow-revert G1:path/to/file.go --apply
+  python3 merge_back.py ... --allow-revert G1:path/to/file.go --only-files checked.txt --apply
+
+Exit: 0 dry run clean or copied; 1 STOP, nothing copied (also an uncaught OSError midway, without the STOP: line);
+      2 bad arguments, including an --only-files list that cannot be read or names nothing.
 """
 import argparse
 import pathlib
@@ -68,6 +72,19 @@ def stop(problems):
     sys.exit(1)
 
 
+def read_only_files(ap, path):
+    try:
+        text = pathlib.Path(path).read_text(encoding="utf-8", errors="surrogateescape")
+    except OSError as e:
+        ap.error(f"--only-files: {e}")
+    # WHY: split on \n only; dirty_paths hands back raw names, and splitlines() would break one on \f or \x85.
+    listed = {x for x in text.split("\n") if x}
+    if not listed:
+        # INVARIANT: an empty list is a caller bug. Reading it as "nothing to copy" would turn a lost list into success.
+        ap.error(f"--only-files {path} names no file")
+    return listed
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--snapshot", required=True)
@@ -75,8 +92,10 @@ def main():
     ap.add_argument("--root", default=None, help="main checkout (default: git toplevel of cwd)")
     ap.add_argument("--allow-revert", action="append", default=[], metavar="LABEL:PATH",
                     help="accept that tree LABEL reverts PATH to HEAD (repeatable)")
+    ap.add_argument("--only-files", metavar="F", help="the exact candidates the caller checked, one path per line")
     ap.add_argument("--apply", action="store_true")
     a = ap.parse_args()
+    only_files = read_only_files(ap, a.only_files) if a.only_files is not None else None
     root = pathlib.Path(a.root) if a.root else toplevel()
 
     def resolve(p):
@@ -121,6 +140,11 @@ def main():
             problems.append(f"main differs from snapshot: {f} ({label})")
         if not s.exists() and m.exists():
             problems.append(f"main already has new file: {f} ({label})")
+    if only_files is not None:
+        # INVARIANT: candidates are recomputed here, after the caller's checks; only this comparison stops a file that
+        # appeared in between from being copied unchecked.
+        problems += [f"not in --only-files: {f}" for f in sorted(set(owner) - only_files)]
+        problems += [f"in --only-files but not a candidate: {f}" for f in sorted(only_files - set(owner))]
 
     for f in sorted(owner):
         print(f"{owner[f][0]:<6} {f}" + ("  [revert to HEAD]" if f in reverted else ""))

@@ -1,0 +1,6 @@
+{"ImportPath":"deepweave/backend-golang/internal/logger [deepweave/backend-golang/internal/logger.test]","Action":"build-output","Output":"# deepweave/backend-golang/internal/logger [deepweave/backend-golang/internal/logger.test]\n"}
+{"ImportPath":"deepweave/backend-golang/internal/logger [deepweave/backend-golang/internal/logger.test]","Action":"build-output","Output":"../../tools/t1_probe/go/go_compile_error.go.src:15:14: cannot use \"nope\" (untyped string constant) as int value in variable declaration\n"}
+{"ImportPath":"deepweave/backend-golang/internal/logger [deepweave/backend-golang/internal/logger.test]","Action":"build-fail"}
+{"Time":"2026-11-06T17:42:52.438149+08:00","Action":"start","Package":"deepweave/backend-golang/internal/logger"}
+{"Time":"2026-11-06T17:42:52.438192+08:00","Action":"output","Package":"deepweave/backend-golang/internal/logger","Output":"FAIL\tdeepweave/backend-golang/internal/logger [build failed]\n","OutputType":"frame"}
+{"Time":"2026-11-06T17:42:52.438202+08:00","Action":"fail","Package":"deepweave/backend-golang/internal/logger","Elapsed":0,"FailedBuild":"deepweave/backend-golang/internal/logger [deepweave/backend-golang/internal/logger.test]"}

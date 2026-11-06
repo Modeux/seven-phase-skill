@@ -1,0 +1,13 @@
+❯ Building...
+✔ Building...
+Application bundle generation complete. [1.834 seconds] - 2026-11-06T09:43:50.343Z
+
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.5 [39m[90m/SP/repo-smoke/angular-workspace[39m
+
+
+[2m Test Files [22m [1m[32m1 passed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[32m2 passed[39m[22m[90m (2)[39m
+[2m   Start at [22m 17:43:51
+[2m   Duration [22m 584ms[2m (transform 30ms, setup 113ms, import 15ms, tests 2ms, environment 374ms)[22m
+

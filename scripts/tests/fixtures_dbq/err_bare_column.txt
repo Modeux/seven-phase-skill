@@ -1,0 +1,4 @@
+ERROR:  column "nope" does not exist
+LINE 1: SELECT nope FROM characters;
+               ^
+HINT:  Perhaps you meant to reference the column "characters.name".

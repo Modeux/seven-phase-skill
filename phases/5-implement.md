@@ -12,7 +12,7 @@
 
 ## 併發派工（2026-09-23）
 - PLAN 的 wave 內、檔案集合互斥的片**同時派**多個實作 agent（一則訊息裡同時起）。
-- **每片一份 `<片號>-brief.md`**：PLAN 裡歸這片的段落（含矩陣那片的符號／行號欄）、測試設計清單、相關 invariant，用 `scripts/extract.py` 逐字摘錄並附出處；SPEC／PLAN 全文列「需要時再讀」（SKILL.md「任務包瘦身」）。
+- **每片一份 `<片號>-brief.md`**：PLAN 裡歸這片的段落（含矩陣那片的符號／行號欄）、測試設計清單、相關 invariant，用 `scripts/mkbrief.py` 從一份 manifest 一次組好（逐字摘錄並附出處）；SPEC／PLAN 全文列「需要時再讀」（SKILL.md「任務包瘦身」）。
 - **隔離**：每片一棵私有 worktree。工作樹有未 commit 的改動時，`isolation: "worktree"` 起在預設分支、看不到這些改動——改用 `scripts/mkworktree.py`（detach 到本 HEAD＋套 `mkpatch.py` 產的 patch＋驗 sha）自己建樹，派工訊息寫明樹的絕對路徑。
 - **交回**：agent 在私有樹改完，主用 `scripts/merge_back.py` 對快照算出改過的檔，確認主樹那些檔仍等於快照、片間零重疊後複製回主樹（不靠 agent 產 patch；`git apply` 從子目錄跑會靜默略過目錄外 hunk）。同波兩片打到同檔＝矩陣寫錯，回 Plan 修，不硬合。
 - **共用資源——上限加在指令上，不加在 agent 上**：檔案互斥的片一波派完，不為 Docker 分波。任務包寫明：每條吃 Docker 的指令（`-tags integration`、testcontainers、sqlc 容器）一律包 `scripts/dockerslot.py --`（預設同時 3 條、其餘排隊，Bash 設 `timeout: 600000`；exit 75＝等太久，照訊息重試或回報）；sqlc 用 `--pool sqlc --slots 1`；主 session 的全量整合用 `--all`。前端片不吃 Docker，不排在後端片後面——派工同時由主 session 先在前端樹跑 `pnpm install`。每波結束清殘留網路；Python 共用 venv 只准唯讀掛載進一次性容器。為什麼：agent 九成時間在讀碼與推理、`go test` 約佔 4%，按 agent 分波等於讓不碰 Docker 的時間也排隊（age-gate-unify 第 7 階段：驗證員 3＋2 兩波多等約 17 分、前端修復片等後端那波約 39 分）。
@@ -20,8 +20,8 @@
 
 ## 主 session 的驗收（不放寬）
 - 偏離裁決：agent 自報的每條偏離逐條接受／否決，否決的寫成第二輪紅丟回同一 agent。
-- **主親跑閘**：每片跑「受影響包」的 build／vet／單元＋該片具名整合；**不採信 subagent 自報**（已知失敗模式：只跑窄範圍 `-run` 就報綠，漏掉命名不同的連帶紅）。輸出重導向到檔案再 grep（接 `tail` 會藏掉前面的包並把 exit code 歸零）。
-  - 前端片的「受影響包」＝片改到的 project 整包（`ng test frontend --watch=false`，整包 424 支約 60 秒；`admin` 同理），不是只 `--include` 片自己改到的 spec。為什麼：`--include` 只是不跑其他 spec、仍會編譯它們，型別錯本來就會現形；漏掉的是沒跑到的 spec 在執行期紅，例如經 page／store 間接 import，或 spec 之間不隔離造成的全域汙染。以前這類要到階段末全閘才抓到（10-19 洞察報告：修片弄壞自己沒跑的 spec）。照 import 關係挑子集的工具試過，每片只省約 50 秒，又抓不到全域汙染，不採。
+- **主親跑閘**：每片跑「受影響包」的 build／vet／單元＋該片具名整合；**不採信 subagent 自報**（已知失敗模式：只跑窄範圍 `-run` 就報綠，漏掉命名不同的連帶紅）。一律 `scripts/recv.py` 收件：交付檔、範圍、閘有沒有涵蓋改到的包、跑閘（`gate.py`）、閘跑的就是要合的、`merge_back.py`，任一步失敗就停、不合回；先不帶 `--apply` 預演。改到 `.go` 時它自動多跑全 repo 的 vet（含 `integration` 與該檔的 build tag），不能關；全域檔要對應的閘（`go.mod` 要 `./...`、SQL 要 `--integ`、前端全域設定兩個 project 都要）；測試檔新增 skip／only 的行會被拒；主線 HEAD 比快照新要 `--allow-root-moved "理由"`（規則全表 `recv.py --help`）。它不做判斷：紅的原因、偏離裁決、抽突變（`mutate.py`）仍是主 session 的事。純文件片沒有閘可跑，直接 `merge_back.py`。
+  - 前端片的「受影響包」＝片改到的 project 整包（`gate.py fe --project frontend`，整包約 15,000 支、90–140 秒；`admin` 同理），不是只 `--include` 片自己改到的 spec。為什麼：`--include` 只是不跑其他 spec、仍會編譯它們，型別錯本來就會現形；漏掉的是沒跑到的 spec 在執行期紅，例如經 page／store 間接 import，或 spec 之間不隔離造成的全域汙染。以前這類要到階段末全閘才抓到（10-19 洞察報告：修片弄壞自己沒跑的 spec）。照 import 關係挑子集的工具試過，每片只省約 50 秒，又抓不到全域汙染，不採。
 - diff 生產碼對快照，確認只動該片範圍；改完一律 `git status --porcelain`（不帶 pathspec）對帳。
 - **改語義的片收件時，舊語義字樣全樹 grep**（改了欄位意義、狀態定義、推翻某個宣稱過的保證；第 7 階段修片同樣適用）：主 session 拿舊語義的關鍵字樣（舊欄名、舊狀態詞、「已關閉」「不送欄位」這類宣稱）對整棵樹 `git grep`，範圍含 migration 檔頭與 `COMMENT`、`db/queries` 註解、`ops/` 腳本、程式碼的 WHY／INVARIANT（含不帶 slug 的），命中逐條改掉或寫明為何保留；不只 grep 任務包列出的文件。為什麼：journey-revamp 第 6 階段審出十條跨層文字漂移（R10–R19），全落在文件片列出的範圍外；slug 閘只 grep 固定 slug，不帶 slug 的 `INVARIANT:` 看不到。
 - 全閘（整合全包、lint、audit、前端整包＋production build、契約 lint）只在本階段末跑一次，判準是「對既存紅基線零新增」。

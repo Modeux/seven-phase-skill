@@ -4,6 +4,7 @@
 Usage: python3 -m unittest discover -s scripts/tests -p 'test_rulesfor.py' -v
 """
 import pathlib
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -81,6 +82,31 @@ class RulesForTest(unittest.TestCase):
         self.assertEqual(len(rulesfor.check(self.root, plan)), 1)
         plan.write_text("# PLAN\n## 規則對照\n| 規則檔 | 處置 |\n|---|---|\n", encoding="utf-8")
         self.assertIn("註記", rulesfor.check(self.root, plan)[0])
+
+
+class WrongRootTest(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        self.root = pathlib.Path(self.tmp.name)
+        self.script = pathlib.Path(rulesfor.__file__).resolve()
+
+    def cli(self, *args):
+        return subprocess.run([sys.executable, str(self.script), "--root", str(self.root), *args],
+                              capture_output=True, text=True, encoding="utf-8")
+
+    def test_check_on_a_root_without_rules_is_an_error_not_ok(self):
+        plan = self.root / "PLAN.md"
+        plan.write_text("## 規則對照\n<!-- rulesfor: a/b.go -->\n| 規則檔 | 處置 |\n|---|---|\n", encoding="utf-8")
+        p = self.cli("--check", str(plan))
+        self.assertEqual(p.returncode, 2, p.stdout + p.stderr)
+        self.assertNotIn("OK", p.stdout)
+        self.assertIn(".claude/rules", p.stderr)
+
+    def test_skeleton_on_a_root_without_rules_is_an_error_not_an_empty_table(self):
+        p = self.cli("a/b.go")
+        self.assertEqual(p.returncode, 2, p.stdout + p.stderr)
+        self.assertEqual(p.stdout, "")
 
 
 if __name__ == "__main__":

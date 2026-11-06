@@ -1,0 +1,50 @@
+❯ Building...
+✔ Building...
+Application bundle generation complete. [0.338 seconds] - 2026-11-06T09:43:53.968Z
+
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.5 [39m[90m/SP/repo-smoke/angular-workspace[39m
+
+ [31m❯[39m [30m[43m frontend [49m[39m projects/frontend/src/app/zz-probe-fe_red.spec.ts [2m([22m[2m3 tests[22m[2m | [22m[31m2 failed[39m[2m)[22m[32m 4[2mms[22m[39m
+[31m     [31m×[31m fails one[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m fails two[39m[32m 0[2mms[22m[39m
+
+[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 2 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[41m[1m FAIL [22m[49m [30m[43m frontend [49m[39m projects/frontend/src/app/zz-probe-fe_red.spec.ts[2m > [22mzz probe[2m > [22mfails one
+[31m[1mAssertionError[22m: expected 1 to be 2 // Object.is equality[39m
+
+- Expected
++ Received
+
+- 2
++ 1
+
+[36m [2m❯[22m projects/frontend/src/app/zz-probe-fe_red.spec.ts:[2m3:37[22m[39m
+    [90m  1|[39m [34mdescribe[39m([32m'zz probe'[39m[33m,[39m () [33m=>[39m {
+    [90m  2|[39m   [34mit[39m([32m'passes'[39m[33m,[39m () [33m=>[39m { [34mexpect[39m([34m1[39m)[33m.[39m[34mtoBe[39m([34m1[39m)[33m;[39m })[33m;[39m
+    [90m  3|[39m   [34mit[39m([32m'fails one'[39m[33m,[39m () [33m=>[39m { [34mexpect[39m([34m1[39m)[33m.[39m[34mtoBe[39m([34m2[39m)[33m;[39m })[33m;[39m
+    [90m   |[39m                                     [31m^[39m
+    [90m  4|[39m   describe('nested', () => { it('fails two', () => { throw new Error('…
+    [90m  5|[39m })[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[43m frontend [49m[39m projects/frontend/src/app/zz-probe-fe_red.spec.ts[2m > [22mzz probe[2m > [22mnested[2m > [22mfails two
+[31m[1mError[22m: kaboom two[39m
+[36m [2m❯[22m projects/frontend/src/app/zz-probe-fe_red.spec.ts:[2m4:60[22m[39m
+    [90m  2|[39m   [34mit[39m([32m'passes'[39m[33m,[39m () [33m=>[39m { [34mexpect[39m([34m1[39m)[33m.[39m[34mtoBe[39m([34m1[39m)[33m;[39m })[33m;[39m
+    [90m  3|[39m   [34mit[39m([32m'fails one'[39m[33m,[39m () [33m=>[39m { [34mexpect[39m([34m1[39m)[33m.[39m[34mtoBe[39m([34m2[39m)[33m;[39m })[33m;[39m
+    [90m  4|[39m   describe('nested', () => { it('fails two', () => { throw new Error('…
+    [90m   |[39m                                                            [31m^[39m
+    [90m  5|[39m })[33m;[39m
+    [90m  6|[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯[22m[39m
+
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[31m2 failed[39m[22m[2m | [22m[1m[32m1 passed[39m[22m[90m (3)[39m
+[2m   Start at [22m 17:43:54
+[2m   Duration [22m 368ms[2m (transform 16ms, setup 100ms, import 3ms, tests 4ms, environment 198ms)[22m
+
