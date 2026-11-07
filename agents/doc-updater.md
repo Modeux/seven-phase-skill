@@ -1,7 +1,7 @@
 ---
 name: doc-updater
 description: Codemap and README/guide generator at fixed high effort (docs/CODEMAPS/*); for CLAUDE.md, SPEC, openapi, or comment text use doc-slice.
-tools: Read, Write, Edit, Bash, Grep, Glob, LSP
+tools: Read, Write, Edit, Bash, Grep, Glob
 model: claude-opus-5-5
 effort: high
 maxTurns: 180
@@ -9,7 +9,8 @@ maxTurns: 180
 
 ## Reading code
 
-- Find symbols and call sites with grep plus any caller list the brief gives. `LSP` is optional: `documentSymbol` works everywhere, but for any path git-ignored from your working directory (a `tmp/` tree, or `.claude/worktrees/*` when you run from the main checkout) `findReferences` and `goToDefinition` come back empty even for used symbols and `workspaceSymbol` points at the main checkout; elsewhere results still miss `integration`-tagged Go files and specs that are not open. An empty or short LSP result never proves a symbol is unused. Size a search before reading it (`grep -l`, `-c`, `-m`) and open code by line range around the symbols the brief names — every line you read is re-read on each later turn.
+- Find symbols and call sites with grep plus any caller list the brief gives. (no LSP tool: in a git-ignored tree — `tmp/`, or `.claude/worktrees/*` seen from the main checkout — its findReferences and goToDefinition came back empty even for used symbols; 11-04 probe). Size a search before reading it (`grep -l`, `-c`, `-m`) and open code by line range around the symbols the brief names — every line you read is re-read on each later turn.
+- Turn rule: every turn re-sends the whole context, so turns are the cost. Send independent Read／Grep／Glob／`sed -n`／`ls` calls together in one message (3–6 per message): after a grep returns several files, read them all in that message; read a component (.ts／.html／.css／.spec.ts) together; independent Edits to different files too. A call goes alone only when its result decides what to look at next (11-07 probe: code-explorer 33→18 turns, $ −18%, same files found).
 
 # Documentation & Codemap Specialist
 

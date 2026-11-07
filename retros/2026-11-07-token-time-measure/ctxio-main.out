@@ -1,0 +1,46 @@
+main sessions, last 14 days: tool_result 49.5 M chars (≈12.4 M tokens); assistant text 1.4 M chars; prompts 3100 / 8.82 M chars
+tool                     calls  M chars  share avg chars
+Bash                     17126    30.44    61%      1777
+Read                      3436    15.50    31%      4511
+Edit                      4974     0.87     2%       174
+Agent                      666     0.72     1%      1083
+Write                     2037     0.43     1%       213
+Artifact                    26     0.33     1%     12584
+AskUserQuestion            417     0.22     0%       524
+mcp__angular-cli__get_best_practices      41     0.12     0%      2970
+WebSearch                   35     0.12     0%      3479
+mcp__idea__execute_sql_query     229     0.12     0%       505
+WebFetch                    55     0.11     0%      1969
+mcp__plugin_figma_figma__get_metadata      20     0.08     0%      3931
+mcp__plugin_figma_figma__use_figma      30     0.07     0%      2314
+mcp__plugin_playwright_playwright__browser_run_code_unsafe      34     0.06     0%      1903
+
+Bash output by command key (top 25):
+  grep                                       3350 calls   5.45 M chars  avg    1628
+  sed                                        1611 calls   4.64 M chars  avg    2881
+  cat                                         786 calls   2.27 M chars  avg    2890
+  cd                                          421 calls   1.37 M chars  avg    3251
+  R=/Users/huntwu/Desktop/deepweave/deepwe    616 calls   1.13 M chars  avg    1842
+  ls                                          575 calls   1.12 M chars  avg    1942
+  W=/Users/huntwu/Desktop/deepweave/deepwe    567 calls   0.91 M chars  avg    1606
+  wc                                          427 calls   0.87 M chars  avg    2039
+  I=/Users/huntwu/Desktop/deepweave/deepwe    412 calls   0.69 M chars  avg    1685
+  P=/Users/huntwu/Desktop/deepweave/deepwe    263 calls   0.58 M chars  avg    2221
+  D=/Users/huntwu/Desktop/deepweave/deepwe    245 calls   0.57 M chars  avg    2338
+  python3                                     431 calls   0.55 M chars  avg    1271
+  bash                                        679 calls   0.50 M chars  avg     735
+  F=/Users/huntwu/Desktop/deepweave/deepwe    214 calls   0.43 M chars  avg    1992
+  git                                         252 calls   0.40 M chars  avg    1579
+  git diff                                    103 calls   0.36 M chars  avg    3459
+  graphify                                    138 calls   0.32 M chars  avg    2344
+  A=/Users/huntwu/Desktop/deepweave/deepwe    107 calls   0.27 M chars  avg    2483
+  T=/Users/huntwu/Desktop/deepweave/deepwe    118 calls   0.25 M chars  avg    2081
+  mkpatch.py                                  161 calls   0.24 M chars  avg    1486
+  merge_back.py                               206 calls   0.23 M chars  avg    1112
+  B=/Users/huntwu/Desktop/deepweave/deepwe    101 calls   0.22 M chars  avg    2170
+  head                                        115 calls   0.22 M chars  avg    1883
+  C=/Users/huntwu/Desktop/deepweave/deepwe     93 calls   0.21 M chars  avg    2234
+  board.py                                    330 calls   0.20 M chars  avg     607
+
+Agent hand-backs: n=666 median 1105 chars  p90 1107  max 4726  >3000 chars: 3
+exit=0

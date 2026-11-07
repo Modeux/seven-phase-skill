@@ -464,9 +464,12 @@ def process_lines(b):
     if acc and acc["due"]:
         out.append(f"■ 驗收到期 {len(acc['due'])}（{ACCEPTANCE}）：" + "、".join(
             f"{p['what']}（{p['due'].strftime('%m-%d') if p['due'] else '沒寫日期'}）" for p in acc["due"]))
-    if acc and acc["last_retro"] and len(b["since_retro"]) >= RETRO_EVERY:
-        out.append(f"■ 檢討：上次 {acc['last_retro'].strftime('%m-%d')}，之後記錄了 {len(b['since_retro'])} 個任務"
-                   " → 回報時跟 owner 提一句可以檢討（phases/retro.md）")
+    # WHY due rows and not task count: retros ran 6 times in 10-17～11-07 on a task-count trigger and
+    # re-measured the same numbers while every adopted rule was still unverified; a retro is only worth
+    # its tokens when a batch of acceptance rows can be settled in the same session (retro.md 何時跑).
+    if acc and len(acc["due"]) >= RETRO_EVERY:
+        out.append(f"■ 檢討：驗收到期 {len(acc['due'])} 列（滿 {RETRO_EVERY}）→ 結清這批驗收的 session 順便檢討（phases/retro.md）"
+                   + (f"；上次檢討 {acc['last_retro'].strftime('%m-%d')}" if acc["last_retro"] else ""))
     if b["docs"]["flagged"]:
         fl = sorted(b["docs"]["flagged"], key=lambda r: -r["now"])
         out.append(f"■ 說明檔過大 {len(fl)}（上限 {kb(DOC_CAP)}；根檔與兩份母檔另有上限，board.py --docsize）：" + "、".join(
@@ -625,7 +628,7 @@ def render_process(b):
         cols.append(f'<section class="col" style="--c:#e5484d"><h2><i></i>待驗收 {len(acc["pending"])}（到期 {len(acc["due"])}）</h2>'
                     f'<p>真相源 <code>{e(str(ACCEPTANCE))}</code></p>{cards or "<p class=meta>（無）</p>"}</section>'
                     f'<section class="col" style="--c:#6e56cf"><h2><i></i>檢討</h2><p>上次 {e(last)}；之後記錄了 '
-                    f'{len(b["since_retro"])} 個任務（滿 {RETRO_EVERY} 個提醒 owner）</p><p class="meta">{e(since)}</p></section>')
+                    f'{len(b["since_retro"])} 個任務；到期驗收滿 {RETRO_EVERY} 列才提示順便檢討</p><p class="meta">{e(since)}</p></section>')
     rows = "".join(f'<li><code>{e(short_doc(r["path"]))}</code> {kb(r["now"])} {e(r["flag"])}</li>'
                    for r in sorted(d["flagged"], key=lambda r: -r["now"]))
     cols.append(f'<section class="col" style="--c:#f5a524"><h2><i></i>說明檔過大 {len(d["flagged"])}</h2>'

@@ -1,0 +1,38 @@
+main sessions, last 14 days: tool_result 63.2 M chars (≈15.8 M tokens); assistant text 0.1 M chars; prompts 615 / 0.46 M chars
+tool                     calls  M chars  share avg chars
+Bash                     15767    39.57    63%      2510
+Read                      3006    21.14    33%      7032
+Edit                      8468     1.91     3%       226
+Write                     2010     0.49     1%       245
+LSP                         44     0.04     0%       800
+SubagentHandback           277     0.02     0%        61
+ToolSearch                   1     0.00     0%       159
+mcp__angular-cli__get_best_practices       1     0.00     0%       100
+
+Bash output by command key (top 25):
+  sed                                        2488 calls   9.29 M chars  avg    3733
+  grep                                       3715 calls   7.82 M chars  avg    2105
+  cd                                         1081 calls   3.32 M chars  avg    3075
+  cat                                         719 calls   3.19 M chars  avg    4436
+  W=/Users/huntwu/Desktop/deepweave/deepwe    775 calls   2.83 M chars  avg    3649
+  T=/Users/huntwu/Desktop/deepweave/deepwe    514 calls   2.03 M chars  avg    3945
+  ls                                          296 calls   0.92 M chars  avg    3104
+  bash                                        949 calls   0.85 M chars  avg     900
+  D=/Users/huntwu/Desktop/deepweave/deepwe    251 calls   0.85 M chars  avg    3392
+  B=/Users/huntwu/Desktop/deepweave/deepwe    271 calls   0.81 M chars  avg    2976
+  A=/Users/huntwu/Desktop/deepweave/deepwe    194 calls   0.69 M chars  avg    3572
+  wc                                          198 calls   0.64 M chars  avg    3244
+  git                                         176 calls   0.57 M chars  avg    3239
+  I=/Users/huntwu/Desktop/deepweave/deepwe    258 calls   0.47 M chars  avg    1829
+  F=/Users/huntwu/Desktop/deepweave/deepwe    156 calls   0.40 M chars  avg    2545
+  python3                                     334 calls   0.34 M chars  avg    1029
+  git status                                   89 calls   0.31 M chars  avg    3477
+  O=/Users/huntwu/Desktop/deepweave/deepwe    121 calls   0.28 M chars  avg    2305
+  FE=/Users/huntwu/Desktop/deepweave/deepw     43 calls   0.27 M chars  avg    6266
+  npx ng test                                 267 calls   0.23 M chars  avg     875
+  dockerslot.py                               324 calls   0.21 M chars  avg     651
+  P=/Users/huntwu/Desktop/deepweave/deepwe     44 calls   0.21 M chars  avg    4754
+  just --justfile                             220 calls   0.16 M chars  avg     723
+  C=/Users/huntwu/Desktop/deepweave/deepwe     46 calls   0.14 M chars  avg    3123
+  head                                         62 calls   0.14 M chars  avg    2191
+exit=0

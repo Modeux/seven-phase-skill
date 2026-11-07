@@ -1,0 +1,53 @@
+last 14 days; minutes
+agentType                         n  median    p90    max     sum  tool%
+tdd-guide                       252    19.3   44.6  836.2    7593    44%
+ui-lane-reviewer                 47    35.3  102.9  632.5    2767    42%
+lane-reviewer(wf)                53    20.1   24.7   30.3    1058     6%
+doc-slice                        70     9.8   17.3  103.4     812    44%
+pr-test-analyzer(wf)             20    26.7   83.9  140.4     709    52%
+converge-verifier(wf)            24    22.5   43.4   69.2     641    38%
+converge-verifier                23    21.8   34.2   39.5     534    12%
+ui-lane-reviewer(wf)             11    35.7   61.4   67.5     427    59%
+lane-reviewer                    17    23.6   28.2   28.5     391     4%
+general-purpose                  17    15.2   28.6  101.0     334    43%
+code-explorer                    55     5.8    7.6    8.7     311     2%
+blind-judge                     113     2.1    4.4    6.5     279     1%
+comment-analyzer(wf)             28     9.0   12.5   13.1     252     1%
+security-reviewer(wf)            16    13.5   17.8   18.2     221     6%
+database-reviewer(wf)            11    18.9   21.2   23.9     200     7%
+planner                           8    22.2   36.9   36.9     194     1%
+silent-failure-hunter(wf)        19     7.9   10.8   12.0     159     6%
+typescript-reviewer(wf)          16    10.3   11.4   11.5     150     9%
+go-reviewer(wf)                  15    11.1   14.7   14.8     148    13%
+code-architect                   15     8.7   11.7   11.8     132     1%
+a11y-architect(wf)                8    15.5   20.9   20.9     125     1%
+quick-task                       13     4.9   12.0   22.1      80    21%
+performance-optimizer             1    36.5   36.5   36.5      37    36%
+database-reviewer                 1    19.3   19.3   19.3      19     3%
+silent-failure-hunter             1    18.5   18.5   18.5      19    21%
+web-fetch                         4     1.2    1.8    1.8       4    34%
+claude-code-guide                 1     2.7    2.7    2.7       3    46%
+?                                 1     0.2    0.2    0.2       0    16%
+
+== tdd-guide: tool time share of wall (7593 min total)
+  Edit                              1509.6 min   19.9%
+  bash:other                         882.6 min   11.6%
+  Write                              224.2 min    3.0%
+  bash:ng-serve/build                220.8 min    2.9%
+  bash:docker/just                   161.0 min    2.1%
+  bash:sleep/wait                    130.5 min    1.7%
+  bash:go-test                        75.9 min    1.0%
+  bash:git                            48.5 min    0.6%
+  Read                                33.6 min    0.4%
+  bash:playwright                     10.8 min    0.1%
+  SubagentHandback                     3.2 min    0.0%
+  LSP                                  2.9 min    0.0%
+  bash:curl                            2.4 min    0.0%
+  bash:ng-test                         1.3 min    0.0%
+  longest runs:
+    836.2 min  turns=281  tool=  1%  3cd58b5f F3 workshop chat-frame flow
+    830.9 min  turns=207  tool=  1%  3cd58b5f B2 private-save routes + intent
+    156.2 min  turns=190  tool= 30%  4c3c59bf F5 fix short-window focus and corner
+    106.2 min  turns=266  tool= 13%  9234dd18 FX3 same-place cards and cover
+    103.5 min  turns=200  tool=  7%  9234dd18 P-K round 6 probe build
+     93.3 min  turns=221  tool=  7%  b53c0bf6 X1 cmd/server 接線

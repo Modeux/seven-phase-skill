@@ -1,0 +1,99 @@
+last 14 days; minutes
+agentType                         n  median    p90    max     sum  tool%
+tdd-guide                       252    19.3   44.6  836.2    7593    44%
+ui-lane-reviewer                 47    35.3  102.9  632.5    2767    42%
+lane-reviewer(wf)                53    20.1   24.7   30.3    1058     6%
+doc-slice                        70     9.8   17.3  103.4     812    44%
+pr-test-analyzer(wf)             20    26.7   83.9  140.4     709    52%
+converge-verifier(wf)            24    22.5   43.4   69.2     641    38%
+converge-verifier                23    21.8   34.2   39.5     534    12%
+ui-lane-reviewer(wf)             11    35.7   61.4   67.5     427    59%
+lane-reviewer                    17    23.6   28.2   28.5     391     4%
+general-purpose                  17    15.2   28.6  101.0     334    43%
+code-explorer                    55     5.8    7.6    8.7     311     2%
+blind-judge                     113     2.1    4.4    6.5     279     1%
+comment-analyzer(wf)             28     9.0   12.5   13.1     252     1%
+security-reviewer(wf)            16    13.5   17.8   18.2     221     6%
+database-reviewer(wf)            11    18.9   21.2   23.9     200     7%
+planner                           8    22.2   36.9   36.9     194     1%
+silent-failure-hunter(wf)        19     7.9   10.8   12.0     159     6%
+typescript-reviewer(wf)          16    10.3   11.4   11.5     150     9%
+go-reviewer(wf)                  15    11.1   14.7   14.8     148    13%
+code-architect                   15     8.7   11.7   11.8     132     1%
+a11y-architect(wf)                8    15.5   20.9   20.9     125     1%
+quick-task                       13     4.9   12.0   22.1      80    21%
+performance-optimizer             1    36.5   36.5   36.5      37    36%
+database-reviewer                 1    19.3   19.3   19.3      19     3%
+silent-failure-hunter             1    18.5   18.5   18.5      19    21%
+web-fetch                         4     1.2    1.8    1.8       4    34%
+claude-code-guide                 1     2.7    2.7    2.7       3    46%
+?                                 1     0.2    0.2    0.2       0    16%
+
+== ui-lane-reviewer: tool time share of wall (2767 min total)
+  bash:other                         502.0 min   18.1%
+  browser:run_code_unsafe            195.7 min    7.1%
+  Write                              131.9 min    4.8%
+  bash:sleep/wait                    115.8 min    4.2%
+  Edit                               102.2 min    3.7%
+  Read                                61.2 min    2.2%
+  bash:docker/just                    40.0 min    1.4%
+  bash:curl                            7.8 min    0.3%
+  bash:playwright                      5.3 min    0.2%
+  bash:git                             5.1 min    0.2%
+  browser:wait_for                     1.7 min    0.1%
+  browser:evaluate                     1.6 min    0.1%
+  bash:ng-serve/build                  1.1 min    0.0%
+  browser:take_screenshot              0.8 min    0.0%
+  longest runs:
+    632.5 min  turns=252  tool=  6%  76daa2ff Round five closing browser walk
+    247.7 min  turns=313  tool= 34%  6fc7a93e Phase 7 real-browser walk-through
+    105.4 min  turns=496  tool=  9%  5025e2f7 Package 3 walk-through r1
+    102.9 min  turns=315  tool=102%  b001b4d1 走一趟：模糊預覽與標籤
+    102.9 min  turns=315  tool=102%  36a5cfd3 走一趟：模糊預覽與標籤
+     97.5 min  turns=366  tool=116%  9537fc04 voice-byteplus real-browser walk
+
+== converge-verifier: tool time share of wall (534 min total)
+  bash:other                          27.6 min    5.2%
+  Edit                                 8.7 min    1.6%
+  bash:go-test                         6.2 min    1.2%
+  bash:ng-serve/build                  5.5 min    1.0%
+  Write                                5.1 min    0.9%
+  browser:run_code_unsafe              2.3 min    0.4%
+  bash:git                             1.7 min    0.3%
+  bash:playwright                      1.7 min    0.3%
+  bash:ng-test                         1.2 min    0.2%
+  WebFetch                             1.2 min    0.2%
+  bash:docker/just                     1.2 min    0.2%
+  bash:sleep/wait                      0.9 min    0.2%
+  Read                                 0.5 min    0.1%
+  bash:curl                            0.5 min    0.1%
+  longest runs:
+     39.5 min  turns=362  tool= 21%  d787ec01 Red writer RW six items
+     34.3 min  turns=207  tool= 12%  05b9ac06 Verify V2 invite card findings
+     34.2 min  turns=287  tool= 19%  05b9ac06 Verify V3 frontend and recall findings
+     29.7 min  turns=157  tool=  6%  0994ff3b Verify revised reconciliation and deploy
+     28.5 min  turns=192  tool=  8%  05b9ac06 Verify V1 framed-memory sync findings
+     28.1 min  turns=236  tool=  9%  d787ec01 Converge verify VB routing/marketing
+
+== converge-verifier(wf): tool time share of wall (641 min total)
+  bash:other                         154.7 min   24.1%
+  Write                               34.9 min    5.4%
+  Edit                                15.6 min    2.4%
+  bash:go-test                        12.3 min    1.9%
+  bash:ng-serve/build                  6.1 min    0.9%
+  bash:sleep/wait                      5.1 min    0.8%
+  bash:git                             5.1 min    0.8%
+  Read                                 4.6 min    0.7%
+  bash:playwright                      2.5 min    0.4%
+  bash:docker/just                     2.0 min    0.3%
+  WebFetch                             1.7 min    0.3%
+  browser:run_code_unsafe              1.3 min    0.2%
+  bash:curl                            0.4 min    0.1%
+  browser:close                        0.1 min    0.0%
+  longest runs:
+     69.2 min  turns=172  tool= 68%  workflow verify-V1
+     54.0 min  turns=259  tool= 75%  workflow verify:V2
+     43.4 min  turns=142  tool= 95%  workflow verify-fe
+     37.3 min  turns=230  tool= 40%  workflow verify-V-fe
+     34.1 min  turns=206  tool= 44%  workflow verify-fe
+     29.5 min  turns=176  tool= 53%  workflow verify-V2

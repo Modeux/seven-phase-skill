@@ -1,0 +1,38 @@
+group                tool           calls    solo  median s   p90 s sum h(solo)
+tdd-guide            Bash(cheap)     1958    1958      0.11    3.60         2.3
+main                 Bash(cheap)     5007    5007      0.14    1.71         1.6
+ui-lane-reviewer     Read            1833    1833      0.07    0.60         1.4
+main                 Read            3436    3436      0.07    0.42         1.1
+tdd-guide            Read            3006    3006      0.07    0.37         0.6
+converge-verifier    Bash(cheap)     1216    1216      0.11    0.66         0.2
+ui-lane-reviewer     Bash(cheap)      730     730      0.12    1.42         0.2
+pr-test-analyzer     Bash(cheap)      308     308      0.11    1.59         0.1
+doc-slice            Bash(cheap)      761     761      0.12    1.21         0.1
+doc-slice            Read             913     913      0.07    0.34         0.1
+converge-verifier    Read             493     493      0.07    0.15         0.1
+general-purpose      Read             228     228      0.06    0.16         0.1
+lane-reviewer        Bash(cheap)     1039    1039      0.10    0.31         0.1
+lane-reviewer        Read            1281    1281      0.07    0.31         0.1
+code-explorer        Grep            2196    2196      0.07    0.11         0.0
+typescript-reviewer  Bash(cheap)      123     123      0.10    0.90         0.0
+code-explorer        Read            1887    1887      0.06    0.08         0.0
+comment-analyzer     Grep            1143    1143      0.07    0.13         0.0
+pr-test-analyzer     Read             385     385      0.06    0.13         0.0
+comment-analyzer     Read             906     906      0.06    0.10         0.0
+go-reviewer          Read             175     175      0.06    0.32         0.0
+quick-task           Bash(cheap)      113     113      0.11    1.06         0.0
+typescript-reviewer  Read             236     236      0.06    0.14         0.0
+silent-failure-hunter Read             240     240      0.07    0.14         0.0
+code-explorer        Glob             115     115      0.09    1.00         0.0
+security-reviewer    Bash(cheap)      265     265      0.09    0.17         0.0
+security-reviewer    Read             391     391      0.06    0.12         0.0
+planner              Grep             517     517      0.07    0.10         0.0
+general-purpose      Bash(cheap)      126     126      0.11    0.92         0.0
+planner              Read             513     513      0.06    0.08         0.0
+
+all groups:
+  Bash(cheap)  solo= 12094 median 0.12s  p90 1.37s  sum 4.8 h
+  Read         solo= 17142 median 0.07s  p90 0.19s  sum 3.6 h
+  Grep         solo=  4149 median 0.07s  p90 0.11s  sum 0.1 h
+  Glob         solo=   212 median 0.09s  p90 0.97s  sum 0.0 h
+exit=0

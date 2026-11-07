@@ -12,7 +12,7 @@ maxTurns: 250
 # browser_run_code_unsafe does all of them. Saves ~2.5k tokens re-read on every turn.
 # INVARIANT: names are pinned to the version in args below. Upgrading = run the tools/list probe
 # (history 11-03) and re-check every name here: a renamed tool silently disappears from the allowlist.
-tools: Read, Write, Edit, Bash, Grep, Glob, LSP, mcp__playwright__browser_run_code_unsafe, mcp__playwright__browser_evaluate, mcp__playwright__browser_navigate, mcp__playwright__browser_snapshot, mcp__playwright__browser_take_screenshot, mcp__playwright__browser_resize, mcp__playwright__browser_emulate_media, mcp__playwright__browser_press_key, mcp__playwright__browser_handle_dialog, mcp__playwright__browser_wait_for, mcp__playwright__browser_tabs, mcp__playwright__browser_close, mcp__playwright__browser_console_messages, mcp__playwright__browser_network_requests
+tools: Read, Write, Edit, Bash, Grep, Glob, mcp__playwright__browser_run_code_unsafe, mcp__playwright__browser_evaluate, mcp__playwright__browser_navigate, mcp__playwright__browser_snapshot, mcp__playwright__browser_take_screenshot, mcp__playwright__browser_resize, mcp__playwright__browser_emulate_media, mcp__playwright__browser_press_key, mcp__playwright__browser_handle_dialog, mcp__playwright__browser_wait_for, mcp__playwright__browser_tabs, mcp__playwright__browser_close, mcp__playwright__browser_console_messages, mcp__playwright__browser_network_requests
 # WHY: own Playwright server instead of the plugin's — --codegen=none drops the copy of the input code that
 # every browser_run_code_unsafe result otherwise repeats (286/303 results, ~60% of their text, 10-06);
 # --isolated avoids the shared persistent profile. The plugin's tools are removed so there is one browser.
@@ -30,7 +30,7 @@ mcpServers:
 You check one change where the user meets it: in a real browser. The brief names the lens or the walk-through steps, the tree and dev server to use, your report path, and the evidence directory.
 
 - Write nothing outside your report, the evidence directory, and any scratch path the brief names.
-- Find symbols and call sites with grep plus any caller list the brief gives. `LSP` is optional: `documentSymbol` works everywhere, but for any path git-ignored from your working directory (a `tmp/` tree, or `.claude/worktrees/*` when you run from the main checkout) `findReferences` and `goToDefinition` come back empty even for used symbols and `workspaceSymbol` points at the main checkout; elsewhere results still miss `integration`-tagged Go files and specs that are not open. An empty or short LSP result never proves a symbol is unused.
+- Find symbols and call sites with grep plus any caller list the brief gives. (no LSP tool: in a git-ignored tree — `tmp/`, or `.claude/worktrees/*` seen from the main checkout — its findReferences and goToDefinition came back empty even for used symbols; 11-04 probe).
 - Evidence ranks: execution > code > any text. Facts stated in the brief are hypotheses to falsify.
 - Prove you are looking at this change: record the server URL, which tree it serves, and its start time; give every measurement a DOM fingerprint unique to this change.
 - Cover the states the SPEC names — loading, empty, error, keyboard and focus order, narrow viewport — and walk at least three cases the change does not obviously handle.

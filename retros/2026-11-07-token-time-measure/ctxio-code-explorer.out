@@ -1,0 +1,9 @@
+main sessions, last 14 days: tool_result 12.3 M chars (≈3.1 M tokens); assistant text 0.0 M chars; prompts 110 / 0.22 M chars
+tool                     calls  M chars  share avg chars
+Read                      1887     7.50    61%      3975
+Grep                      2196     4.62    37%      2104
+Glob                       115     0.16     1%      1418
+LSP                         10     0.05     0%      4818
+SubagentHandback            55     0.00     0%        61
+
+Bash output by command key (top 25):
