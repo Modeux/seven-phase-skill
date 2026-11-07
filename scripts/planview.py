@@ -5,9 +5,10 @@
   planview.py <slug|task dir>           # write <checkout>/tmp/progress/<slug>.html, print one summary line
   planview.py <slug> --open             # …and open it in the default browser
   planview.py --check <slug|task dir>   # exit 1 when SPEC.md or PLAN.md has neither a ```mermaid block
-                                        #   nor a 「無圖：<理由>」 line (phases 3／4 diagram gate)
+                                        #   nor a 「無圖：<理由>」 line, or PLAN.md keeps more than MAX_LONG
+                                        #   lines over LONG_LINE chars (phases 3／4 readability gate)
 
-The task files are embedded verbatim and rendered in the browser (marked for GFM tables, mermaid for
+The task files (plus plan-appendix/*.md, collapsed) are embedded verbatim and rendered in the browser (marked for GFM tables, mermaid for
 diagrams, both version-pinned on jsdelivr), so the page cannot drift from the markdown: rerun it after
 every edit. What the page adds over the IDE preview: a dashboard of counts, a sticky outline, collapsible
 `##` sections, tables with a sticky header, wrapped cells and a per-column filter, and rendered diagrams.
@@ -27,7 +28,10 @@ import _mdtable  # noqa: E402
 
 PLANS = ".claude/PRPs/plans"
 DOCS = ("SPEC.md", "PLAN.md", "REVIEW.md", "PROGRESS.md")
+APPENDIX = "plan-appendix"  # machine-facing PLAN parts (rules.md, matrix.md, tests.md…), shown collapsed
 GATED = ("SPEC.md", "PLAN.md")
+LONG_LINE = 300  # chars; a table row past this is a wall of text in any renderer
+MAX_LONG = 5     # PLAN.md lines over LONG_LINE allowed by --check (baseline 45／98／83 before the split)
 # doc → [(chip label, heading keyword)]: rows of every table under a `##`/`###` whose title contains the keyword.
 COUNTS = {
     "SPEC": [("決議", "決議"), ("假設", "假設"), ("原型差異", "原型差異")],
@@ -78,11 +82,19 @@ def toplevel(path="."):
 
 
 def read_docs(tdir):
-    return {d[:-3]: (tdir / d).read_text(encoding="utf-8") for d in DOCS if (tdir / d).is_file()}
+    docs = {d[:-3]: (tdir / d).read_text(encoding="utf-8") for d in DOCS if (tdir / d).is_file()}
+    for p in sorted((tdir / APPENDIX).glob("*.md")):
+        docs[f"appendix/{p.stem}"] = p.read_text(encoding="utf-8")
+    return docs
 
 
 def mermaid_count(text):
     return len(_MERMAID_FENCE.findall(text))
+
+
+def long_lines(text, limit=LONG_LINE):
+    """Lines outside code fences longer than `limit` characters."""
+    return sum(1 for line in _mdtable.unfenced(text).splitlines() if len(line) > limit)
 
 
 def no_diagram_declared(text):
@@ -117,7 +129,8 @@ def summary(name, text):
     """[(label, count, section index or None)] for the dashboard; section index is 1-based among `##`."""
     titles = h2_titles(text)
     out = []
-    for label, kw in COUNTS.get(name, []):
+    kind = "PLAN" if name.startswith("appendix/") else name
+    for label, kw in COUNTS.get(kind, []):
         n = rows_under(text, kw)
         if not n:
             continue
@@ -133,11 +146,15 @@ def summary(name, text):
         out.append(("圖", d, None) if d or not no_diagram_declared(text) else ("無圖（已宣告）", 0, None))
     elif d:
         out.append(("圖", d, None))
+    ll = long_lines(text)
+    if ll and kind in ("SPEC", "PLAN"):
+        out.append(("長行", ll, None))
     return out
 
 
 def check(tdir):
-    """Lines naming each gated doc that has neither a mermaid block nor a 無圖 declaration; [] when fine."""
+    """Gate lines for SPEC／PLAN: no mermaid block and no 無圖 declaration; PLAN.md with more than MAX_LONG
+    lines over LONG_LINE chars (the machine-facing tables belong in plan-appendix/). [] when fine."""
     bad = []
     for d in GATED:
         p = tdir / d
@@ -146,6 +163,8 @@ def check(tdir):
         text = p.read_text(encoding="utf-8")
         if not mermaid_count(text) and not no_diagram_declared(text):
             bad.append(f"{d}: 沒有 ```mermaid 圖，也沒有「無圖：<理由>」那一行（狀態機／時序／跨層資料流／改表關係要畫；真的沒有就宣告理由）")
+        if d == "PLAN.md" and long_lines(text) > MAX_LONG:
+            bad.append(f"{d}: 超過 {LONG_LINE} 字的行有 {long_lines(text)} 行（上限 {MAX_LONG}）——規則對照、矩陣的符號／行號、測試整表搬 {APPENDIX}/，儲存格 ≤60 字、長理由寫表格下方小節")
     return bad
 
 
@@ -227,7 +246,7 @@ JS = r"""
     let cur=null,n=0;const links=[];
     for(const node of Array.from(tmp.childNodes)){
       if(node.nodeType===1&&node.tagName==='H2'){
-        n++;const d=document.createElement('details');d.className='sec';d.open=true;d.id=name+'-'+n;
+        n++;const d=document.createElement('details');d.className='sec';d.open=!name.startsWith('appendix/');d.id=name+'-'+n;
         const sm=document.createElement('summary');sm.innerHTML='<span class="h">'+node.innerHTML+'</span><span class="n"></span>';
         const body=document.createElement('div');body.className='body';d.append(sm,body);sec.appendChild(d);cur=body;
         links.push('<a href="#'+d.id+'" title="'+esc(node.textContent)+'">'+node.innerHTML+'</a>');continue;
@@ -291,6 +310,8 @@ def render(slug, docs, when):
                 cls = " warn"
             elif label == "圖":
                 cls = " ok" if n else " warn"
+            elif label == "長行":
+                cls = " warn" if (name == "PLAN" and n > MAX_LONG) else ""
             href = f"#{name}-{idx}" if idx else f"#doc-{name}"
             parts.append(f'<a class="chip{cls}" href="{href}">{e(label)} {n}</a>')
         if parts:
@@ -344,7 +365,7 @@ def main(argv):
     print(summary_line(out, docs))
     bad = check(tdir)
     for line in bad:
-        print(f"planview: 圖閘未過 — {line}")
+        print(f"planview: 好讀閘未過 — {line}")
     if a.open and sys.platform == "darwin":
         subprocess.run(["open", str(out)], check=False)
     return 0

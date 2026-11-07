@@ -116,6 +116,43 @@ class DiagramGateTest(unittest.TestCase):
             self.assertEqual(planview.check(p), [])
 
 
+class LongLineGateTest(unittest.TestCase):
+    def test_long_lines_ignore_code_fences(self):
+        text = "| a | " + "x" * 400 + " |\n```\n" + "y" * 500 + "\n```\n" + "z" * 301 + "\n"
+        self.assertEqual(planview.long_lines(text), 2)
+
+    def test_plan_over_limit_fails_spec_does_not(self):
+        wall = "".join(f"| D{i} | {'理' * 320} |\n" for i in range(planview.MAX_LONG + 1))
+        plan = PLAN + "\n## 附\n| 編號 | 理由 |\n|---|---|\n" + wall
+        with tempfile.TemporaryDirectory() as d:
+            p = pathlib.Path(d)
+            (p / "SPEC.md").write_text(SPEC + "\n無圖：x\n" + wall, encoding="utf-8")
+            (p / "PLAN.md").write_text(plan, encoding="utf-8")
+            bad = planview.check(p)
+            self.assertEqual(len(bad), 1)
+            self.assertIn("PLAN.md: 超過 300 字的行有 6 行", bad[0])
+            s = {label: n for label, n, _ in planview.summary("PLAN", plan)}
+            self.assertEqual(s["長行"], 6)
+
+
+class AppendixTest(unittest.TestCase):
+    def test_appendix_files_are_read_counted_and_collapsed(self):
+        with tempfile.TemporaryDirectory() as d:
+            p = pathlib.Path(d)
+            (p / "PLAN.md").write_text(PLAN, encoding="utf-8")
+            (p / "plan-appendix").mkdir()
+            (p / "plan-appendix" / "tests.md").write_text(
+                "## 測試整表\n| 編號 | 測什麼 | 反例 |\n|---|---|---|\n| T1 | a | b |\n| T2 | a | b |\n| T3 | a | b |\n",
+                encoding="utf-8")
+            docs = planview.read_docs(p)
+            self.assertEqual(list(docs), ["PLAN", "appendix/tests"])
+            s = {label: n for label, n, _ in planview.summary("appendix/tests", docs["appendix/tests"])}
+            self.assertEqual(s["測試"], 3)
+            page = planview.render("x", docs, "11-07 10:00")
+            self.assertIn('<b>appendix/tests</b><a class="chip" href="#appendix/tests-1">測試 3', page)
+            self.assertIn("d.open=!name.startsWith('appendix/')", page)
+
+
 class PageTest(unittest.TestCase):
     def test_markdown_embedded_verbatim_with_script_end_split(self):
         md = PLAN + "\n<script>alert(1)</script>\n"
@@ -152,7 +189,7 @@ class PageTest(unittest.TestCase):
             text = buf.getvalue()
             self.assertIn("SPEC 決議 2、假設 1、圖 0", text)
             self.assertIn("PLAN 定案 3、切片 2、測試 2、審查地圖 3、交 owner 2、圖 1", text)
-            self.assertIn("圖閘未過 — SPEC.md", text)
+            self.assertIn("好讀閘未過 — SPEC.md", text)
             with contextlib.redirect_stdout(io.StringIO()):
                 self.assertEqual(planview.main([str(p), "--check"]), 1)
 

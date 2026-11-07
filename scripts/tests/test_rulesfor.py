@@ -76,6 +76,25 @@ class RulesForTest(unittest.TestCase):
         self.assertTrue(any("缺列" in e and "worker.md" in e for e in errs))
         self.assertTrue(any("a11y.md" in e and "開頭" in e for e in errs))
 
+    def test_check_resolves_task_dir_and_sectionless_plan_to_appendix_rules(self):
+        plan = self._plan({".claude/rules/fe/a11y.md": "套用：§Focus → 片 B 測 3",
+                           ".claude/rules/go/worker.md": "不相關：只改 log 字串",
+                           "web/CLAUDE.md": "不相關：不碰 build"})
+        appendix = self.root / "plan-appendix"
+        appendix.mkdir()
+        (appendix / "rules.md").write_text(plan.read_text(encoding="utf-8"), encoding="utf-8")
+        plan.write_text("# PLAN\n規則對照見 appendix：套用 1 份、不相關 2 份\n", encoding="utf-8")
+        self.assertEqual(rulesfor.resolve(self.root), appendix / "rules.md")
+        self.assertEqual(rulesfor.resolve(plan), appendix / "rules.md")
+        self.assertEqual(rulesfor.check(self.root, self.root), [])
+        self.assertEqual(rulesfor.check(self.root, plan), [])
+        # a PLAN.md that still carries the section is checked as is, even with an appendix beside it
+        (appendix / "rules.md").write_text("# nothing\n", encoding="utf-8")
+        plan.write_text(self._plan({".claude/rules/fe/a11y.md": "套用：x", ".claude/rules/go/worker.md": "不相關：y",
+                                    "web/CLAUDE.md": "不相關：z"}).read_text(encoding="utf-8"), encoding="utf-8")
+        self.assertEqual(rulesfor.resolve(plan), plan)
+        self.assertEqual(rulesfor.check(self.root, plan), [])
+
     def test_check_fails_without_section_or_marker(self):
         plan = self.root / "PLAN.md"
         plan.write_text("# PLAN\n", encoding="utf-8")

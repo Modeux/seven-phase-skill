@@ -2,9 +2,13 @@
 """List the rule files a PLAN's file matrix hits, and gate that PLAN answers every one.
 
 Usage:
-  python3 rulesfor.py <path>...                 # print a `## 規則對照` skeleton for PLAN.md
-  python3 rulesfor.py --check PLAN.md           # exit 1 if a hit rule file has no row or no 處置
+  python3 rulesfor.py <path>... >> plan-appendix/rules.md   # print a `## 規則對照` skeleton
+  python3 rulesfor.py --check <task dir | rules.md | PLAN.md>  # exit 1 if a hit rule file has no row or no 處置
   python3 rulesfor.py --root <repo> ...         # default: git toplevel of cwd
+
+The table lives in `plan-appendix/rules.md` (machine-facing; PLAN.md stays readable). --check given the task
+directory, or a PLAN.md without the section, looks there; a PLAN.md that still carries the section (tasks
+written before 11-07) is checked as is.
 
 Hits, for each matrix path (existing or not yet created):
   1. `.claude/rules/**/*.md` whose frontmatter `paths:` glob matches it (`**` crosses directories,
@@ -101,11 +105,30 @@ def skeleton(root, paths):
     return "\n".join(out)
 
 
-def check(root, plan):
+APPENDIX_RULES = pathlib.Path("plan-appendix") / "rules.md"
+_SECTION = r"^##\s+" + HEADING + r"\s*$(.*?)(?=^##\s|\Z)"
+
+
+def resolve(target):
+    """The file that holds `## 規則對照`: the task dir's plan-appendix/rules.md, the file given, or — for a
+    PLAN.md without the section — rules.md beside it."""
+    target = pathlib.Path(target)
+    if target.is_dir():
+        return target / APPENDIX_RULES if (target / APPENDIX_RULES).is_file() else target / "PLAN.md"
+    sibling = target.parent / APPENDIX_RULES
+    if target.is_file() and not re.search(_SECTION, target.read_text(encoding="utf-8"), re.M | re.S) and sibling.is_file():
+        return sibling
+    return target
+
+
+def check(root, target):
+    plan = resolve(target)
+    if not plan.is_file():
+        return ["{}: 找不到檔案（規則對照放 {}）".format(plan, APPENDIX_RULES)]
     text = plan.read_text(encoding="utf-8")
-    m = re.search(r"^##\s+" + HEADING + r"\s*$(.*?)(?=^##\s|\Z)", text, re.M | re.S)
+    m = re.search(_SECTION, text, re.M | re.S)
     if not m:
-        return ["{}: 沒有 `## {}` 節（跑 rulesfor.py <矩陣路徑> 產骨架）".format(plan, HEADING)]
+        return ["{}: 沒有 `## {}` 節（跑 rulesfor.py <矩陣路徑> >> {} 產骨架）".format(plan, HEADING, APPENDIX_RULES)]
     body = m.group(1)
     mark = _MARK.search(body)
     if not mark or not mark.group(1).split():
@@ -130,7 +153,7 @@ def check(root, plan):
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("paths", nargs="*")
-    ap.add_argument("--check", metavar="PLAN_MD")
+    ap.add_argument("--check", metavar="TASK_DIR|RULES_MD|PLAN_MD")
     ap.add_argument("--root")
     a = ap.parse_args()
     root = pathlib.Path(a.root) if a.root else _common.toplevel(".")
@@ -145,7 +168,7 @@ def main():
         print("rulesfor: {}".format("FAIL {} 項".format(len(errs)) if errs else "OK"))
         return 1 if errs else 0
     if not a.paths:
-        ap.error("給矩陣路徑，或用 --check PLAN.md")
+        ap.error("給矩陣路徑，或用 --check <任務目錄>")
     print(skeleton(root, [p.strip("/") for p in a.paths]))
     return 0
 

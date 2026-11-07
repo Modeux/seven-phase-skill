@@ -12,7 +12,7 @@
 
 ## 併發派工（2026-09-23）
 - PLAN 的 wave 內、檔案集合互斥的片**同時派**多個實作 agent（一則訊息裡同時起）。
-- **每片一份 `<片號>-brief.md`**：PLAN 裡歸這片的段落（含矩陣那片的符號／行號欄）、測試設計清單、相關 invariant，用 `scripts/mkbrief.py` 從一份 manifest 一次組好（逐字摘錄並附出處）；SPEC／PLAN 全文列「需要時再讀」（SKILL.md「任務包瘦身」）。
+- **每片一份 `<片號>-brief.md`**：PLAN 裡歸這片的段落、`plan-appendix/matrix.md` 該片的符號／行號／呼叫者節、`plan-appendix/tests.md` 該片的測試列、相關 invariant，用 `scripts/mkbrief.py` 從一份 manifest 一次組好（逐字摘錄並附出處）；SPEC／PLAN 全文列「需要時再讀」（SKILL.md「任務包瘦身」）。
 - **隔離**：每片一棵私有 worktree。工作樹有未 commit 的改動時，`isolation: "worktree"` 起在預設分支、看不到這些改動——改用 `scripts/mkworktree.py`（detach 到本 HEAD＋套 `mkpatch.py` 產的 patch＋驗 sha）自己建樹，派工訊息寫明樹的絕對路徑。
 - **交回**：agent 在私有樹改完，主用 `scripts/merge_back.py` 對快照算出改過的檔，確認主樹那些檔仍等於快照、片間零重疊後複製回主樹（不靠 agent 產 patch；`git apply` 從子目錄跑會靜默略過目錄外 hunk）。同波兩片打到同檔＝矩陣寫錯，回 Plan 修，不硬合。
 - **共用資源——上限加在指令上，不加在 agent 上**：檔案互斥的片一波派完，不為 Docker 分波。任務包寫明：每條吃 Docker 的指令（`-tags integration`、testcontainers、sqlc 容器）一律包 `scripts/dockerslot.py --`（預設同時 3 條、其餘排隊，Bash 設 `timeout: 600000`；exit 75＝等太久，照訊息重試或回報）；sqlc 用 `--pool sqlc --slots 1`；主 session 的全量整合用 `--all`。前端片不吃 Docker，不排在後端片後面——派工同時由主 session 先在前端樹跑 `pnpm install`。每波結束清殘留網路；Python 共用 venv 只准唯讀掛載進一次性容器。為什麼：agent 九成時間在讀碼與推理、`go test` 約佔 4%，按 agent 分波等於讓不碰 Docker 的時間也排隊（age-gate-unify 第 7 階段：驗證員 3＋2 兩波多等約 17 分、前端修復片等後端那波約 39 分）。
