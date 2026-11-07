@@ -1,0 +1,5 @@
+{"type": "user", "isSidechain": true, "timestamp": "2026-11-02T01:03:05.000Z", "message": {"role": "user", "content": "寫 S1 測試"}}
+{"type": "assistant", "isSidechain": true, "timestamp": "2026-11-02T01:03:10.000Z", "message": {"id": "s1", "role": "assistant", "content": [{"type": "tool_use", "id": "ta1", "name": "Bash", "input": {"command": "python3 -m unittest discover"}}]}}
+{"type": "user", "isSidechain": true, "timestamp": "2026-11-02T01:03:20.000Z", "message": {"role": "user", "content": [{"type": "tool_result", "tool_use_id": "ta1", "content": "OK"}]}}
+{"type": "assistant", "isSidechain": true, "timestamp": "2026-11-02T01:04:10.000Z", "message": {"id": "s2", "role": "assistant", "content": [{"type": "tool_use", "id": "ta2", "name": "Read", "input": {"file_path": "/repo/backend-golang/a.go"}}]}}
+{"type": "user", "isSidechain": true, "timestamp": "2026-11-02T01:04:11.000Z", "message": {"role": "user", "content": [{"type": "tool_result", "tool_use_id": "ta2", "content": "package a"}]}}

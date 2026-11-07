@@ -11,6 +11,7 @@ gate.py fe --tree T --project frontend|admin [--include PATH]  # 片收件不帶
 gate.py fe-build --tree T --project frontend|admin
 gate.py ai --tree T --repo <主 checkout> [--kind pytest|ruff|mypy] [PATH ...]
 gate.py clean-docker [--apply]                                 # 列／清孤兒 testcontainers
+gate.py lint --tree T [--pkg ./internal/x/...] [--clean-docker] # Go golangci 整包：OOM 自動分批到跑完，沒跑完＝INCOMPLETE
 共用：--out FILE、--expect red、--known-red FILE、--no-known-red、--label
 ```
 - 第一行 `GATE <mode> <verdict> pass=N fail=N skip=N <秒>s out=<路徑>`，機器讀 `<out>.summary.json`。
@@ -62,7 +63,7 @@ python3 ~/.claude/skills/seven-phase/scripts/recv.py --slice S1 --tree T --snaps
 - **ai-service（Python）**：**禁在 host 跑 `uv`／`just test-ai`／host pytest**（會把共用 venv 重建成 macOS 版，容器跑不起來；`gate.py ai` 會擋下並提示）。重建：一次性容器內 `uv sync --frozen`。
 - **Docker 槽位**：`gate.py` 之外吃 Docker 的指令才自己包 `python3 ~/.claude/skills/seven-phase/scripts/dockerslot.py --`（如 `just sqlc` 用 `--pool sqlc --slots 1`）。
 - **契約**：`npx --yes @redocly/cli lint docs/api-contracts/openapi.yaml`。
-- **lint／audit**：`just lint-gateway`（exit 1 是常態，判準「碰過的檔零新增」；`backend-golang/tmp/` 是 gitignored 探針碼，不算）；`bash scripts/audit-pgx-tx-patterns.sh`（既存 (b)×2、(e)×4）；`just fix-go-changed`（**零輸出**才過：這次改到的 Go 行都已是新語法；`--apply` 只套這些 hunk、併進本包；全庫 `just fix-go-check` 在存量清掉前 exit 1 是常態，不當閘）。
+- **lint／audit**：Go lint 一律 `gate.py lint --tree <T> --clean-docker`（不再手打 `just lint-gateway`：Docker VM 7.7GB 下整包常被 OOM 砍，過去每個任務都手寫縮範圍腳本、三個任務以「整包沒跑過」結案；工具 OOM 就分批到跑完，整包 GREEN／RED-KNOWN 才算跑過；`backend-golang/tmp/` 的探針碼自動歸 `ignored=`、不算紅；既存紅名單 `backend-golang/known-red-golint.txt`，11-07 實跑整包 88 秒、正式碼零 issue，所以名單目前不存在＝空）；`bash scripts/audit-pgx-tx-patterns.sh`（既存 (b)×2、(e)×4）；`just fix-go-changed`（**零輸出**才過：這次改到的 Go 行都已是新語法；`--apply` 只套這些 hunk、併進本包；全庫 `just fix-go-check` 在存量清掉前 exit 1 是常態，不當閘）。
 - **Go 探針**：`backend-golang/tmp/` 下的 `.go` 探針會被 `go vet ./...`／`go build ./...` 掃到：探針檔存成 `.go.src`，用 `go test -overlay <json>` 掛進目標套件跑。
 - 判「這條紅是不是我弄的」：`git archive HEAD | tar -x -C <tmp>` 匯出乾淨副本跑同一條；比 stash 安全（stash stack 與所有 worktree 共用）。
 

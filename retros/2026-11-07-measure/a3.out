@@ -1,0 +1,106 @@
+意圖                     次數  腳本  KB   生成h 執行h  失敗% 重複%  顆數  結果MB 誰
+讀檔／搜尋                  31091     0  9278   77.6   5.6     7     0   842   94.0 [('tdd-guide', 8113), ('主session', 6852)]
+改產品碼/其他檔               11132     0     0   28.1  31.9     1     0   572    2.6 [('tdd-guide', 8807), ('主session', 1563)]
+寫其他 md                  2587     0     0   14.2   6.3     1     0   524    0.5 [('doc-slice', 898), ('主session', 802)]
+其他指令                    5904     0  2316   11.3  22.2    11     0   679    7.3 [('主session', 2183), ('tdd-guide', 1858)]
+瀏覽器腳本                   3543  2847  6029   10.6  14.2     8    31   162    3.6 [('ui-lane-reviewer', 2777), ('主session', 273)]
+突變驗證                    2972   907  4175    9.6   9.0     9    29   453    4.3 [('tdd-guide', 1117), ('主session', 740)]
+寫任務紀錄(Edit/Write)       3468     0     0    8.5  10.6     1     0   211    0.6 [('主session', 2902), ('doc-slice', 565)]
+git                     3249   175  1425    7.6   1.7    10    26   699    9.3 [('主session', 1339), ('tdd-guide', 714)]
+Read 等                  4630     0     7    6.2   2.2     9     0   216   69.2 [('主session', 4630)]
+跑閘／測試                   2634   764  1932    5.5  11.1    15    40   430    2.1 [('tdd-guide', 1492), ('主session', 740)]
+讀閘輸出                    2690     0  1259    4.6   7.4    11     0   478    4.8 [('tdd-guide', 1296), ('主session', 1004)]
+組任務包                    1501   275  1023    4.5   2.3    13    22   331    2.8 [('主session', 982), ('tdd-guide', 160)]
+DB 查詢／種資料               1404   254  1210    4.0   1.1    13    19   230    2.3 [('ui-lane-reviewer', 676), ('主session', 232)]
+問 owner                  407     0     0    3.6  24.6    11     0   140    0.2 [('主session', 407)]
+transcript 量測            947   495  1179    3.4   1.5    14    23   222    2.0 [('主session', 557), ('tdd-guide', 239)]
+其他腳本                    1219  1219   902    2.9   2.7     6    23   357    0.6 [('tdd-guide', 360), ('主session', 318)]
+起環境／樹                    971   141   493    2.8   0.8    11    23   345    2.0 [('主session', 506), ('tdd-guide', 131)]
+寫任務包(Edit/Write)         422     0     0    2.6   2.5     0     0   109    0.1 [('主session', 419), ('tdd-guide', 3)]
+流程腳本(既有)                1009    54   414    2.2   0.8     7    29   155    1.6 [('主session', 903), ('tdd-guide', 40)]
+派工                       754     0     7    2.2   1.6     3     0   138    0.8 [('主session', 754)]
+解析報告／資料                  660   660   653    1.9   1.1    14    25   230    1.2 [('主session', 267), ('ui-lane-reviewer', 189)]
+探針／盲評                    589   168   590    1.8   0.5     9    17   115    1.3 [('主session', 285), ('tdd-guide', 147)]
+批次改檔                     461   461   801    1.5   0.5    41    26   281    0.3 [('tdd-guide', 196), ('主session', 112)]
+API 探針                   442   185   374    1.2   0.5    13    19   157    0.6 [('ui-lane-reviewer', 188), ('主session', 114)]
+看板                       410    18   108    0.6   0.3     2    20   171    0.4 [('主session', 381), ('doc-slice', 27)]
+清容器                      195    16    92    0.6   0.4     8    22   111    0.3 [('主session', 105), ('tdd-guide', 46)]
+腳本改任務紀錄                  115   115   246    0.5   0.1    19    35    74    0.1 [('主session', 102), ('doc-slice', 6)]
+
+== 錯誤簽名 top 30（正規化）
+ 1079 a=461  Exit code N
+  995 a=383  "This session is isolated in the worktree <P>
+  346 a=328  PreToolUse:Bash hook error: py-edit-guard: 用 Python 改檔被擋，請改用 Edit。Edit 只需先 Read 目標附近幾行（off
+   88 a=63   n-- WHY: fail fast instead of queueing live writes behind a blocked DDL lock
+   66 a=39   does not exist
+   61 a=45   nTypeError: Cannot read properties of null (reading 'S')
+   58 a=37   blocked
+   53 a=32   "The user doesn't want to proceed with this tool use. The tool use was rejected (eg. if it
+   52 a=36   nerror: recipe `S` failed with exit code N
+   45 a=42   N s 逾時 panic、N 支沒跑，被錯讀成「紅比基線少」）。比對前先 `S` 為 N 才算數。
+   27 a=24   PreToolUse:Bash hook error: graphify-query-guard: `S` 沒帶 `S`，會被 p
+   27 a=18   "S"
+   25 a=21   nTraceback (most recent call last):
+   24 a=24   nid points at a finding that does not exist (`S` when go has N, `S`, `S` when spec has non
+   24 a=19   rror: recipe `S` failed on line N with exit code N
+   22 a=22   n**會被擋（N-N～N-N 實測）**：shell 變數（`S`）、命令替換（`S`）、heredoc、`
+   22 a=21   "<tool_use_error>Subagents should return findings as text, not write report files. Include
+   20 a=20   t-- WHY: fail fast instead of queueing live writes behind a blocked DDL lock
+   19 a=18   nzsh: command not found: timeout
+   19 a=19   on Reads」擋這條連線的 `S`，**owner 已同意也照擋**（N-N）：被擋就別換工具繞，把 SQL 貼給 owner 在 JetBrains 自己跑、貼回結果，或請 
+   18 a=12   ng transaction also queues every live write behind it, so a blocked deploy fails and is re
+   16 a=15   Traceback (most recent call last):
+   16 a=14   "Permission to use Bash with command rm -rf <P>
+   15 a=15   t**會被擋（N-N～N-N 實測）**：shell 變數（`S`）、命令替換（`S`）、heredoc、`
+   15 a=15   <P>: No such file or directory
+   15 a=14   "<tool_use_error>Found N matches of the string to replace, but replace_all is false. To re
+   14 a=14   成伺服器的 `S` 閘畫（無媒體，只剩上一條的收回動作）。燈箱的公開 VM 由 `S` 讀 VM 的 `S`，是唯一的同義寫法。新增畫作品的面要問它，並加進 `work-detai
+   14 a=7    "explorer-graph-seed-guard: code-explorer 沒有 Bash、跑不了 graphify，派工 prompt 必須帶「圖給的起點」節。先在主 s
+   14 a=2    "The server-side auto mode classifier gave no verdict (the response ended before its verdi
+   14 a=8    nTimeoutError: locator.click: Timeout 30000ms exceeded.
+
+== 波間換線 n=52 合計 26.9h，主 session 呼叫數中位 42
+  讀檔／搜尋                  生成    104 分 執行      7 分  呼叫 779
+  跑閘／測試                  生成     14 分 執行     37 分  呼叫 124
+  突變驗證                   生成     21 分 執行     20 分  呼叫 130
+  改產品碼/其他檔               生成     22 分 執行     17 分  呼叫 158
+  其他指令                   生成     21 分 執行     17 分  呼叫 221
+  派工                     生成     19 分 執行     19 分  呼叫 138
+  寫任務紀錄(Edit/Write)      生成     23 分 執行     15 分  呼叫 134
+  寫其他 md                 生成     26 分 執行      9 分  呼叫 82
+  讀閘輸出                   生成     12 分 執行     23 分  呼叫 127
+  Read 等                 生成     20 分 執行     14 分  呼叫 273
+  流程腳本(既有)               生成     21 分 執行     11 分  呼叫 172
+  寫任務包(Edit/Write)       生成     22 分 執行      6 分  呼叫 52
+  組任務包                   生成     17 分 執行      3 分  呼叫 105
+  瀏覽器腳本                  生成      5 分 執行      9 分  呼叫 22
+  git                    生成      8 分 執行      4 分  呼叫 74
+  探針／盲評                  生成      8 分 執行      2 分  呼叫 49
+
+== 每種 agent 花在非產品腳本的（每顆平均：腳本數／KB／生成分鐘）
+  ui-lane-reviewer       顆 62   腳本/顆  52.2  KB/顆   91.5  生成分/顆   9.2  合計生成   9.5h
+  主session               顆 198  腳本/顆  12.1  KB/顆   18.9  生成分/顆   2.4  合計生成   7.8h
+  tdd-guide              顆 255  腳本/顆   7.0  KB/顆   13.2  生成分/顆   1.4  合計生成   5.8h
+  converge-verifier      顆 47   腳本/顆  11.1  KB/顆   19.9  生成分/顆   2.3  合計生成   1.8h
+  pr-test-analyzer       顆 19   腳本/顆  11.4  KB/顆   25.4  生成分/顆   3.7  合計生成   1.2h
+  doc-slice              顆 71   腳本/顆   2.1  KB/顆    4.3  生成分/顆   0.6  合計生成   0.8h
+  lane-reviewer          顆 70   腳本/顆   1.4  KB/顆    2.0  生成分/顆   0.4  合計生成   0.5h
+  quick-task             顆 13   腳本/顆   7.0  KB/顆   16.4  生成分/顆   1.4  合計生成   0.3h
+  silent-failure-hunter  顆 20   腳本/顆   1.0  KB/顆    3.3  生成分/顆   0.8  合計生成   0.3h
+  general-purpose        顆 18   腳本/顆   5.6  KB/顆    5.5  生成分/顆   0.9  合計生成   0.3h
+  全部非產品腳本生成合計 28.9h；KB 15312
+
+walk_lib 上線後 ui-lane 腳本 580 支，提到 walk.: 46，走 walk_lib: 9
+ui-lane 重定義 helper: measure(21), onReq(19), r(19), shot(19), open(19), read(19), q(17), tick(15), login(14), state(14), snap(13), lum(13), onResp(12), settle(12), at(11), f(11), probe(10), t(9), focusProbe(9), txt(9), m(8), vis(8), press(8), lost(8), d(8), hit(8), run(7), pick(7), geo(7), mark(6), go(6), ratio(6), items(6), p(6), R(6), g(6), label(6), active(6), load(6), enter(6)
+ui-lane 腳本常見片段（幾顆 agent／幾支）:
+  視窗切換                    45 顆   472 支
+  鍵盤/Tab                  46 顆   384 支
+  網路攔截                    48 顆   453 支
+  console 錯誤收集            12 顆    14 支
+  scroll 量測               42 顆   268 支
+  getBoundingClientRect   50 顆   467 支
+  getComputedStyle        45 顆   292 支
+  login/token             42 顆   347 支
+  elementFromPoint        37 顆   137 支
+  動畫/transition            4 顆     7 支
+  等待 sleep                53 顆  1125 支

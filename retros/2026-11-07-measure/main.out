@@ -1,0 +1,279 @@
+main-session tool rows 29472 sessions 235
+
+== main-session Bash cmd rows 15607; top shapes (n / sessions / err%)
+   2450 195    7%  grep -n
+   1794 179   12%  sed -n
+    460 119    6%  grep -rn
+    354 114    6%  wc -c
+    333  87    8%  git -C
+    332 151    1%  python3 board.py
+    268  48    3%  python3 merge_back.py
+    253 104   15%  cat
+    202  64    8%  grep -E
+    192  78    3%  python3 mkpatch.py
+    188 120   15%  ls -la
+    170  44    4%  grep -nE
+    145  87    8%  grep -rln
+    144  79    7%  wc -l
+    142  58    4%  python3 extract.py
+    134  33    8%  python3 dockerslot.py
+    129  70    9%  mkdir -p
+    128  43    0%  python3 run_external.py
+    124  16   25%  bash go-test.sh
+    113  74   25%  cat -n
+    113  52    3%  python3 mkworktree.py
+    112  52    4%  grep -c
+    102  24   32%  npx ng --watch
+     89  33   15%  python3 reviewcov.py
+     88  43    7%  graphify query --context
+     83  54    7%  ls -n
+     82  23   18%  docker exec -U
+     78  35   10%  shasum -a
+     78  14   29%  just --justfile
+     76  38    7%  python3 checktree.py
+     72  43   12%  ls
+     68  44   15%  cat -c
+     65  46    9%  git status --porcelain
+     60  26    8%  sed -i
+     51  30    6%  grep -ln
+     51   8    6%  bash run-probe.sh
+     48  24   15%  bash env.sh
+     47  20   13%  python3 rulesfor.py
+     47   9    6%  cd
+     45  20   27%  sed -E
+     45  19    0%  grep -h
+     45  14    0%  git grep -n
+     44  32   11%  tail -c
+     43  24    9%  git log --oneline
+     43  16   14%  node run_kit.mjs
+     42  39    2%  ls -c
+     42  24   12%  cat -E
+     39  25   10%  python3 wf_reports.py
+     39  17    0%  cp
+     38  16    0%  git worktree --force
+     38  24    0%  python3 numstat.py
+     37  16    3%  python3 laneyield.py
+     36  18    3%  graphify affected --relation
+     34  23    0%  pnpm install --frozen-lockfile
+     34  16    6%  grep -rnE
+     34  24    0%  grep -o
+     32  18   31%  lsof -nP
+     31  13   16%  tail -n
+     29  24    7%  awk
+     29  19    7%  tail
+
+== repeated single-line commands (normalized) seen in >=3 sessions
+   151  41  bash <P>
+   130  48  python3 <P>
+   125  69  cat <P>
+    87  26  sed -n 'S' <P>
+    85  15  grep -n "S" <P>
+    58   9  grep -n -E 'S' <P>
+    39  27  grep -n 'S' <P>
+    37  26  python3 ~<P> --help N>&N | head -N
+    37  15  python3 <P> --help
+    33   4  git -C <P> worktree remove --force <P>
+    30  10  python3 tmp<P>
+    26  19  grep -n 'S' <P> | head -N
+    23  10  bash <P> > <P> N>&N
+    23  10  sed -n 'S' <P> | cut -c1-N
+    22  12  grep -n 'S' .claude<P> | cut -c1-N
+    22   6  git worktree remove --force tmp<P>
+    20   8  grep -n "S" <P> | head -N
+    20   3  sed -n 'S' angular-workspace<P>
+    18  16  cd <P> && pwd
+    17  14  cat ~<P>
+    17  12  python3 <P> --help N>&N | head -N
+    17   4  grep -n -E "S" <P>
+    16   9  graphify query "S" --context call --budget N N>&N | head -N
+    16   8  grep -n -E 'S' <P> | cut -c1-N | head -N
+    16  12  tail -N <P>
+    16   8  mkdir -p <P>
+    15   8  grep -E 'S' <P>
+    15   8  grep -n -E 'S' <P> | head -N
+    15   9  ls <P>
+    14  13  grep -n 'S' <P> | cut -c1-N
+    14   9  wc -c <P>; grep -n 'S' <P>
+    14   8  grep -n -E 'S' <P> | cut -c1-N
+    13  12  python3 ~<P> N>&N | tail -N
+    13  12  wc -c <P>
+    13   9  head -N <P>
+    13   6  grep -n "S" <P> | cut -c1-N
+    13   9  sed -n 'S' backend-golang<P>
+    12  12  python3 ~<P> N>&N | grep -A2 'S' | head -N
+    12   9  grep -n 'S' .claude<P>
+    12   8  sed -n 'S' tmp<P>
+    12   7  git -C <P> status --porcelain
+    12   4  tail -n N <P>
+    11   9  grep -n 'S' <P> | cut -c1-N | head -N
+    11   4  grep -n "S" .claude<P>
+    11   4  python3 -I <P>
+    11   7  graphify query "S" --context call --budget N --graph <P> N>&N | head -N
+    11   3  bash <P> <P>
+    10  10  python3 ~<P> N>&N | head -N
+    10   9  python3 ~<P> --help N>&N | head -N; python3 ~<P> --help N>&N | head -N
+    10   5  bash tmp<P>
+    10   6  cp <P> <P>
+    10   5  python3 <P> --hook session-start
+    10   3  graphify affected "S" --relation calls --graph <P>
+     9   8  sed -n 'S' .claude<P>
+     9   5  ls <P> <P>
+     9   4  python3 <P> <P>
+     9   8  grep -n 'S' .claude<P> | head -N
+     9   5  python3 <P> N>&N | cut -c1-N
+     8   3  P=<P>; sed -n 'S' $P<P>
+     8   8  ls -la .claude<P> && cat .claude<P>
+     8   7  cat <P> | head -N
+     8   5  python3 ~<P> > <P> N>&N; echo board=$?
+     8   8  python3 ~<P> grok --packet tmp<P> --snapshot tmp<P> --out tmp<P>
+     8   4  python3 ~<P> agy --packet tmp<P> --snapshot tmp<P> --out tmp<P>
+     8   7  bash <P> N>&N | tail -N
+     8   7  grep -c 'S' <P>
+     8   8  python3 <P> --help | head -N; python3 <P> --help | head -N
+     8   7  cat <P> <P>
+     8   3  bash tmp<P> > tmp<P> N>&N
+     8   6  grep -n 'S' tmp<P> | head -N
+     8   7  grep -n 'S' .claude<P> | cut -c1-N | head -N
+     8   5  python3 <P> --out <P> --root <P>
+     8   8  git status --porcelain
+     8   3  grep -n 'S' angular-workspace<P>
+     7   6  tail -c N <P>
+     7   4  I=<P>; sed -n 'S' $I<P>
+     7   7  cat ~<P> | head -N
+     7   5  grep -n -i -E 'S' <P>
+     7   7  cat tmp<P>
+     7   5  grep -n 'S' tmp<P> | cut -c1-N | head -N
+     7   5  sed -n N,40p <P>
+     7   4  ls -la <P>
+     7   5  grep -c "S" <P>
+     6   6  grep -n 'S' <P> | head
+     6   6  sed -n N,30p <P>
+     6   6  python3 ~<P> --help | head -N
+     6   4  python3 <P> > <P> N>&N
+     6   4  grep -E "S" <P>
+     6   5  python3 <P> --help | head -N
+     6   4  grep -nE 'S' <P> | head -N
+     6   3  python3 -I <P> <P>
+     6   6  python3 <P> N>&N | grep -A2 'S' | head -N
+     6   3  grep -n -i "S" <P>
+     6   3  graphify query "S" --context call --budget N --graph <P>
+     5   5  grep -n 'S' ~<P> | head -N
+     5   5  wc -c <P> <P>
+     5   5  P=<P>; ls -la $P; wc -c $P/*.md; head -N $P<P>
+     5   3  W=<P>; sed -n 'S' $W<P>
+     5   4  P=<P>; grep -n 'S' $P | cut -c1-N
+     5   3  python3 <P> > <P> N>&N; echo done
+     5   4  python3 <P> N>&N | tail -N
+     5   5  sed -n N,60p <P>
+     5   5  sed -n N,200p <P>
+     5   4  kill N
+     5   5  python3 <P> N>&N | head -N
+     5   5  grep -E 'S' <P> | head -N
+     5   4  python3 ~<P> codex --packet tmp<P> --snapshot tmp<P> --out tmp<P> --root <P>
+     5   3  python3 ~<P> > <P> N>&N; echo rc=$?
+     5   3  grep -n 'S' tmp<P>
+     5   3  python3 <P> > <P> N>&N; echo EXIT=$?
+     5   5  wc -c <P>; grep -n 'S' <P> | head -N
+     4   4  cat <P>; echo ======; cat <P>
+     4   4  python3 ~<P> N>&N | grep -A2 "S" | head -N
+     4   4  ls -la .claude<P> && wc -c .claude<P>*
+     4   4  python3 ~<P> codex --packet tmp<P> --snapshot tmp<P> --out tmp<P>
+     4   4  cat <P>; cat <P>
+     4   4  cat <P>; head -N <P>
+     4   4  cat <P> | cut -c1-N
+     4   4  sed -n N,80p <P>
+     4   4  wc -c <P>*.md; head -N <P>
+     4   4  cat <P>; echo ----; cat <P>
+     4   4  P=<P>; ls -la $P; wc -c $P/*.md; grep -n 'S' $P<P>
+     4   4  grep -n "S" ~<P> | head -N
+     4   4  grep -nE 'S' <P> | cut -c1-N
+     4   4  python3 ~<P> --help N>&N | sed -n N,25p
+     4   3  B=<P>; grep -n 'S' $B | cut -c1-N
+     4   3  python3 ~<P> > <P> N>&N; echo board $?
+     4   3  python3 ~<P> --path tmp<P> --patch tmp<P> --baseline tmp<P> N>&N | tail -N
+     4   3  cd <P>
+     4   3  grep -nE 'S' <P>
+     4   4  sed -n N,20p <P>
+     4   3  python3 <P> --out tmp<P>
+     4   3  grep -n "S" backend-golang<P>
+     4   3  docker ps -a --filter label=org.testcontainers=true --format "S"
+     3   3  cat <P>; wc -c <P>
+     3   3  python3 ~<P> N>&N | grep -n 'S' | head -N
+     3   3  grep -n "S" backend-golang<P> | head -N
+     3   3  sed -n 'S' backend-golang<P>; sed -n 'S' backend-golang<P>
+     3   3  wc -c ~<P>; cat ~<P>
+     3   3  P=<P>; sed -n 'S' $P
+     3   3  wc -c <P>; cat <P>
+     3   3  P=<P>; wc -c $P; grep -n 'S' $P | head -N
+     3   3  cat <P>; ls <P> | head -N
+     3   3  cat <P>; cat <P> | head -N
+     3   3  sed -n N,160p <P>
+     3   3  sed -n N,90p <P>
+     3   3  grep -n 'S' <P> | head -N; wc -c <P>
+     3   3  grep -rln 'S' <P>
+     3   3  sed -n N,300p <P>
+     3   3  docker exec deepweave-postgres psql -U deepweave -d deepweave -c "S"
+     3   3  git -C <P> worktree list | grep -E 'S'
+     3   3  python3 <P> --help N>&N | sed -n N,25p
+
+== main-session one-off scripts 2354 KB 3681 gen h 7.7
+  keyword hits: {'md 改寫': 453, 'browser': 134, 'json': 714, 'DB': 90, 'git': 324, 'status/report': 188, 'cost': 114, 'curl/api': 104, 'transcript': 290}
+  written script paths (top 15):
+     15 /huntwu/Desktop/deepweave/deepweave/.claude/worktrees/voice/tmp/voice-byteplus/probe/build_listen.py
+     14 /Users/huntwu/Desktop/deepweave/deepweave/tmp/pm-acceptance/2026-11-04/build.py
+     14 private/tmp/claude-501/-Users-huntwu-Desktop-deepweave-deepweave/<sid>/scratchpad/sk/scripts/gate.py
+     10 pweave/.claude/worktrees/message-clear-bug/tmp/message-retention-restore/plan-review/build_packet.py
+      8 /Users/huntwu/Desktop/deepweave/deepweave/tmp/pm-acceptance/2026-11-03/build.py
+      7 rs/huntwu/Desktop/deepweave/deepweave/.claude/worktrees/voice/tmp/voice-byteplus/probe/tts2_probe.py
+      7 /Desktop/deepweave/deepweave/.claude/worktrees/portrait/tmp/portrait-prompt-revamp/eval2/mkowner.mjs
+      7 /Users/huntwu/Desktop/deepweave/deepweave/tmp/pm-feedback-4/plan-review/build_packets.py
+      6 /Desktop/deepweave/deepweave/.claude/worktrees/bugfix/tmp/pm-feedback-3/plan-review/build_packets.py
+      6 op/deepweave/deepweave/.claude/worktrees/bugfix/.claude/PRPs/plans/pm-feedback-3/seed-home-rails.sql
+      6 /Desktop/deepweave/deepweave/.claude/worktrees/portrait/tmp/portrait-prompt-revamp/eval2/collect.mjs
+      6 untwu/Desktop/deepweave/deepweave/.claude/worktrees/voice/tmp/voice-byteplus/converge/impl/slices.py
+      5 top/deepweave/deepweave/.claude/worktrees/journey-revamp/tmp/journey-revamp/probe/card_gate_rules.py
+      5 op/deepweave/deepweave/.claude/worktrees/pm-feedback/tmp/character-intro-page/converge/fix/slices.py
+      5 Desktop/deepweave/deepweave/.claude/worktrees/journey-revamp/tmp/journey-revamp/impl/walk/kit/env.sh
+
+== board.py runs (checkpoint proxy) 373 in 164 sessions; planview runs 4
+  tool calls in 25 min before board.py: median 50 p75 71; gen min median 6.9
+  tools in those windows: [('Bash', 11188), ('Edit/Write other', 2992), ('Read', 2194), ('Edit/Write PROGRESS', 1415), ('Write', 597), ('Agent', 396), ('AskUserQuestion', 267), ('Edit', 226), ('Skill', 149), ('ToolSearch', 123)]
+  Edit/Write PROGRESS.md: 1511 rows, chars 818K, sessions 162
+
+== main-session errors 2259 (8%), immediate same-tool retries 1460
+   399 Exit code N
+   342 "This session is isolated in the worktree <P>
+    98 PreToolUse:Bash hook error: py-edit-guard: 用 Python 改檔被擋，請改用 Edit。Edit 只需先 Read 目標附近幾行（off
+    45 N s 逾時 panic、N 支沒跑，被錯讀成「紅比基線少」）。比對前先 `S` 為 N 才算數。
+    40 "The user doesn't want to proceed with this tool use. The tool use was rejected (eg. if it
+    29 nerror: recipe `S` failed with exit code N
+    27 PreToolUse:Bash hook error: graphify-query-guard: `S` 沒帶 `S`，會被 p
+    24 "S"
+    21 nTypeError: Cannot read properties of null (reading 'S')
+    19 on Reads」擋這條連線的 `S`，**owner 已同意也照擋**（N-N）：被擋就別換工具繞，把 SQL 貼給 owner 在 JetBrains 自己跑、貼回結果，或請 
+    15 nid points at a finding that does not exist (`S` when go has N, `S`, `S` when spec has non
+    15 n**會被擋（N-N～N-N 實測）**：shell 變數（`S`）、命令替換（`S`）、heredoc、`
+    15 t**會被擋（N-N～N-N 實測）**：shell 變數（`S`）、命令替換（`S`）、heredoc、`
+    14 "explorer-graph-seed-guard: code-explorer 沒有 Bash、跑不了 graphify，派工 prompt 必須帶「圖給的起點」節。先在主 s
+    14 "The server-side auto mode classifier gave no verdict (the response ended before its verdi
+    13 does not exist
+    11 `S`：EXIT=N 只允許 unhandled `S`（`cor
+    10 n-- WHY: fail fast instead of queueing live writes behind a blocked DDL lock
+    10 blocked
+     9 nTraceback (most recent call last):
+
+== Read: total 3341 result MB 65.7; task-doc reads 775 MB 4.8; same doc re-read in same session: 366
+  agent report/brief/out reads 220 MB 1.5
+  skill-file reads 429 MB 3.3
+     42 seven-phase/assets/checkpoint.md
+     30 seven-phase/phases/5-implement.md
+     29 seven-phase/references/project-deepweave.md
+     26 seven-phase/references/external-review.md
+     25 seven-phase/references/lanes.md
+     20 seven-phase/phases/7-converge.md
+     19 seven-phase/assets/walk-kit.md
+     18 seven-phase/phases/4-plan.md
+     17 seven-phase/ACCEPTANCE.md
+     16 seven-phase/phases/1-research.md
+     16 seven-phase/phases/3-interview.md
+     16 seven-phase/assets/fixplan.md

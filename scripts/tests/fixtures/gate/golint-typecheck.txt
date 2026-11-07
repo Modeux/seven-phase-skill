@@ -1,0 +1,5 @@
+internal/tag/handler.go:5:2: undefined: foo (typecheck)
+	foo()
+	^
+1 issues:
+* typecheck: 1

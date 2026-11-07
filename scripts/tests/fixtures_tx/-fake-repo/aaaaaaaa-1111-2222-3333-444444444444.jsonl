@@ -1,0 +1,16 @@
+{"type": "assistant", "timestamp": "2026-10-20T00:00:00.000Z", "message": {"id": "m0", "role": "assistant", "content": [{"type": "tool_use", "id": "tu0", "name": "Bash", "input": {"command": "ls old-window"}}]}}
+{"type": "user", "timestamp": "2026-11-02T01:00:00.000Z", "message": {"role": "user", "content": "請跑一下"}}
+{"type": "assistant", "timestamp": "2026-11-02T01:00:05.000Z", "message": {"id": "m1", "role": "assistant", "content": [{"type": "tool_use", "id": "tu1", "name": "Bash", "input": {"command": "git status --porcelain", "description": "status"}}]}}
+{"type": "user", "timestamp": "2026-11-02T01:00:06.000Z", "message": {"role": "user", "content": [{"type": "tool_result", "tool_use_id": "tu1", "content": "M x.go"}]}}
+{"type": "api-request-blob", "timestamp": "2026-11-02T01:00:07.000Z", "message": {"role": "assistant", "content": [{"type": "tool_use", "id": "tu1", "name": "Bash", "input": {"command": "git status --porcelain"}}]}}
+{"type": "assistant", "timestamp": "2026-11-02T01:01:00.000Z", "message": {"id": "m2", "role": "assistant", "content": [{"type": "tool_use", "id": "tu2", "name": "Read", "input": {"file_path": "/repo/backend-golang/a.go"}}]}}
+{"type": "user", "timestamp": "2026-11-02T01:01:01.000Z", "message": {"role": "user", "content": [{"type": "tool_result", "tool_use_id": "tu2", "content": [{"type": "text", "text": "package a"}]}]}}
+{"type": "assistant", "timestamp": "2026-11-02T01:02:00.000Z", "message": {"id": "m3", "role": "assistant", "content": [{"type": "tool_use", "id": "tu3", "name": "Write", "input": {"file_path": "/repo/db/migrations/0001_x.sql", "content": "-- +goose Up"}}]}}
+{"type": "user", "timestamp": "2026-11-02T01:02:01.000Z", "message": {"role": "user", "content": [{"type": "tool_result", "tool_use_id": "tu3", "is_error": true, "content": "PreToolUse:Write hook error: generated-file-guard: 手動新建 migration 被擋"}]}}
+{"type": "assistant", "timestamp": "2026-11-02T01:03:00.000Z", "message": {"id": "m4", "role": "assistant", "content": [{"type": "tool_use", "id": "tu4", "name": "Agent", "input": {"subagent_type": "tdd-guide", "description": "S1", "prompt": "寫 S1 測試"}}]}}
+{"type": "user", "timestamp": "2026-11-02T01:20:00.000Z", "message": {"role": "user", "content": [{"type": "tool_result", "tool_use_id": "tu4", "content": [{"type": "text", "text": "done"}]}]}}
+{"type": "assistant", "isSidechain": true, "timestamp": "2026-11-02T01:04:00.000Z", "message": {"id": "m5", "role": "assistant", "content": [{"type": "tool_use", "id": "tu5", "name": "Bash", "input": {"command": "echo sidechain"}}]}}
+{"type": "assistant", broken line
+{"type": "assistant", "timestamp": "2026-11-02T01:05:00.000Z", "message": {"id": "m6", "role": "assistant", "content": [{"type": "tool_use", "id": "tu6", "name": "Edit", "input": {"file_path": "/repo/web/a.ts", "old_string": "a", "new_string": "b"}}]}}
+{"type": "user", "timestamp": "2026-11-02T01:05:01.000Z", "message": {"role": "user", "content": [{"type": "tool_result", "tool_use_id": "tu6", "content": "The file /repo/web/a.ts has been updated."}]}}
+{"type": "attachment", "timestamp": "2026-11-02T01:05:02.000Z", "attachment": {"type": "hook_additional_context", "hookName": "PostToolUse:Edit", "toolUseID": "tu6", "hookEvent": "PostToolUse", "content": ["ts-lint: web/a.ts 有 1 個 eslint 錯誤"]}}

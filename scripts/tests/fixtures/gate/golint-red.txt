@@ -1,0 +1,9 @@
+internal/tag/handler.go:42:9: Error return value of `w.Write` is not checked (errcheck)
+	w.Write(b)
+	       ^
+internal/logger/log.go:10:6: func `unusedHelper` is unused (unused)
+func unusedHelper() {}
+     ^
+2 issues:
+* errcheck: 1
+* unused: 1

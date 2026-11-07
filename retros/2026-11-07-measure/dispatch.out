@@ -1,0 +1,62 @@
+dispatches 660 sessions 135
+prompt chars: median 822 p90 3101 max 9749 total KB 904
+per type: n / median chars
+  tdd-guide               250      840
+  blind-judge             113      519
+  code-explorer            78     3251
+  doc-slice                71      924
+  ui-lane-reviewer         47      663
+  converge-verifier        23     1769
+  general-purpose          17     1903
+  lane-reviewer            17      356
+  code-architect           15      242
+  quick-task               13     1555
+  planner                   8      586
+  web-fetch                 4     1613
+  claude-code-guide         1     1577
+  database-reviewer         1      292
+  performance-optimizer     1      293
+  silent-failure-hunter     1     1888
+
+boilerplate lines (>=3 dispatches, >=2 sessions): 171/5585 lines = 3%, chars 0%
+top repeated lines (dispatches / sessions):
+    77  27  <P>
+    16   7  `S`
+    11   4  - `S`
+    10   1  - 評審包（N 題，標題 `S`…`S`；題目順序已隨機打亂，題與題之間沒有規律）：<P>
+    10   1  - 結果檔（用 Write 寫）：<P>
+    10   1  - 評分說明（必讀、照它判、照它的交件格式）：<P>
+     9   2  先完整讀任務包：<P>
+     9   3  工作目錄：<P>
+     8   1  先讀評分說明 `S`，再讀評審包 `S`（N 題，分段讀），照說明逐題評分，一題都不能漏。結果寫到 `S`。不要讀其他檔。寫完回一行（照說明的格式）。
+     8   1  先讀評分說明 `S`，再讀評審包 `S`（N 節，分段讀），照說明逐節逐段評分，一段都不能漏。結果寫到 `S`。不要讀其他檔。寫完回一行（照說明的格式）。
+     8   1  - 評審包：<P>
+     8   1  - 結果檔（用 Write 寫，JSON 格式照評分說明）：<P>
+     8   1  - 評分說明（先讀）：<P>
+     8   1  回給我的訊息只要 ≤N 行摘要＋交件路徑。
+     8   2  N. 共用任務包 `S`
+     8   1  讀評審包：`S`（只讀這一個檔；不要讀、不要 Glob 同目錄或上層目錄的其他檔，尤其不要碰 `S` 目錄）。
+     8   1  用 Write 寫 `S`，JSON：
+     8   1  你是盲評評審。先讀評分說明 `S`，再讀評審包 `S`。除了這兩個檔，不讀、不 Glob 任何其他檔（尤其不要碰任何 `S` 目錄）。照說明逐題判，結果用 Write 寫到 `S`。寫完照說明回一行。
+     7   1  評審包：<P>
+     7   1  評分說明：<P>
+     7   1  結果檔（用 Write 寫，JSON 格式照評分說明）：<P>
+     7   1  - tmp<P>（共用規則、環境、交付格式）
+     7   2  ## Hand-back (≤N lines)
+     7   1  交付：純文字事實表，≤N 行，依編號分節。找不到的寫「找不到」並列出試過的 grep。
+     6   2  - 交付 hand-back ≤N 行：改了哪些檔、紅綠各幾支、自報偏離（沒有寫「無」）、殘留。
+     6   1  寫完回一行：題數、`S` 各值的數量、`S` 為 true 幾題。
+     6   1  評審包很長，分段讀（Read 帶 offset／limit），每題都要判、一題都不能漏，id 照標題。每題只看那一題的「她知道的」「对方问」「她回」。`S` 判準照說明：清單沒有的具體經過（誰做了什麼動作、看到什麼具體東
+     6   1  先讀評分說明 `S`，再讀評審包 `S`（L N 題＋P N 題，檔案大、分段讀），照說明逐題評分，一題都不能漏。結果寫到 `S`。不要讀其他檔。寫完回一行（照說明的格式）。
+     6   1  工作樹（唯一可寫）：<P>
+     6   1  你是盲評評審。照評分說明判評審包裡每一題，結果寫檔。
+     6   1  - Save outputs to: <P>
+     6   1  Read narrowly: grep -n first, then Read with offset<P> Final answer ≤ N lines, structured by the numbered item
+     6   1  N. 本片裁決 `S`（以它為準）
+     6   1  ## 圖給的起點（graphify, from repo root）
+     6   1  請回答（每條附 file:line 與 ≤N 行逐字引文）：
+     6   1  N. `S`（共用任務包：owner 拍板、跨片契約 C1–C5、環境規則、紅的歸屬、回饋迴圈、交付格式）
+     6   1  交付檔放 `S`，檔名以 `S` 開頭。
+     5   1  N. 共用任務包 <P>
+     5   1  你是盲評員。先讀評分說明，再讀評審包，逐題評分。
+     5   1  - tmp<P>（條目、主 session 裁決、觸發表，逐字）

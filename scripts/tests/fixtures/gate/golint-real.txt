@@ -1,0 +1,142 @@
+tmp/assistprobe/main.go:532:17: Error return value of `out.Close` is not checked (errcheck)
+	defer out.Close()
+	               ^
+tmp/assistprobe/main.go:556:13: Error return value of `out.Write` is not checked (errcheck)
+			out.Write(append(b, '\n'))
+			         ^
+tmp/assistprobe/main.go:566:12: Error return value of `out.Write` is not checked (errcheck)
+		out.Write(append(b, '\n'))
+		         ^
+tmp/derivimgprobe/second_ref/main.go:124:18: Error return value of `conn.Close` is not checked (errcheck)
+	defer conn.Close(ctx)
+	                ^
+tmp/derivimgprobe/second_ref/main.go:434:23: Error return value of `resp.Body.Close` is not checked (errcheck)
+	defer resp.Body.Close()
+	                     ^
+tmp/derivimgprobe/second_ref/main.go:482:15: Error return value of `f.Close` is not checked (errcheck)
+	defer f.Close()
+	             ^
+tmp/qwenprobe/main.go:106:15: Error return value of `f.Close` is not checked (errcheck)
+	defer f.Close()
+	             ^
+tmp/qwenprobe/main.go:203:17: Error return value of `out.Close` is not checked (errcheck)
+	defer out.Close()
+	               ^
+tmp/qwenprobe/rawds.go:65:23: Error return value of `resp.Body.Close` is not checked (errcheck)
+	defer resp.Body.Close()
+	                     ^
+tmp/qwenprobe_shared/main.go:232:15: Error return value of `f.Close` is not checked (errcheck)
+	defer f.Close()
+	             ^
+tmp/qwenprobe_shared/main.go:478:17: Error return value of `out.Close` is not checked (errcheck)
+	defer out.Close()
+	               ^
+tmp/assistprobe/main.go:485:2: rangeValCopy: each iteration copies 216 bytes (consider pointers or indexing) (gocritic)
+	for _, c := range chars {
+	^
+tmp/assistprobe/main.go:499:2: rangeValCopy: each iteration copies 152 bytes (consider pointers or indexing) (gocritic)
+	for _, c := range cases {
+	^
+tmp/assistprobe/main.go:506:3: rangeValCopy: each iteration copies 152 bytes (consider pointers or indexing) (gocritic)
+		for _, c := range cases {
+		^
+tmp/assistprobe/main.go:538:2: rangeValCopy: each iteration copies 192 bytes (consider pointers or indexing) (gocritic)
+	for i, j := range jobs {
+	^
+tmp/canaryw1/main.go:129:3: exitAfterDefer: os.Exit will exit, and `defer scancel()` will not run (gocritic)
+		os.Exit(1)
+		^
+tmp/derivimgprobe/second_ref/main.go:331:2: rangeValCopy: each iteration copies 880 bytes (consider pointers or indexing) (gocritic)
+	for _, b := range builds {
+	^
+tmp/derivimgprobe/second_ref/main.go:381:2: rangeValCopy: each iteration copies 880 bytes (consider pointers or indexing) (gocritic)
+	for _, b := range builds {
+	^
+tmp/genderprobe/main.go:155:4: rangeValCopy: each iteration copies 136 bytes (consider pointers or indexing) (gocritic)
+			for _, c := range cases {
+			^
+tmp/genderprobe/main.go:197:2: rangeValCopy: each iteration copies 160 bytes (consider pointers or indexing) (gocritic)
+	for _, r := range recs {
+	^
+tmp/loverprobe/main.go:184:2: rangeValCopy: each iteration copies 160 bytes (consider pointers or indexing) (gocritic)
+	for _, r := range recs {
+	^
+tmp/qwenprobe_shared/catdump/main.go:13:3: rangeValCopy: each iteration copies 160 bytes (consider pointers or indexing) (gocritic)
+		for _, e := range cocreation.CatalogForType(t) {
+		^
+tmp/qwenprobe_shared/main.go:345:3: ifElseChain: rewrite if-else to switch statement (gocritic)
+		if err != nil {
+		^
+tmp/qwenprobe_shared/main.go:444:4: rangeValCopy: each iteration copies 496 bytes (consider pointers or indexing) (gocritic)
+			for _, c := range cases {
+			^
+tmp/qwenprobe_shared/main.go:485:2: rangeValCopy: each iteration copies 552 bytes (consider pointers or indexing) (gocritic)
+	for _, j := range jobs {
+	^
+tmp/derivimgprobe/second_ref/main.go:327:31: G101: Potential hardcoded credentials (gosec)
+	client := byteplus.NewClient(byteplus.Config{APIKey: "dry-run-no-key", BaseURL: srv.URL})
+	                             ^
+tmp/derivimgprobe/second_ref/main.go:337:8: G301: Expect directory permissions to be 0750 or less (gosec)
+		must(os.MkdirAll(b.Dir, 0o755))
+		     ^
+tmp/derivimgprobe/second_ref/main.go:339:8: G306: Expect WriteFile permissions to be 0600 or less (gosec)
+		must(os.WriteFile(path, append(pretty.Bytes(), '\n'), 0o644))
+		     ^
+tmp/derivimgprobe/second_ref/main.go:357:7: G301: Expect directory permissions to be 0750 or less (gosec)
+	must(os.MkdirAll(outDir, 0o755))
+	     ^
+tmp/derivimgprobe/second_ref/main.go:359:7: G306: Expect WriteFile permissions to be 0600 or less (gosec)
+	must(os.WriteFile(mdPath, []byte(md.String()), 0o644))
+	     ^
+tmp/derivimgprobe/second_ref/main.go:382:8: G301: Expect directory permissions to be 0750 or less (gosec)
+		must(os.MkdirAll(b.Dir, 0o755))
+		     ^
+tmp/derivimgprobe/second_ref/main.go:442:12: G306: Expect WriteFile permissions to be 0600 or less (gosec)
+	if err := os.WriteFile(path, data, 0o644); err != nil {
+	          ^
+tmp/derivimgprobe/second_ref/main.go:456:15: G304: Potential file inclusion via variable (gosec)
+	data, err := os.ReadFile(path)
+	             ^
+tmp/derivimgprobe/second_ref/main.go:478:12: G304: Potential file inclusion via variable (gosec)
+	f, err := os.Open(path)
+	          ^
+tmp/qwenprobe/main.go:102:12: G304: Potential file inclusion via variable (gosec)
+	f, err := os.Open(path)
+	          ^
+tmp/breakerprobe/probe_test.go:57:4: concat-loop: string concatenation in a loop (perfsprint)
+			s += ","
+			^
+tmp/derivimgprobe/second_ref/main.go:222:107: bool-format: fmt.Sprint can be replaced with faster strconv.FormatBool (perfsprint)
+		tier, note = tierOverride, "OVERRIDE via -abc-tier-override (not the production path); source is_nsfw="+fmt.Sprint(row.IsNsfw)
+		                                                                                                        ^
+tmp/qwenprobe_shared/main.go:469:38: integer-format: fmt.Sprint can be replaced with faster strconv.Itoa (perfsprint)
+		ka := a.feature + a.c.ID + a.sub + fmt.Sprint(a.nudgeIdx)
+		                                   ^
+tmp/qwenprobe_shared/main.go:470:38: integer-format: fmt.Sprint can be replaced with faster strconv.Itoa (perfsprint)
+		kb := b.feature + b.c.ID + b.sub + fmt.Sprint(b.nudgeIdx)
+		                                   ^
+tmp/breakerprobe/probe_test.go:88:8: Consider preallocating es with capacity 3 (prealloc)
+			var es []error
+			    ^
+tmp/breakerprobe/probe_test.go:98:8: Consider preallocating es with capacity 3 (prealloc)
+			var es []error
+			    ^
+tmp/breakerprobe/probe_test.go:122:8: Consider preallocating es with capacity 3 (prealloc)
+			var es []error
+			    ^
+tmp/breakerprobe/probe_test.go:133:8: Consider preallocating es with capacity 4 (prealloc)
+			var es []error
+			    ^
+tmp/qwenprobe_shared/main.go:440:6: Consider preallocating jobs with capacity len(fj) * len(modelList) * len(featList) (prealloc)
+	var jobs []job
+	    ^
+tmp/qwenprobe/main.go:127:9: QF1012: Use fmt.Fprintf(...) instead of Write([]byte(fmt.Sprintf(...))) (staticcheck)
+	_, _ = h.Write([]byte(fmt.Sprintf("%s|%s|%d", vibeID, st, run)))
+	       ^
+45 issues:
+* errcheck: 11
+* gocritic: 14
+* gosec: 10
+* perfsprint: 4
+* prealloc: 5
+* staticcheck: 1

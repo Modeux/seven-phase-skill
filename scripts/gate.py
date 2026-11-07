@@ -7,6 +7,8 @@ Usage:
   python3 gate.py fe --tree T --project frontend|admin [--include PATH ...] [--timeout D]
   python3 gate.py fe-build --tree T --project frontend|admin [--timeout D]
   python3 gate.py ai --tree T --repo R [--kind pytest|ruff|mypy] [PATH ...] [--timeout D]
+  python3 gate.py lint --tree T [--pkg P ...] [--concurrency 2] [--memlimit 3000MiB] [--gogc 50] [--image I]
+                       [--timeout 40m] [--max-wait 1800] [--clean-docker] [--ignore-prefix tmp/ ... | --no-ignore]
   python3 gate.py clean-docker [--apply]
 Shared: --out FILE (default <T>/tmp/gate/<mode>-<time>.out), --expect red|green, --known-red FILE, --no-known-red,
         --label TEXT
@@ -18,12 +20,26 @@ go: runs in <T>/backend-golang without GOROOT. --run repeats; `|` inside one --r
 fe: --include accepts absolute, repo-relative or workspace-relative paths, or a glob under projects/.
 ai: always a throwaway container; never host uv/pytest. --repo owns the shared Linux ai-service/.venv.
 clean-docker: lists testcontainers that are dead/exited or older than 50 minutes; --apply removes them.
+lint: golangci-lint in docker on <T>/backend-golang, one dockerslot slot per batch, GOMEMLIMIT/GOGC/--concurrency
+    set. --pkg as in go (default ./...). The image defaults to `golangci_lint_image` in <T>/justfile. When a run is
+    killed for memory (rc 137, `signal: killed`, `Killed`, `cannot allocate memory`), the first run is re-planned as
+    ./cmd/... plus one ./internal/<dir>/... per directory in 4 batches, a later batch is halved, and a single pattern
+    that still dies is listed as not finished. A batch past --timeout is not finished. Every batch's output is
+    appended to --out after a `=== batch <i>/<n>: <patterns>` line. Line 2 is `clean-docker found=N removed=N`:
+    orphan testcontainers are always listed and removed only with --clean-docker. An issue (typecheck included)
+    whose path starts with an --ignore-prefix (repeatable, replaces the default tmp/, the gitignored probes) never
+    counts; --no-ignore counts everything, an empty prefix is a tool error.
+    First line: GATE lint <verdict> issues=<new> known=<listed hits> ignored=<n> batches=<finished>/<planned>
+    incomplete=<patterns> out=<path>, then one line per new issue (`path:line:col message (linter)`) and per unfinished pattern.
 
 Known-red list: `fe` reads <T>/angular-workspace/known-red-<project>.txt and `go --integ/--all` reads
 <T>/backend-golang/known-red-integration.txt when they exist; --known-red FILE replaces it, --no-known-red turns
 it off; giving both is a tool error. A line is one test's exact full name; `TestX/*` (go only) is TestX and every
 subtest under it; `unhandled <N> <spec> :: <message>` is exactly N uncaught errors whose whole message is that text
 from that spec. `#` starts a comment line. A listed test may pass or fail; any other red stays red.
+`lint` reads <T>/backend-golang/known-red-golint.txt (missing = empty): `<path> :: <linter> :: <message>`, path as
+golangci prints it, no line number; an issue is listed when path and linter are equal and its message starts with
+<message>. A `typecheck` issue is a compile error: BUILD-FAIL, never on the list.
 
 Verdicts: GREEN | RED | RED-KNOWN | BUILD-FAIL | NO-TESTS | INCOMPLETE | SLOT-TIMEOUT.
 RED means an assertion failed: compile errors are BUILD-FAIL; panics, timeouts, kills, tests that started
@@ -94,6 +110,20 @@ COUNT_RE = re.compile(r"(\d+) (failed|passed|skipped|todo|errors?|deselected|xfa
 PYTEST_END_RE = re.compile(r"\bin \d+(\.\d+)?s\b|no tests ran")
 RUFF_RE = re.compile(r"^(\S+?:\d+:\d+): ([A-Z]+\d+) (.*)$")
 MYPY_RE = re.compile(r"^(\S+?:\d+): error: (.*)$")
+GOLINT_IMAGE = "golangci/golangci-lint:v2.14.0"
+GOLINT_MODCACHE = "deepweave-golangci-modcache"
+GOLINT_KNOWN = "known-red-golint.txt"
+GOLINT_BATCHES = 4
+GOLINT_OOM_RC = 137
+GOLINT_MAX_NOTES = 20
+# WHY: backend-golang/tmp/ holds gitignored probe code that the project rules do not count; golangci still lints it.
+GOLINT_IGNORE_DEFAULT = ["tmp/"]
+GOLINT_ISSUE_RE = re.compile(r"^(\S+?):(\d+):(\d+): (.*) \((\w[\w-]*)\)$")
+GOLINT_TALLY_RE = re.compile(r"^(\d+ issues?[.:]?|\* [\w-]+: \d+)$")
+GOLINT_CARET_RE = re.compile(r"^\s*\^+\s*$")
+GOLINT_OOM_RE =re.compile(r"signal: killed|\bKilled\b|cannot allocate memory")
+GOLINT_IMAGE_RE = re.compile(r'^golangci_lint_image\s*:=\s*"([^"]+)"', re.M)
+MEMLIMIT_RE = re.compile(r"^\d+(B|KiB|MiB|GiB|TiB)?$")
 
 _stop_reason = None
 
@@ -145,6 +175,17 @@ def _build_parser():
     ai.add_argument("--kind", choices=("pytest", "ruff", "mypy"), default="pytest")
     ai.add_argument("--timeout")
     ai.add_argument("paths", nargs="*")
+    lint = mode("lint")
+    lint.add_argument("--pkg", action="append", default=[])
+    lint.add_argument("--concurrency", default="2")
+    lint.add_argument("--memlimit", default="3000MiB")
+    lint.add_argument("--gogc", default="50")
+    lint.add_argument("--image")
+    lint.add_argument("--timeout", default="40m")
+    lint.add_argument("--max-wait", dest="max_wait", default="1800")
+    lint.add_argument("--clean-docker", dest="clean_docker", action="store_true")
+    lint.add_argument("--ignore-prefix", dest="ignore_prefix", action="append")
+    lint.add_argument("--no-ignore", dest="no_ignore", action="store_true")
     clean = mode("clean-docker", tree=False)
     clean.add_argument("--apply", action="store_true")
     return ap
@@ -153,7 +194,7 @@ def _build_parser():
 def parse_args(argv):
     ns = _build_parser().parse_args(argv)
     if not ns.mode:
-        raise ToolError("missing mode: go, fe, fe-build, ai or clean-docker")
+        raise ToolError("missing mode: go, fe, fe-build, ai, lint or clean-docker")
     return ns
 
 
@@ -867,6 +908,144 @@ def _ai_argv(ns, tree, repo):
             "-e", "APP_ENV=development", "-e", "MYPY_CACHE_DIR=/tmp/mypy", AI_IMAGE, ".venv/bin/python"] + tool
 
 
+def _justfile_lint_image(tree):
+    try:
+        text = pathlib.Path(tree, "justfile").read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return GOLINT_IMAGE
+    m = GOLINT_IMAGE_RE.search(text)
+    return m.group(1) if m else GOLINT_IMAGE
+
+
+def _validate_lint(ns, tree):
+    """Check the tuning flags, fill in the image, and return the normalized starting patterns."""
+    backend = os.path.join(tree, "backend-golang")
+    if not os.path.isdir(backend):
+        raise ToolError(f"{tree} has no backend-golang/")
+    if not re.match(r"^[1-9]\d*$", ns.concurrency):
+        raise ToolError(f"--concurrency: want a positive integer, got {ns.concurrency}")
+    if not MEMLIMIT_RE.match(ns.memlimit):
+        raise ToolError(f"--memlimit: want a GOMEMLIMIT value like 3000MiB, got {ns.memlimit}")
+    if not (ns.gogc == "off" or re.match(r"^\d+$", ns.gogc)):
+        raise ToolError(f"--gogc: want an integer or off, got {ns.gogc}")
+    try:
+        float(ns.max_wait)
+    except ValueError:
+        raise ToolError(f"--max-wait: want seconds, got {ns.max_wait}")
+    _duration_seconds(ns.timeout)
+    if ns.no_ignore and ns.ignore_prefix:
+        raise ToolError("--no-ignore and --ignore-prefix contradict each other")
+    prefixes = [] if ns.no_ignore else GOLINT_IGNORE_DEFAULT if ns.ignore_prefix is None else ns.ignore_prefix
+    for p in prefixes:
+        # INVARIANT: an empty prefix matches every path and would turn any run green.
+        if not p.strip():
+            raise ToolError("--ignore-prefix needs a non-empty path prefix; use --no-ignore to count everything")
+    ns.ignore_prefix = [p[2:] if p.startswith("./") else p for p in prefixes]
+    if not ns.image:
+        ns.image = _justfile_lint_image(tree)
+    patterns = []
+    for p in [_norm_pkg(backend, tree, p) for p in ns.pkg] or ["./..."]:
+        if p not in patterns:
+            patterns.append(p)
+    return patterns
+
+
+def lint_argv(ns, tree, patterns):
+    """The full command for one lint batch, dockerslot wrapper included."""
+    cmd = ["docker", "run", "--rm", "-e", f"GOMEMLIMIT={ns.memlimit}", "-e", f"GOGC={ns.gogc}",
+           "-v", f"{tree}:/app", "-v", f"{GOLINT_MODCACHE}:/go/pkg/mod", "-w", "/app/backend-golang",
+           ns.image, "golangci-lint", "run", "--concurrency", ns.concurrency] + list(patterns)
+    return [sys.executable, str(DOCKERSLOT), "--max-wait", ns.max_wait, "--"] + cmd
+
+
+def _lint_expand(backend, patterns):
+    """Replace ./... with ./cmd/... and one pattern per internal/ directory, listed without running go."""
+    out = []
+    for p in patterns:
+        if p != "./...":
+            out.append(p)
+            continue
+        if os.path.isdir(os.path.join(backend, "cmd")):
+            out.append("./cmd/...")
+        internal = os.path.join(backend, "internal")
+        names = sorted(os.listdir(internal)) if os.path.isdir(internal) else []
+        # INVARIANT: the same directories `./...` skips, so splitting never lints what the whole run would not.
+        out += [f"./internal/{d}/..." for d in names
+                if os.path.isdir(os.path.join(internal, d)) and not d.startswith((".", "_")) and d != "testdata"]
+    return list(dict.fromkeys(out))
+
+
+def _split_even(items, n):
+    n = min(n, len(items))
+    size, extra = divmod(len(items), n)
+    out, i = [], 0
+    for k in range(n):
+        step = size + (1 if k < extra else 0)
+        out.append(items[i:i + step])
+        i += step
+    return out
+
+
+def parse_golint(text, rc):
+    """One batch's output: {"issues", "build", "notes", "oom", "problem"}. Never raises on unknown lines."""
+    issues, build, notes = [], [], []
+    oom_text = False
+    lines = [x.rstrip() for x in text.splitlines()]
+    skip = set()
+    for i, s in enumerate(lines):
+        if i in skip or not s.strip() or s.startswith("dockerslot:"):
+            continue
+        m = GOLINT_ISSUE_RE.match(s)
+        if m:
+            path, ln, col, message, linter = m.groups()
+            item = {"path": path, "line": int(ln), "col": int(col), "message": message, "linter": linter,
+                    "name": f"{path}:{ln}:{col} {message} ({linter})"}
+            (build if linter == "typecheck" else issues).append(item)
+            # WHY: the text format quotes the source line and a caret under it; source text is not engine output.
+            if i + 2 < len(lines) and GOLINT_CARET_RE.match(lines[i + 2]):
+                skip.update((i + 1, i + 2))
+            continue
+        # INVARIANT: an issue message may say "Killed"; only engine lines can signal memory death.
+        if GOLINT_OOM_RE.search(s):
+            oom_text = True
+        if not GOLINT_TALLY_RE.match(s.strip()):
+            notes.append(s)
+    # WHY: exit 0 means the engine finished; memory words in a finished run are log text, not a kill.
+    oom = rc == GOLINT_OOM_RC or (rc != 0 and oom_text)
+    problem = None
+    if not oom:
+        if rc == 1 and not issues and not build:
+            problem = "golangci-lint exited 1 with no parsable issue"
+        elif rc not in (0, 1) and not build:
+            problem = f"golangci-lint exited rc={rc}" + (f": {_short(notes[0])}" if notes else " with no output")
+    return {"issues": issues, "build": build, "notes": notes, "oom": oom, "problem": problem}
+
+
+def _load_golint_known(path, explicit):
+    """Return [{"path", "linter", "message", "line"}, ...], or None without a list."""
+    if not path:
+        return None
+    try:
+        with open(path, encoding="utf-8") as f:
+            entries = [x.strip() for x in f if x.strip() and not x.lstrip().startswith("#")]
+    except OSError as e:
+        raise ToolError(f"--known-red: {e}")
+    if explicit and not entries:
+        raise ToolError(f"--known-red {path} lists no issue")
+    known = []
+    for entry in entries:
+        parts = [x.strip() for x in entry.split(" :: ", 2)]
+        if len(parts) != 3 or not all(parts):
+            raise ToolError(f"--known-red {path}: want `<path> :: <linter> :: <message>`, got: {entry}")
+        known.append({"path": parts[0], "linter": parts[1], "message": parts[2], "line": entry})
+    return known
+
+
+def _golint_listed(issue, entries):
+    return any(e["path"] == issue["path"] and e["linter"] == issue["linter"] and issue["message"].startswith(e["message"])
+               for e in entries)
+
+
 def _load_known_red(path):
     """Return {"names": [...], "unhandled": [{"count", "origin", "message"}, ...]}, or None without a list."""
     if not path:
@@ -900,6 +1079,8 @@ def _tree_known_red(ns, tree):
         path = os.path.join(tree, "angular-workspace", f"known-red-{ns.project}.txt")
     elif ns.mode == "go" and (ns.integ or ns.all) and not (ns.build or ns.vet or ns.tags_off):
         path = os.path.join(tree, "backend-golang", "known-red-integration.txt")
+    elif ns.mode == "lint":
+        path = os.path.join(tree, "backend-golang", GOLINT_KNOWN)
     else:
         return None, False
     # WHY: agents forget a flag on a healthy tree and then spend a turn reading a baseline as a regression.
@@ -1047,9 +1228,14 @@ def _clean_finished_containers():
         return 0, str(e)
 
 
-def clean_docker(ns):
+def _orphan_rows():
+    """(all labelled rows, the orphans among them)."""
     rows = _docker_rows()
-    orphans = [r for r in rows if r["state"] in ("dead", "exited") or r["age_s"] > ORPHAN_AGE_S]
+    return rows, [r for r in rows if r["state"] in ("dead", "exited") or r["age_s"] > ORPHAN_AGE_S]
+
+
+def clean_docker(ns):
+    rows, orphans = _orphan_rows()
     if ns.apply:
         _docker_rm([r["id"] for r in orphans])
     first = f"GATE clean-docker OK found={len(orphans)} removed={len(orphans) if ns.apply else 0} kept={len(rows) - len(orphans)}"
@@ -1079,6 +1265,9 @@ def _prepare(ns):
         requested = [_norm_pkg(cwd, tree, p) for p in ns.pkg]
         module = _go_module(cwd)
         return "go", argv, cwd, lambda p, rc: parse_go_stream(p, rc, requested, ns.run, module), None
+    if ns.mode == "lint":
+        patterns = _validate_lint(ns, tree)
+        return "lint", lint_argv(ns, tree, patterns), tree, None, _duration_seconds(ns.timeout)
     if ns.mode == "fe":
         ws = _fe_workspace(ns, tree)
         includes, files = _norm_includes(ws, ns.include)
@@ -1120,6 +1309,10 @@ def _write_outputs(out, summary, res, stop):
 
 
 def _first_line(s):
+    if s["mode"] == "lint":
+        x = s["lint"]
+        return (f"GATE lint {s['verdict']} issues={len(x['new'])} known={x['known_hits']} ignored={x['ignored']} "
+                f"batches={x['batches_done']}/{x['batches_total']} incomplete={len(s['incomplete'])} out={s['out']}")
     return f"GATE {s['mode']} {s['verdict']} pass={s['pass']} fail={s['fail']} skip={s['skip']} {s['seconds']:g}s out={s['out']}"
 
 
@@ -1172,7 +1365,138 @@ def run_gate(argv, check_pending=False):
         raise
 
 
+def _clean_line(apply):
+    """Line 2 of a lint run. Listing always happens; a failure is fatal only when removal was asked for."""
+    try:
+        _, orphans = _orphan_rows()
+        if apply:
+            _docker_rm([r["id"] for r in orphans])
+    except ToolError as e:
+        if apply:
+            raise
+        return f"clean-docker failed: {_short(str(e))}"
+    return f"clean-docker found={len(orphans)} removed={len(orphans) if apply else 0}"
+
+
+def _run_lint(ns):
+    mode, first_cmd, tree, _, wall = _prepare(ns)
+    patterns = _validate_lint(ns, tree)
+    known_file, from_tree = _tree_known_red(ns, tree)
+    entries = _load_golint_known(known_file, explicit=not from_tree)
+    out = pathlib.Path(os.path.abspath(ns.out if ns.out else _default_out(tree, mode)))
+    out.parent.mkdir(parents=True, exist_ok=True)
+    raw = pathlib.Path(str(out) + ".raw")
+    clean = _clean_line(ns.clean_docker)
+    backend = os.path.join(tree, "backend-golang")
+
+    t0 = time.monotonic()
+    queue, sections, batches = [patterns], [], []
+    issues, build, notes, unfinished = {}, {}, [], []
+    done = failed_leaves = 0
+    slot_gave_up = False
+    while queue:
+        batch = queue.pop(0)
+        if _stop_reason:
+            unfinished += [(p, f"not started: {_stop_reason}") for p in batch]
+            failed_leaves += 1
+            continue
+        attempt = len(batches) + 1
+        rc, stop = _execute(lint_argv(ns, tree, batch), tree, raw, wall)
+        text = _read_clean(raw)
+        sections.append(f"=== batch {attempt}/{attempt + len(queue)}: {' '.join(batch)}\n{text}")
+        record = {"patterns": batch, "rc": rc}
+        batches.append(record)
+        if rc == EXIT_SLOT and "dockerslot: gave up" in text:
+            slot_gave_up = True
+            record["outcome"] = "slot-timeout"
+            unfinished += [(p, "dockerslot gave up waiting") for b in [batch] + queue for p in b]
+            break
+        if stop:
+            record["outcome"] = "stopped"
+            unfinished += [(p, stop) for p in batch]
+            failed_leaves += 1
+            continue
+        try:
+            _reject_docker_failure("\n".join(x for x in text.splitlines() if not x.startswith("dockerslot:")), rc)
+        except ToolError:
+            pathlib.Path(out).write_text("\n".join(sections), encoding="utf-8")
+            raw.unlink()
+            raise
+        b = parse_golint(text, rc)
+        if b["oom"]:
+            record["outcome"] = "oom"
+            items = _lint_expand(backend, batch) if attempt == 1 else batch
+            if len(items) <= 1:
+                unfinished += [(p, f"out of memory alone (rc={rc})") for p in items]
+                failed_leaves += 1
+            elif attempt == 1:
+                queue = _split_even(items, GOLINT_BATCHES) + queue
+            else:
+                queue = _split_even(items, 2) + queue
+            continue
+        if b["problem"]:
+            record["outcome"] = "problem"
+            unfinished += [(p, b["problem"]) for p in batch]
+            failed_leaves += 1
+            continue
+        record["outcome"] = "done"
+        done += 1
+        for x in b["issues"]:
+            issues.setdefault(x["name"], x)
+        for x in b["build"]:
+            build.setdefault(x["name"], x)
+        notes += b["notes"]
+    if raw.exists():
+        raw.unlink()
+    seconds = round(time.monotonic() - t0, 1)
+    prefixes = tuple(ns.ignore_prefix)
+    ignored = [n for n, x in list(issues.items()) + list(build.items()) if prefixes and x["path"].startswith(prefixes)]
+    issues = {n: x for n, x in issues.items() if n not in ignored}
+    build = {n: x for n, x in build.items() if n not in ignored}
+
+    res = Result()
+    res.needs_tests = False
+    res.text = "\n".join(sections)
+    res.failures = [{"name": n, "pkg": "", "lines": []} for n in issues]
+    res.failed = len(res.failures)
+    res.build = list(build)
+    res.incomplete = [p for p, _ in unfinished]
+    res.reasons = [f"{p}: {why}" for p, why in unfinished]
+    res.notes = notes[:GOLINT_MAX_NOTES]
+    if len(notes) > GOLINT_MAX_NOTES:
+        res.notes.append(f"... {len(notes)} unparsed lines total, see out")
+
+    known = None
+    if entries is not None:
+        listed = [n for n, x in issues.items() if _golint_listed(x, entries)]
+        hit = {e["line"] for e in entries for x in issues.values() if _golint_listed(x, [e])}
+        known = {"new": [n for n in issues if n not in listed], "existing": listed,
+                 "absent": [e["line"] for e in entries if e["line"] not in hit], "passed": [],
+                 "unhandled": 0, "unhandled_absent": []}
+        # WHY: a narrowed or unfinished run never reaches most of the list, so "absent" would be noise.
+        if (from_tree and ns.pkg) or unfinished:
+            known["absent"] = []
+    verdict = "SLOT-TIMEOUT" if slot_gave_up else _verdict(res, known)
+    new = known["new"] if known else list(issues)
+    summary = {
+        "mode": mode, "tree": tree, "verdict": verdict, "exit": _exit_code(verdict, ns.expect),
+        "expect": ns.expect, "pass": 0, "fail": res.failed, "skip": 0,
+        "failed": [f["name"] for f in res.failures], "failures": res.failures,
+        "incomplete": res.incomplete, "reasons": res.reasons, "no_tests": [], "build": res.build,
+        "notes": res.notes, "run_unmatched": [], "known_red": known, "known_red_file": known_file,
+        "packages": None, "docker_cleaned": None, "docker_clean_error": None,
+        "lint": {"new": new, "known_hits": len(issues) - len(new), "batches_done": done,
+                 "batches_total": done + failed_leaves, "runs": batches, "image": ns.image, "clean_docker": clean,
+                 "ignored": len(ignored), "ignored_issues": ignored, "ignore_prefixes": list(prefixes)},
+        "out": str(out), "seconds": seconds, "cmd": " ".join(shlex.quote(c) for c in first_cmd), "label": ns.label,
+    }
+    _write_outputs(out, summary, res, None)
+    return summary
+
+
 def _run_gate(ns):
+    if ns.mode == "lint":
+        return _run_lint(ns)
     _load_known_red(ns.known_red)
     mode, cmd, cwd, parse, wall = _prepare(ns)
     tree = os.path.realpath(ns.tree)
@@ -1252,8 +1576,30 @@ def _failure_lines(failures, per_failure):
     return lines
 
 
+def _render_lint(s):
+    x = s["lint"]
+    lines = [_first_line(s), x["clean_docker"]]
+    if s["label"]:
+        lines.append(f"label: {s['label']}")
+    lines += [_short(b) for b in s["build"][:12]]
+    lines += [_short(n) for n in x["new"][:MAX_LISTED]]
+    if len(x["new"]) > MAX_LISTED:
+        lines.append(f"... {len(x['new'])} new issues total, see out")
+    lines += [_short(f"did not finish: {p} ({why.split(': ', 1)[-1]})")
+              for p, why in zip(s["incomplete"], s["reasons"])][:MAX_LISTED]
+    if s["notes"]:
+        lines.append(f"unparsed lines: {len(s['notes'])} (summary notes / out)")
+    if s["known_red_file"]:
+        lines.append(f"known-red: {s['known_red_file']}")
+    if s["known_red"] and s["known_red"]["absent"]:
+        lines.append(_names_line("名單內但這次沒出現", s["known_red"]["absent"]))
+    return lines
+
+
 def render(s):
     """The concise stdout for one summary; first line is the verdict line."""
+    if s["mode"] == "lint":
+        return _render_lint(s)
     lines = [_first_line(s)]
     if s["label"]:
         lines.append(f"label: {s['label']}")
