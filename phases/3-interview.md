@@ -12,6 +12,8 @@
 
 完成後完整規格**補進 SPEC.md（接在方向決議之後）**，每題留「決議＋理由」表列；涉 UI 必須有**可驗收的 UI/UX 條目**（畫面狀態、互動流程、無障礙要求）。
 
+**圖先文後（硬閘）**：SPEC 描述狀態機（生成狀態、campaign、卡片生命週期）、請求→worker→WS 時序、跨層資料流或改表關係的，該節開頭放一張 ```mermaid（型別對照見 repo 的 `diagram` skill：`stateDiagram-v2`／`sequenceDiagram`／`flowchart LR`／`erDiagram`，ERD 用 `just erd`）；節點標籤用程式碼裡的真實識別字（表、函式、事件、狀態值），讀的人要能 grep 到。四種形狀都沒有的包，SPEC 寫一行 `無圖：<理由>`。checkpoint 前 `scripts/planview.py --check <slug>` 要 exit 0。為什麼：`diagram` skill 的「SPEC/PLAN 含狀態機就先畫」是軟觸發——主 checkout 20 份 SPEC／PLAN 有 15 份零張圖；owner 11-07：圖對讀懂 SPEC／PLAN 很重要，一行 4,000 字的表格看不出流程。
+
 **改到持久化資料語義的包**（新表、改既有列的意義、換表或搬欄）：SPEC 加「資料語義表」，每張表一段——一列代表什麼、生命週期（何時建立、保留多久、何時刪）、全部寫入入口、讀者、只留伺服器不進 API 的欄位、每條不變式由哪一層守（DB constraint／trigger、service、UI）與出處（第 1 階段的政策出處；「無出處」的逐條用 AskUserQuestion 問 owner）。換表或搬欄時，舊表每個欄位守的規則逐條寫去向：帶過去，或刻意不要＋理由。**不寫 DDL、查詢規模與部署**，那是 PLAN 第 7、9 條。
 - 為什麼不從 schema 起手：schema 是這張表推出來的結果。從 schema 起手，表會照想像中的實體長，不照要回答的查詢與要守的規則長；而真正貴的返工是行為還沒定就把列的粒度寫死（`character_voices` 建表隔天就從「每角色一列」改掛創作者）。
 - 為什麼要列舊欄位去向：點數 v1.4 換表時新的 `subscription_plans` 沒帶 `message_retention_days`（舊語義「NULL 永久、free 7 天」），查詢改寫死 90 天、只清付費用戶，約半年後才在 backlog 發現。從新行為推 schema 一樣會漏掉舊表守著的規則（11-02 codex／grok 外審）。

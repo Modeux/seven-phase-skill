@@ -154,6 +154,7 @@ evals/         測試這個 skill 本身的案例
 | 工具 | 做什麼 |
 |---|---|
 | `board.py` | 掃過所有任務，印出進度看板 |
+| `planview.py` | 一個任務的 SPEC／PLAN／REVIEW／PROGRESS 嵌成一頁可收合、可篩選、有圖的 HTML；`--check` 是 SPEC／PLAN 的圖閘 |
 | `mkpatch.py`／`mkworktree.py`／`checktree.py` | 把還沒存的改動拍一張快照，開一個隔離的工作區給審查員用，事後確認沒被動過 |
 | `merge_back.py` | 把修復工作區的改動搬回主工作區 |
 | `numstat.py` | 算這次改了多少行程式／測試／文件，決定要派多少審查員 |

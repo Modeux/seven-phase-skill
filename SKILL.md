@@ -40,7 +40,7 @@ owner 是產品負責人不是工程師。這套流程把方向控制權與 toke
 
 ## Checkpoint 協定（完整路每階段結束，硬規則；精簡路只在交付時停，見 `phases/lean.md`）
 owner 吃過「一路衝到底、末端才發現前提錯」的虧，也要自己決定何時 compact——所以每階段都停。
-1. 結論與下一步寫進 PROGRESS.md（階段表那一列＋「## 下一步」＋「## 第 N 階段紀錄」五行：做了什麼／關鍵裁決／紅→綠或證據／閘結果／殘留），**同時改檔頭 frontmatter**：`status`（`owner` 等 owner 拍板／說繼續／commit／push、`doing` 做到一半被打斷、`blocked` 等外部、`deploy` 已 commit 剩部署驗收、`done`）＋`next`（一句話：下一步是什麼、誰要動）；任務住在 worktree 加 `worktree: <名稱>`，多包任務或階段表推不出來時加 `phase:`（如 `第三包 5/7`）。改完跑 `python3 ~/.claude/skills/seven-phase/scripts/board.py` 重算看板。精簡路在建檔與交付時各改一次；owner 說 commit 並 commit 完，改成 `status: deploy`、`next` 寫部署要點。
+1. 結論與下一步寫進 PROGRESS.md（階段表那一列＋「## 下一步」＋「## 第 N 階段紀錄」五行：做了什麼／關鍵裁決／紅→綠或證據／閘結果／殘留），**同時改檔頭 frontmatter**：`status`（`owner` 等 owner 拍板／說繼續／commit／push、`doing` 做到一半被打斷、`blocked` 等外部、`deploy` 已 commit 剩部署驗收、`done`）＋`next`（一句話：下一步是什麼、誰要動）；任務住在 worktree 加 `worktree: <名稱>`，多包任務或階段表推不出來時加 `phase:`（如 `第三包 5/7`）。改完跑 `python3 ~/.claude/skills/seven-phase/scripts/board.py` 重算看板，再跑 `scripts/planview.py <slug>` 產任務頁（第 2／3／4 階段另有導讀頁；兩者的形狀見 `assets/checkpoint.md`）。精簡路在建檔與交付時各改一次；owner 說 commit 並 commit 完，改成 `status: deploy`、`next` 寫部署要點。
 2. **完全停止**，白話回報：做了什麼、發現什麼、為什麼這樣決定、接下來幹嘛。
 3. 附一段可直接貼的 `/compact <摘要>`（位置、真相源檔、下一步、全程規則），用 `assets/checkpoint.md` 的形狀；**並明說現在能不能 `/clear`**（判準同檔第 6 條；owner 不要多個任務的 context 混在一起）。
 4. **等 owner 說「繼續」**才進下一階段。不得順勢往下做，也不得在回報裡先問下一階段的問題。
@@ -124,5 +124,6 @@ owner 吃過「一路衝到底、末端才發現前提錯」的虧，也要自�
 - `uilane_audit.py`：`ui-lane-reviewer` 每次的生成／等工具切分（平行呼叫不重算）、腳本重複率、自寫基礎腳本數、等失敗執行的佔比、峰值 context。
 - `run_kit.mjs`、`walk_lib.mjs`、`walk_env.sh`：走一趟的 runner、共用瀏覽器函式庫、起環境（`assets/walk-kit.md`）。
 - `board.py`：跨任務進度看板（另含「流程」區：`ACCEPTANCE.md` 到期的驗收、上次檢討後記錄了幾個任務、過大的說明檔；`--docsize` 印每份說明檔的大小與增減）——掃主 checkout 與所有掛分支的 worktree 的 PROGRESS.md，讀 frontmatter、git 狀態當場算，寫 `<主 checkout>/tmp/progress/board.html` 並印摘要；HTML 下半部是 `.claude/PRPs/BACKLOG.md` 的 Backlog 四欄。每次跑都把未完成任務的「下一步」快照進 `tmp/progress/ledger.json`，目錄刪了仍以「目錄已刪・待部署」顯示，owner 說部署完了 → 確認是哪幾個後 `--deployed <slug…|all>` 清掉；`~/.claude/settings.json` 的 SessionStart hook（startup／clear／compact）以 `--hook session-start` 跑它，把摘要注入 context。
+- `planview.py`：一個任務的 SPEC／PLAN／REVIEW／PROGRESS md 原文嵌進一頁 HTML（`tmp/progress/<slug>.html`）：儀表板計數（定案、切片、測試、閘、審查地圖、交 owner、圖）、固定目錄、`##` 章節收合、表格固定表頭＋逐欄篩選、mermaid 渲染（marked／mermaid 釘版 CDN，離線顯示原文）；每次 checkpoint 跑、改了任務檔重跑。`--check <slug>`：SPEC／PLAN 既無 ```mermaid 也無 `無圖：<理由>` 就 exit 1（第 3／4 階段圖閘）。
 - `taskcost.py`／`laneyield.py`：每個任務、每個階段目錄的花費；每一路審查的獨家發現與花費（調路數、檢討流程前先跑；精簡路讀 PROGRESS.md 的 `## 審查` 表）。`laneyield.py` 依表頭欄名讀地圖與裁決表，讀不懂的資料（認不出的裁決詞、來源不是 lane、編號重複、找不到地圖）一律印成 `DATA error`、不當零；`--no-cost --strict` 是第 7 階段裁決表的格式閘；一份 REVIEW 放多包、各包審查目錄不同時加 `--review-dir '<輪標題字>=tmp/<slug>/review2'`（可重複）。`agentcost.py`／`taskcost.py`／`laneyield.py`／`claudemdcost.py` 共用 `_usage.py`：含 Workflow agent，同一訊息多筆 usage 取各欄最大值，依每筆時間戳過濾，cache write 分 5m／1h 計價；`--all-worktrees` 連 worktree 的 session 一起算。金額是 API 等價、不是帳單，沒有價格的模型列為 unpriced、不算 $0。
 Bash 一律絕對路徑或 `git -C`／`go test -C`，**不要 `cd`**（工作目錄會殘留，下一個 bridge 或 pathspec 會跑錯樹）。
