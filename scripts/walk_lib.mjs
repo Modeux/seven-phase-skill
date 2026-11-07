@@ -72,11 +72,14 @@ export async function launch({
   delete contextOptions.defaultBrowserType;
   if (statePath) contextOptions.storageState = statePath;
 
+  const startedAt = Date.now();
   const browser = await pw[engineName].launch({ headless: !headed });
   const context = await browser.newContext(contextOptions);
   context.setDefaultTimeout(actionTimeoutMs);
   context.setDefaultNavigationTimeout(NAVIGATION_TIMEOUT_MS);
   const page = await context.newPage();
+  let navigations = 0;
+  page.on('framenavigated', (f) => { if (f === page.mainFrame()) navigations += 1; });
   const errors = [];
   page.on('console', (m) => {
     if (['error', 'warning'].includes(m.type())) {
@@ -91,7 +94,14 @@ export async function launch({
 
   const cfg = readConfig(kit, config);
   const walk = makeWalk(page, { roundDir: resolvedRoundDir, cfg, errors, actionTimeoutMs });
-  return { pw, browser, context, page, walk, errors, cfg, roundDir: resolvedRoundDir, close: () => browser.close() };
+  // WHY one line on close: an audit can tell "the probe itself is slow" from "the agent waited on it" only if the
+  // probe reports its own runtime; it goes to stderr so a step's stdout contract is untouched.
+  const close = async () => {
+    await browser.close();
+    const line = `[walk] closed after ${((Date.now() - startedAt) / 1000).toFixed(1)}s, ${navigations} navigations`;
+    if (onLog) onLog(line); else process.stderr.write(`${line}\n`);
+  };
+  return { pw, browser, context, page, walk, errors, cfg, roundDir: resolvedRoundDir, close };
 }
 
 // Runs in the page, so it is passed to evaluate as source text.

@@ -31,6 +31,9 @@ FAILED = re.compile(r"TimeoutError|Timeout \d+ms|waiting for locator|strict mode
                     r"|TypeError|is not a function|is not defined|Cannot read prop|ERR_MODULE_NOT_FOUND"
                     r"|Cannot find module|Cannot use import|ECONNREFUSED|ERR_CONNECTION")
 USES_LIB = re.compile(r"walk_lib\.mjs|async\s*\(\s*page\s*,\s*walk\s*\)")
+PROBE = re.compile(r"\bnode\b|run_kit")
+# A shell loop that sleeps or pgreps is the agent polling its own background job; the harness notifies on exit instead.
+POLL = re.compile(r"\b(for|while|until)\b[^\n]*\b(sleep|pgrep)\b")
 
 
 def ts(s):
@@ -92,6 +95,9 @@ def analyze(agent):
                 inp = b.get("input") or {}
                 r["ids"].append(b["id"])
                 tools[b["id"]] = (b["name"], inp, t)
+                if b["name"] == "Bash" and PROBE.search(inp.get("command", "")):
+                    run["probes"] += 1
+                    run["bg_probes"] += bool(inp.get("run_in_background"))
                 src, path = source_of(b["name"], inp)
                 if src is None:
                     continue
@@ -116,6 +122,12 @@ def analyze(agent):
                 txt = text_of(b)
                 if name == "Bash":
                     run["bash_chars"] += len(txt)
+                    cmd = inp.get("command", "")
+                    # Waits are per call from the turn's start, so a batch over-attributes; both are estimates.
+                    if POLL.search(cmd):
+                        run["poll_wait"] += max(t - started, 0)
+                    elif PROBE.search(cmd) and not inp.get("run_in_background"):
+                        run["fg_probe_wait"] += max(t - started, 0)
                 if "run_code" in name or re.search(r"\bnode\b|run_kit", inp.get("command", "")):
                     run["execs"] += 1
                     if FAILED.search(txt) or b.get("is_error"):
@@ -152,12 +164,13 @@ def main():
             if r and r["t0"] >= since:
                 rows.append(r)
     rows.sort(key=lambda r: r["t0"])
-    print("started      wall gen% wait% reqs scriptK dup% infra rewr lib failedWait% bashK peakK  description")
+    print("started      wall gen% wait% reqs scriptK dup% infra rewr lib failedWait% bashK peakK probes bg fgWait% poll%  description")
     for r in rows:
         c = r["run"]
         print(f"{datetime.datetime.fromtimestamp(r['t0']).strftime('%m-%d %H:%M')} {r['wall']/60:5.1f} {r['gen']/r['wall']*100:4.0f} {r['wait']/r['wall']*100:5.0f} "
               f"{r['reqs']:4} {c['script_chars']/1000:7.0f} {c['dup_lines']/max(c['lines'],1)*100:4.0f} {c['infra']:5} {r['rewrites']:4} {'Y' if c['lib'] else '-':>3} "
-              f"{c['failed_wait']/r['wall']*100:11.1f} {c['bash_chars']/1000:5.0f} {c['peak']/1000:5.0f}  {r['desc'][:40]}")
+              f"{c['failed_wait']/r['wall']*100:11.1f} {c['bash_chars']/1000:5.0f} {c['peak']/1000:5.0f} {c['probes']:6} {c['bg_probes']:2} "
+              f"{c['fg_probe_wait']/r['wall']*100:7.0f} {c['poll_wait']/r['wall']*100:5.0f}  {r['desc'][:40]}")
     if not rows:
         return 0
     total = sum(r["wall"] for r in rows)
@@ -171,6 +184,10 @@ def main():
           f"waiting {sum(r['run']['failed_wait'] for r in rows)/total*100:.1f}% of wall (estimate)")
     print(f"Bash output median {med([r['run']['bash_chars'] for r in rows])/1000:.0f}k chars; peak context median {med([r['run']['peak'] for r in rows])/1000:.0f}k; "
           f"runs using walk_lib: {sum(1 for r in rows if r['run']['lib'])}/{len(rows)}")
+    probes = sum(r["run"]["probes"] for r in rows)
+    print(f"probes (node/run_kit via Bash): {probes}, in background {sum(r['run']['bg_probes'] for r in rows)}; "
+          f"foreground probe wait {sum(r['run']['fg_probe_wait'] for r in rows)/total*100:.1f}% of wall, "
+          f"poll loops {sum(r['run']['poll_wait'] for r in rows)/total*100:.1f}% (estimates)")
     return 0
 
 

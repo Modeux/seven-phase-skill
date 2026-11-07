@@ -38,6 +38,7 @@ async (page, walk) => {
 import { launch } from '/Users/huntwu/.claude/skills/seven-phase/scripts/walk_lib.mjs';
 const { page, walk, close } = await launch({ kit: '<套件>', round: 'r1' });  // 另可帶 engine、device、viewport
 ```
+探針與 `run_kit.mjs` 都用 Bash `run_in_background: true` 背景跑（結束會收到 `<task-notification>`），邊跑邊寫下一支或讀已回來的結果；不輪詢（`for … sleep`、`until grep`、`pgrep`）、不前景掛長 `timeout`；唯讀探針同時最多 3 支，會寫（API 寫入、SELECT 以外的 SQL、`env.sh`、種資料）的單獨跑。為什麼：11-06～11-07 兩次乾淨 run，探針每支 1–2 分、一回合只跑一支，加上輪詢迴圈，串行等待佔牆鐘約四成。
 
 | `walk` 上的呼叫 | 做什麼 |
 |---|---|

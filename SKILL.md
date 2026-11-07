@@ -122,7 +122,7 @@ owner 吃過「一路衝到底、末端才發現前提錯」的虧，也要自�
 - `reviewcov.py`：第 6 階段收件（第 4 階段 PLAN 審查地圖另加 `--plan-tests`：「改 PLAN」要點名 PLAN 裡有的測試編號）。核對預期的每一路都交件（失敗、缺件、空檔、舊報告、標題形狀混雜、`counts` 對不上都擋），每條發現都在去重地圖的「來源」欄或未收錄節、地圖編號不重複、來源不指向不存在的條目（`--ack-manual`／`--waive`／`--section` 見 `phases/6-review.md` §5）；`--index` 產生給合成用的計數表與逐條清單（md＋json）。
 - `claudemdcost.py`：子目錄 CLAUDE.md 與限定範圍規則（讀到才載入）的花費，依檔案彙總、worktree 副本併回原路徑。
 - `wallclock.py`：每種 subagent 的牆鐘（中位／p90／最大）與時間花在哪類工具；檢討與排程改動的驗收用。
-- `uilane_audit.py`：`ui-lane-reviewer` 每次的生成／等工具切分（平行呼叫不重算）、腳本重複率、自寫基礎腳本數、等失敗執行的佔比、峰值 context。
+- `uilane_audit.py`：`ui-lane-reviewer` 每次的生成／等工具切分（平行呼叫不重算）、腳本重複率、自寫基礎腳本數、等失敗執行的佔比、峰值 context、探針背景／前景數與前景等待、輪詢迴圈等待。
 - `run_kit.mjs`、`walk_lib.mjs`、`walk_env.sh`：走一趟的 runner、共用瀏覽器函式庫、起環境（`assets/walk-kit.md`）。
 - `board.py`：跨任務進度看板（另含「流程」區：`ACCEPTANCE.md` 到期的驗收、上次檢討後記錄了幾個任務、過大的說明檔；`--docsize` 印每份說明檔的大小與增減）——掃主 checkout 與所有掛分支的 worktree 的 PROGRESS.md，讀 frontmatter、git 狀態當場算，寫 `<主 checkout>/tmp/progress/board.html` 並印摘要；HTML 下半部是 `.claude/PRPs/BACKLOG.md` 的 Backlog 四欄。每次跑都把未完成任務的「下一步」快照進 `tmp/progress/ledger.json`，目錄刪了仍以「目錄已刪・待部署」顯示，owner 說部署完了 → 確認是哪幾個後 `--deployed <slug…|all>` 清掉；`~/.claude/settings.json` 的 SessionStart hook（startup／clear／compact）以 `--hook session-start` 跑它，把摘要注入 context。
 - `planview.py`：一個任務的 SPEC／PLAN／REVIEW／PROGRESS md 原文嵌進一頁 HTML（`tmp/progress/<slug>.html`）：儀表板計數（定案、切片、測試、閘、審查地圖、交 owner、圖）、固定目錄、`##` 章節收合、表格固定表頭＋逐欄篩選、mermaid 渲染（marked／mermaid 釘版 CDN，離線顯示原文）；每次 checkpoint 跑、改了任務檔重跑。`plan-appendix/*.md` 一併嵌入、預設收合。`--check <slug>`：SPEC／PLAN 既無 ```mermaid 也無 `無圖：<理由>`，或 PLAN.md 超過 300 字的行 >5，就 exit 1（第 3／4 階段好讀閘）。
