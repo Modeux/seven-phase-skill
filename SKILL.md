@@ -110,6 +110,7 @@ owner 吃過「一路衝到底、末端才發現前提錯」的虧，也要自�
 - `merge_back.py`：把工作樹相對快照改過的檔複製回主 checkout。候選＝修復樹與快照兩邊 `git status` 的聯集（改回 HEAD、刪掉快照新檔都抓得到）；兩棵 HEAD 不同、主樹那些檔不等於快照、片與片重疊都會停；刪除只回報不套用；把檔改回 HEAD 一律先停（分不出是刻意還原還是 agent 誤 reset），確認是裁決要的才加 `--allow-revert <片>:<路徑>`；`--only-files F` 要求候選恰等於那份清單，多或少都停（`recv.py` 用它）。
 - `run_external.py`：跑 codex／grok／agy 外審（背景跑，見 `references/external-review.md`）。失敗 exit 非零、舊報告不動，每次寫 `lane-<x>.status.json`。
 - `dockerslot.py`：`-- <cmd>` 拿到全機 N 個槽位之一才跑（預設 3，flock 檔，持有者死掉自動釋放）；`--all` 拿全部且讓後到的排在它後面（全量整合）、`--pool <名> --slots 1`（sqlc）、`--status` 看誰佔著；等超過 `--max-wait`（預設 300 秒）exit 75 並印出持有者。讓 agent 一波派完、只在吃 Docker 的那一刻排隊。
+- `synth.py`：第 6 階段合成派工零手工——`wf_reports.py` 落檔、盤點每一路（ok／失敗／缺件／外審還在跑）、`reviewcov.py --index`、照 `assets/synth-brief.md` 產 `synth-task.md`、印派工句；缺件 exit 1、外審未交 exit 3（等背景通知再跑，不 sleep）。
 - `wf_reports.py`：Workflow 扇出（第 6 階段內審、第 7 階段驗證）的報告全文從 run 的 `journal.jsonl` 抽出、依 label 落檔（subagent 在 Workflow 內寫不了檔）；每路寫 status 檔（含 schema 的 `counts`），`tasks/` 有派工單卻沒啟動的列 MISSING。
 - `extract.py`：markdown 依標題或行號逐字切段、附出處。組任務包用下面的 `mkbrief.py`。
 - `mkbrief.py`：一份純文字 manifest 組好每片的 `<片號>-brief.md`（手寫開頭＋逐字摘錄附出處＋該片會載入的規則＋需要時再讀），超過 90KB 沒寫理由就拒絕；`--check` 比對有沒有過期。
