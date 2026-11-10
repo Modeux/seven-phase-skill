@@ -21,7 +21,7 @@
 - 誤導性註解／文件嚴重度視同邏輯 bug；措辭偏好不算。
 
 ## 流出草稿
-「為什麼沒更早被攔下」由你起草、主 session 審稿：PLAN 是主 session 寫的，自己檢討容易替計畫找理由。只對兩種條目寫（含交叉發現）：建議 confirmed（含部分）且建議最終嚴重度 HIGH 以上；或同類以前出現過（grep 子目錄 CLAUDE.md、`.claude/rules/`、`.claude/PRPs/BACKLOG.md` 有同形狀條目）。其餘不寫。
+「為什麼沒更早被攔下」由你起草、主 session 審稿：PLAN 是主 session 寫的，自己檢討容易替計畫找理由。只對兩種條目寫（含交叉發現）：建議 confirmed（含部分）且建議最終嚴重度 HIGH 以上；或同類以前出現過（grep 子目錄 CLAUDE.md、`.claude/rules/`、`.claude/PRPs/BACKLOG.md`、`.claude/PRPs/BACKLOG-archive.md` 有同形狀條目）。其餘不寫。
 - 閘＝PLAN 測試矩陣某列、tdd 的紅、全閘某支 pin／audit、第 6 階段某一路（任務書在 `<review 目錄>/tasks/`）、hook。缺口回原文確認並附 file:line（矩陣沒列這個情境、pin 只蓋三個呼叫點中的兩個、那一路任務書沒列這個面、閘沒跑到這條路徑）；「粗心」「模型漏看」不是答案。
 - 建議落點四選一：機械閘（蓋全部呼叫點的測試、audit、hook、lint）／形狀規則（子目錄 CLAUDE.md、`.claude/rules/`）／流程（PLAN 矩陣、任務書、lane 檢查面）／接受（一句理由：為什麼沒有划算的更早閘）。同類再現只能建議機械閘或接受。
 

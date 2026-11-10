@@ -38,7 +38,10 @@ PLANS = ".claude/PRPs/plans"
 OUT = "tmp/progress/board.html"
 LEDGER = "tmp/progress/ledger.json"
 BACKLOG = ".claude/PRPs/BACKLOG.md"
-BACKLOG_GROUPS = (("重要", "#e5484d"), ("有感", "#f5a524"), ("其餘", "#889096"), ("已知限制", "#8e8c99"))
+# INVARIANT: the only two groups BACKLOG.md admits (SKILL.md「backlog 的家」); items under any other `## ` heading
+# are counted as strays and reported, not shown — 其餘／已知限制 moved to BACKLOG-archive.md on 11-10.
+BACKLOG_GROUPS = (("重要", "#e5484d"), ("有感", "#f5a524"))
+STRAY = "_stray"
 ACCEPTANCE = pathlib.Path(__file__).resolve().parents[1] / "ACCEPTANCE.md"
 DATE_RE = re.compile(r"\d{4}-\d{2}-\d{2}")
 RECORD_RE = re.compile(r"^docs\(prps\): (\S+) .*七階段記錄")
@@ -233,10 +236,11 @@ def read_backlog(main):
     if not path.is_file():
         return None
     groups = {g: [] for g, _ in BACKLOG_GROUPS}
+    groups[STRAY] = []
     cur = item = None
     for line in path.read_text(encoding="utf-8").splitlines():
         if line.startswith("## "):
-            cur = next((g for g, _ in BACKLOG_GROUPS if line[3:].strip().startswith(g)), None)
+            cur = next((g for g, _ in BACKLOG_GROUPS if line[3:].strip().startswith(g)), STRAY)
             item = None
         elif line.startswith("- [ ]") and cur:
             item = {"raw": line[5:].strip()}
@@ -449,7 +453,12 @@ def render_text(b, out):
         lines.append(f"■ {GONE_LABEL} {len(b['gone'])}：" + "、".join(g["slug"] for g in b["gone"]))
     lines += process_lines(b)
     if b["backlog"]:
-        lines.append(f"■ Backlog（{BACKLOG}）：" + "・".join(f"{g} {len(b['backlog'][g])}" for g, _ in BACKLOG_GROUPS))
+        tmp_src = sum("tmp/" in it["src"] for its in b["backlog"].values() for it in its)
+        lines.append(f"■ Backlog（{BACKLOG}）：" + "・".join(f"{g} {len(b['backlog'][g])}" for g, _ in BACKLOG_GROUPS)
+                     + (f"（出處指向 tmp/ {tmp_src}，會被清掉）" if tmp_src else ""))
+        if b["backlog"][STRAY]:
+            lines.append(f"  - ⚠ {len(b['backlog'][STRAY])} 條寫在重要／有感以外的標題下：入口只收這兩組，"
+                         "其餘只留在任務記錄（seven-phase「backlog 的家」）")
         # WHY: injected into every session; the top of 重要 (owner-ranked first) is enough to steer, the rest is in the HTML.
         top = b["backlog"]["重要"]
         lines += [f"  - [重要] {it['title']}｜{clip(it['status'], 30)}" for it in top[:8]]

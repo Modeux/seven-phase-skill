@@ -14,11 +14,11 @@
 
 ## 3. 裁決落檔
 REVIEW.md 加「第 N 階段收斂裁決」表（標題含「收斂裁決」）：每條一列（編號、裁決、最終嚴重度、依據、處置／修在哪一片）＋名單外交叉發現（併入修復或記錄不修）。裁決欄以 `confirmed`／`confirmed-部分`／`false positive`／`won't fix`／`unverified`／`owner 拍板` 開頭（補充放括號），還沒定的寫 `pending`，修完回填——「修片確認」這類自創詞腳本認不得。宣稱嚴重度留在地圖，「最終嚴重度」欄只在這張表（`laneyield.py` 用它分 R／L），格內只放一個嚴重度字，原值或理由放括號（`LOW（原 HIGH）`）。寫完跑 `scripts/laneyield.py <slug> --no-cost --strict`：未辨認／pending／缺裁決的 R、來源認不出 lane、編號重複都會列出，exit 0 才算表齊。多包任務（同一份 REVIEW.md 有好幾輪、各輪審查目錄不同）每輪各指一個：`--review-dir "包 1=tmp/<slug>/review" --review-dir "包 2=tmp/<slug>/review2"`（等號左邊是該輪標題裡的字）。HIGH 以上的 `unverified` 不得在表裡停著：進 §2 owner 拍板，或寫進 `.claude/PRPs/BACKLOG.md`（附缺的證據與下一步）。UI 純主觀偏好不逕改，單列給 owner 拍板。SPEC／PLAN 依拍板修訂（標「第 7 階段」與日期）。
-**範圍**：本包引入的、擋驗收的、擋安全上線的問題一律處置，包括審查才發現、超出原範圍的；與它同根因、同一刀修得到的既有缺口可併修（寫明哪些是既有的）。與本包無關的既有問題進 BACKLOG（附出處），不併進本包；其中碰重要面（錢、權限、未成年、資料遺失、全站可用性）或最終嚴重度 HIGH 以上的，不能只進 backlog，在 checkpoint 回報逐條點名給 owner。審查前就已 defer 的 MEDIUM／LOW 維持 backlog。
+**範圍**：本包引入的、擋驗收的、擋安全上線的問題一律處置，包括審查才發現、超出原範圍的；與它同根因、同一刀修得到的既有缺口可併修（寫明哪些是既有的）。與本包無關的既有問題照 SKILL.md「backlog 的家」分三路（重要／有感進 BACKLOG，其餘只留在 REVIEW.md），不併進本包；其中碰重要面（錢、權限、未成年、資料遺失、全站可用性）或最終嚴重度 HIGH 以上的，不能只進 backlog，在 checkpoint 回報逐條點名給 owner。審查前就已 defer 的 MEDIUM／LOW 不重開。
 
 **流出分析**（根因問「為什麼發生」，這裡問「為什麼沒更早被攔下」）：裁決落定、切修復片之前，對下列條目各答一次「哪一道閘本該更早攔下它、為什麼沒攔」。
 - **誰起草**：派去驗證的條目由 `converge-verifier` 在報告附流出草稿（`assets/converge-brief.md`「流出草稿」）；主 session 審稿（回原文抽查「為什麼沒攔」的缺口），只自己寫沒派驗證的條目（本包修的上線 bug、§5 走一趟才抓到的、HIGH 以下的同類再現）。為什麼：PLAN 是主 session 寫的，自己檢討容易替計畫找理由；驗證員沒寫 PLAN、手上已有證據、本來就在試著推翻（owner 10-16 選這條，不加外審）。
-- **問哪些**：最終嚴重度 HIGH 以上的 `confirmed`（含名單外交叉發現、§5 走一趟才抓到的）；同一類問題以前出現過的（子目錄 CLAUDE.md、`.claude/rules/`、BACKLOG 已有同形狀條目，graphify＋grep 查）；本包修的 bug 本身是上線後才發現的，被修的那個也算一條。其餘不問——每條都問會變成儀式。
+- **問哪些**：最終嚴重度 HIGH 以上的 `confirmed`（含名單外交叉發現、§5 走一趟才抓到的）；同一類問題以前出現過的（子目錄 CLAUDE.md、`.claude/rules/`、BACKLOG 或 `BACKLOG-archive.md` 已有同形狀條目，graphify＋grep 查）；本包修的 bug 本身是上線後才發現的，被修的那個也算一條。其餘不問——每條都問會變成儀式。
 - **答到具體的閘與缺口**：閘＝PLAN 測試矩陣、tdd 的紅、全閘的某支 pin／audit、第 6 階段某一路、hook；缺口＝矩陣沒列這個情境、pin 只蓋三個呼叫點中的兩個、那一路的任務書沒列這個面、閘沒跑到這條路徑。缺口回原文或執行確認（「註解不可信」照樣適用）。「粗心」「模型漏看」不是答案——那不是閘。
 - **落點四選一**（這一例的回歸測試修片本來就會寫，這裡要的是整類）：
   1. **機械閘**：蓋全部呼叫點的守門測試、audit 腳本、hook、lint。**同類再現只能選這條或 4**：上次的文字規則已經被跳過一次，再加文字沒用（history 10-13）。
@@ -44,7 +44,7 @@ REVIEW.md 加「第 N 階段收斂裁決」表（標題含「收斂裁決」）�
 - 耐久結論搬進子目錄 CLAUDE.md／`.claude/rules/` 之後跑 `python3 ~/.claude/skills/seven-phase/scripts/board.py --docsize`，checkpoint 回報這包讓說明檔淨增減多少（「vs HEAD」欄）；有一份被推過 40KB 的，這包內就合併改寫或拆成規則檔（SKILL.md「說明檔大小」）。
 - 確認改動檔集合＝原本的檔＋收斂新增的檔：`checktree.py` 對 baseline，「清單外」warning 就是多出來的檔，逐條確認是收斂新增還是並行 session 的改動，沒有無關檔。
 - 突變紀錄等證據先歸檔到 `tmp/`，再 `git worktree remove --force` 清掉所有審查／修復樹。
-- PROGRESS 寫第 7 階段紀錄與「下一步」（commit 範圍、主樹上不屬於本包的改動、部署後驗收）；backlog 依 SKILL.md「排序」分組寫進 `.claude/PRPs/BACKLOG.md`（格式見 SKILL.md「backlog 的家」），PROGRESS 只寫一行「backlog 已寫進 BACKLOG.md：N 條」。
+- PROGRESS 寫第 7 階段紀錄與「下一步」（commit 範圍、主樹上不屬於本包的改動、部署後驗收）；backlog 照 SKILL.md「backlog 的家」分三路，重要／有感寫進 `.claude/PRPs/BACKLOG.md`，PROGRESS 只寫一行「backlog：重要 N、有感 N、只留記錄 N」。
 - 記憶只更新「進行中」那一條的狀態，技術結論放子目錄 CLAUDE.md。
 - 本包改了 **docs／templates／`.sql`／`openapi.yaml`／任何 `CLAUDE.md`／`.claude/rules/`** 嗎？有 → checkpoint 總結加一行「graphify 圖已過期（post-commit hook 只刷 AST 層），要不要 `/graphify . --update` 由你決定」；**不自跑 `--update`**（owner 10-05：傘狀全做完才一次更新）。
 
