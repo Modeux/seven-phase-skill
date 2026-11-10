@@ -75,11 +75,13 @@ base="${DATABASE_URL/@postgres:/@localhost:}"
 query=""
 case "$base" in *\?*) query="?${base#*\?}"; base="${base%%\?*}";; esac
 WALK_DB_URL="${base%/*}/$DB$query"
-redis="${REDIS_URL/\/\/redis:/\/\/localhost:}"
-redis="${redis/@redis:/@localhost:}"
-redis=$(echo "$redis" | sed -E 's#/[0-9]+$##')
+# WHY sed, not ${VAR/\/\/redis:/\/\/localhost:}: macOS /bin/bash 3.2 keeps the backslashes in the replacement, so
+# REDIS_URL became `redis:\/\/localhost:6379/10`, which go-redis read as localhost:6379 db 0 — the shared dev stack's
+# Redis index; the walk gateway then served the dev stack's cached candidates (home-loading-speed walk, 11-10).
+redis=$(printf '%s' "$REDIS_URL" | sed -E 's#//redis:#//localhost:#; s#@redis:#@localhost:#; s#/[0-9]+$##')
 WALK_REDIS_URL="$redis/$REDIS_INDEX"
-WALK_AI_URL="${AI_SERVICE_URL/\/\/ai-service:/\/\/localhost:}"
+WALK_AI_URL=$(printf '%s' "$AI_SERVICE_URL" | sed 's#//ai-service:#//localhost:#')
+case "$WALK_REDIS_URL$WALK_AI_URL" in *\\*) say "backslash in derived REDIS_URL/AI_SERVICE_URL (shell substitution bug)"; exit 2;; esac
 
 if [ "$DB" != "deepweave" ]; then
   exists=$(docker exec "$PG" psql -U "$PGUSER_" -d postgres -Atc "select 1 from pg_database where datname='$DB'")
