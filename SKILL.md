@@ -8,7 +8,7 @@ description: owner 的七階段開發工作流（research → 討論 → intervi
 owner 是產品負責人不是工程師。這套流程把方向控制權與 token 用量留在 owner 手上：在 owner 要做決定的地方停下來回報、等「繼續」（第 2、3、4、5、7 階段結束，以及第 7 階段收斂驗證交件後；第 1、6 階段回報後接著做，見「Checkpoint 協定」第 7 條）；需求簡單的走精簡路，只在交付時停（見「分流」）。流程規則以本 skill 為準；記憶只放 owner 偏好與進行中任務的狀態。規則看起來多餘時，到 `references/history.md` 用日期或關鍵字 grep 那一列，看它在防什麼（那是一張 96KB 的表，不要整份讀）。
 
 ## 硬禁令（compact 之後接回來的只有開頭這一段，所以放最前面）
-- **compact、`/clear` 或開新 session 之後，先重新載入本 skill 再讀 PROGRESS**，不要靠摘要做事（摘要會掉模型名、路數與下面這幾條）。
+- **compact 之後先重新載入本 skill，再讀 PROGRESS**，不要靠摘要做事（接回來的只有開頭這一段，摘要會掉模型名與路數）。
 - **禁 git commit／push**，直到 owner 明說（owner 要在進歷史之前看過整包結果）。commit 形狀＝兩個：`feat(x): ...`（程式碼＋CLAUDE.md／`.claude/rules/`＋契約）與 `docs(prps): <slug> 七階段記錄`（任務目錄）。工作樹常有別人／別任務的已暫存改動：**一律 `git commit --only -F <msg> -- <明確路徑>`**（新檔先 `git add` 那幾個路徑），絕不用裸 `git commit` 或 `git add -A`。push 前 `git fetch` 並確認 ahead-only。
 - **prod**：**任何 prod 查詢（DB、Langfuse 等量測 API）都先用 AskUserQuestion 問 owner**，附確切查詢、它要回答什麼、答案會怎麼改變決定；只看聚合數字也一樣要問（owner 09-28 定）。核准後由主 session 跑，subagent 一律禁打。DB 只下 SELECT；Langfuse 額度與 prod 警報輪詢器共用。不讀使用者對話內容、不印任何金鑰。
 - **不開 fast mode**（owner 11-06：「我會破產」）：單價 2 倍、走 usage credits；要快從少回合與工具下手。
