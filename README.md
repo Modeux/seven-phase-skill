@@ -138,12 +138,12 @@ cd ~/.claude/skills/seven-phase && git pull
 ## 資料夾裡有什麼
 
 ```
-SKILL.md       入口：開工步驟、怎麼分流、停點規矩、全程規則、誰負責什麼
+SKILL.md       入口：硬禁令、開工步驟、怎麼分流、停點規矩、全程規則、誰負責什麼
 agents/        小幫手（審查員、寫測試的、驗證的）的設定檔；~/.claude/agents 是指到這裡的捷徑
 ACCEPTANCE.md  流程改動的驗收清單（改了什麼、何時驗、怎樣算有效）
 phases/        每一步各一份做法（1-research.md … 7-converge.md），精簡版 lean.md，bug 入口 bug.md，檢討 retro.md
 retros/        每次檢討的報告
-references/    用到才讀：審查員怎麼配、外部審查、每條規則的由來、專案專用設定
+references/    用到才讀：審查員怎麼配、外部審查、每條規則的由來、專案專用設定、小工具索引
 assets/        範本：審查任務書、修復任務包、停點報告格式、瀏覽器走一趟套件
 scripts/       小工具（看板、隔離工作區、審查覆蓋檢查、花費統計……）
 evals/         測試這個 skill 本身的案例

@@ -140,12 +140,12 @@ Everything is recorded in your project under `.claude/PRPs/plans/<task name>/`. 
 ## What's in the folder
 
 ```
-SKILL.md       Entry point: how to start, full vs. lean, stop rules, rules for the whole run, who does what
+SKILL.md       Entry point: hard bans, how to start, full vs. lean, stop rules, rules for the whole run, who does what
 agents/        Setup files for the helpers (reviewers, test writers, verifiers); ~/.claude/agents is a shortcut to here
 ACCEPTANCE.md  Checklist for process changes (what changed, when to check it, what counts as working)
 phases/        One how-to per step (1-research.md … 7-converge.md), lean path in lean.md, bug entry in bug.md, retro in retro.md
 retros/        Report from each retro
-references/    Read only when needed: how reviewers are picked, outside reviews, where each rule came from, project settings
+references/    Read only when needed: how reviewers are picked, outside reviews, where each rule came from, project settings, the helper-script index
 assets/        Templates: review briefs, fix packets, the stop-report format, browser walk-through kit
 scripts/       Helper tools (board, isolated workspaces, review coverage check, cost stats…)
 evals/         Test cases for the skill itself
