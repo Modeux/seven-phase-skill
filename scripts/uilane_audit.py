@@ -8,6 +8,8 @@
 
 Each API request splits into generation (last tool result → last block) and tool wait (last block → last tool
 result), so parallel calls count once; wallclock.py sums per call and can pass 100% on batched runs.
+Away spans (`_usage.away_spans`: retried requests with no response, sitting finished until resumed) are cut out
+of wall, generation and wait; the `away` column shows them.
 A run counts once by agent id: a forked session keeps a copy of its subagents' transcripts.
 "Failed exec" is matched on output text, so it is an estimate.
 """
@@ -21,7 +23,7 @@ import sys
 import time
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
-from _usage import agent_files, project_dirs  # noqa: E402
+from _usage import agent_files, away_spans, overlap, project_dirs  # noqa: E402
 
 SCRIPT = re.compile(r"\.(js|mjs|cjs|sh|py)$")
 # INVARIANT: names agents gave the helpers walk_lib.mjs and walk-env.template.sh now provide; a kit's login.js and
@@ -76,6 +78,7 @@ def analyze(agent):
     if len(events) < 5:
         return None
     t0, t1 = ts(events[0]["timestamp"]), ts(events[-1]["timestamp"])
+    spans = away_spans(events)
     reqs = collections.OrderedDict()
     tools, results = {}, {}
     run = collections.Counter(peak=0)
@@ -136,14 +139,15 @@ def analyze(agent):
     gen = wait = script_gen = 0.0
     prev = t0
     for r in reqs.values():
-        g = max(r["last"] - prev, 0)
+        g = max(r["last"] - prev - overlap(spans, prev, r["last"]), 0)
         gen += g
         script_gen += g if r["script"] else 0
         ends = [results[i] for i in r["ids"] if i in results]
         end = max(ends) if ends else r["last"]
-        wait += max(end - r["last"], 0)
+        wait += max(end - r["last"] - overlap(spans, r["last"], end), 0)
         prev = end
-    return dict(t0=t0, wall=t1 - t0, gen=gen, wait=wait, script_gen=script_gen, reqs=len(reqs), run=run,
+    away = sum(b - a for a, b, _k in spans)
+    return dict(t0=t0, wall=max(t1 - t0 - away, 1), away=away, gen=gen, wait=wait, script_gen=script_gen, reqs=len(reqs), run=run,
                 rewrites=sum(v - 1 for v in written.values()), desc=agent.meta.get("description") or "")
 
 
@@ -164,10 +168,10 @@ def main():
             if r and r["t0"] >= since:
                 rows.append(r)
     rows.sort(key=lambda r: r["t0"])
-    print("started      wall gen% wait% reqs scriptK dup% infra rewr lib failedWait% bashK peakK probes bg fgWait% poll%  description")
+    print("started      wall  away gen% wait% reqs scriptK dup% infra rewr lib failedWait% bashK peakK probes bg fgWait% poll%  description")
     for r in rows:
         c = r["run"]
-        print(f"{datetime.datetime.fromtimestamp(r['t0']).strftime('%m-%d %H:%M')} {r['wall']/60:5.1f} {r['gen']/r['wall']*100:4.0f} {r['wait']/r['wall']*100:5.0f} "
+        print(f"{datetime.datetime.fromtimestamp(r['t0']).strftime('%m-%d %H:%M')} {r['wall']/60:5.1f} {r['away']/60:5.1f} {r['gen']/r['wall']*100:4.0f} {r['wait']/r['wall']*100:5.0f} "
               f"{r['reqs']:4} {c['script_chars']/1000:7.0f} {c['dup_lines']/max(c['lines'],1)*100:4.0f} {c['infra']:5} {r['rewrites']:4} {'Y' if c['lib'] else '-':>3} "
               f"{c['failed_wait']/r['wall']*100:11.1f} {c['bash_chars']/1000:5.0f} {c['peak']/1000:5.0f} {c['probes']:6} {c['bg_probes']:2} "
               f"{c['fg_probe_wait']/r['wall']*100:7.0f} {c['poll_wait']/r['wall']*100:5.0f}  {r['desc'][:40]}")
@@ -176,7 +180,8 @@ def main():
     total = sum(r["wall"] for r in rows)
     lines = sum(r["run"]["lines"] for r in rows)
     print(f"\nruns {len(rows)}; wall median {med([r['wall'] for r in rows])/60:.1f} min, sum {total/60:.0f} min; "
-          f"generation {sum(r['gen'] for r in rows)/total*100:.0f}%, tool wait {sum(r['wait'] for r in rows)/total*100:.0f}%")
+          f"generation {sum(r['gen'] for r in rows)/total*100:.0f}%, tool wait {sum(r['wait'] for r in rows)/total*100:.0f}%; "
+          f"away {sum(r['away'] for r in rows)/60:.0f} min excluded (_usage.away_spans)")
     print(f"generation on requests that write scripts: {sum(r['script_gen'] for r in rows)/total*100:.0f}% of wall; "
           f"repeated script lines: {sum(r['run']['dup_lines'] for r in rows)/max(lines,1)*100:.0f}%; "
           f"infra writes per run: {sum(r['run']['infra'] for r in rows)/len(rows):.1f}; rewrites per run: {sum(r['rewrites'] for r in rows)/len(rows):.1f}")

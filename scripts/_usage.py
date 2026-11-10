@@ -13,6 +13,7 @@ subagents) and `<proj>/<sid>/subagents/workflows/<wf_id>/agent-<id>.jsonl` (Work
 with an `agent-<id>.meta.json` beside it.
 """
 import collections
+import datetime
 import glob
 import json
 import os
@@ -114,6 +115,69 @@ def project_dirs(project_dir=None, all_worktrees=False, cwd=None, checkout=None,
         + sorted(pathlib.Path(p) for p in glob.glob(f"{root}/{main}-tmp-*"))
     return [d for d in found if d.is_dir()]
 
+
+
+# INVARIANT: these two prefixes are the harness's own notices to an agent that ended its turn waiting on a
+# background job; any other text message is the parent or the owner resuming a stopped agent.
+_NOTIFY = ("[SYSTEM NOTIFICATION", "<task-notification>")
+AWAY_MIN = 60
+
+
+def _epoch(s):
+    return datetime.datetime.fromisoformat(s.replace("Z", "+00:00")).timestamp()
+
+
+def _texts(e):
+    c = (e.get("message") or {}).get("content")
+    if isinstance(c, str):
+        return c
+    if not isinstance(c, list) or any(isinstance(b, dict) and b.get("type") == "tool_result" for b in c):
+        return None
+    return " ".join(b.get("text", "") for b in c if isinstance(b, dict) and b.get("type") == "text") or None
+
+
+def away_spans(events):
+    """[(start, end, kind)] inside one agent transcript (timestamped entries, file order) where the agent was not
+    working, for wall-clock reports to subtract. `stalled`: a request followed by another request or an
+    `API Error` with no response between (dropped connection, laptop asleep, owner offline), and the gap after an
+    `API Error` — the agent has stopped and its background jobs' notices will not come. `idle`: no background
+    job outstanding and the next entry is a text message from the parent or the owner (not a tool result, not
+    the harness's background notice).
+    WHY: 11-09 the owner went offline mid-wave and three tdd-guide runs read 129 min, one 11-06 walk read 632 min
+    with 572 offline; agents resumed by SendMessage counted the hours they sat finished.
+    INVARIANT: waiting for the agent's own background job or a long tool call is work — the 11-07 pipelining
+    acceptance rows measure exactly that wait, so it must never land in a span. A background job whose notice never
+    came keeps later gaps counted as work (overstates wall, never hides a wait).
+    WHY no tool-in-flight check: a parent's message reaches an agent only after its tool returns, so a text
+    message after an unanswered tool_use means the agent died mid-call — that gap is idle too."""
+    spans, bg = [], 0
+    for a, b in zip(events, events[1:]):
+        c = (a.get("message") or {}).get("content")
+        died = a.get("type") == "assistant" and (_texts(a) or "").startswith("API Error")
+        if died:
+            bg = 0
+        elif a.get("type") == "assistant" and isinstance(c, list):
+            for x in c:
+                if isinstance(x, dict) and x.get("type") == "tool_use":
+                    bg += x.get("name") == "Bash" and bool((x.get("input") or {}).get("run_in_background"))
+        elif a.get("type") == "user" and (_texts(a) or "").startswith(_NOTIFY):
+            bg = max(bg - 1, 0)
+        t0, t1 = _epoch(a["timestamp"]), _epoch(b["timestamp"])
+        if t1 - t0 < AWAY_MIN:
+            continue
+        if died or a.get("type") == "api-request" and (b.get("type") == "api-request" or (
+                b.get("type") == "assistant" and (_texts(b) or "").startswith("API Error"))):
+            spans.append((t0, t1, "stalled"))
+        elif b.get("type") == "user" and not bg:
+            txt = _texts(b)
+            if txt is not None and not txt.startswith(_NOTIFY):
+                spans.append((t0, t1, "idle"))
+    return spans
+
+
+def overlap(spans, start, end):
+    """Seconds of [start, end] covered by spans."""
+    return sum(max(min(end, b) - max(start, a), 0) for a, b, _k in spans)
 
 def _iso(epoch):
     return time.strftime("%Y-%m-%dT%H:%M:%S", time.gmtime(epoch))

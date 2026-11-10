@@ -7,8 +7,9 @@
   python3 wallclock.py --days 1.5 --detail ui-lane-reviewer converge-verifier
   python3 wallclock.py --project-dir ~/.claude/projects/<dir>
 
-Wall＝first to last transcript timestamp of the agent, so a run that waited on Docker or a hung
-command counts the wait. Workflow agents group as `<type>(wf)`.
+Wall＝first to last transcript timestamp of the agent minus its away spans (`_usage.away_spans`: requests retried
+with no response, sitting finished until resumed; the `away` column sums them). A run that waited on Docker, a
+hung command or its own background job still counts the wait. Workflow agents group as `<type>(wf)`.
 """
 import argparse
 import collections
@@ -20,7 +21,7 @@ import sys
 import time
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
-from _usage import agent_files, project_dirs  # noqa: E402
+from _usage import agent_files, away_spans, project_dirs  # noqa: E402
 
 
 def ts(s):
@@ -67,6 +68,7 @@ def collect(dirs, since):
             t0, t1 = ts(events[0]["timestamp"]), ts(events[-1]["timestamp"])
             if t0 < since:
                 continue
+            away = sum(b - x for x, b, _k in away_spans(events))
             pending, tool_t, turns = {}, collections.Counter(), 0
             for e in events:
                 c = (e.get("message") or {}).get("content")
@@ -80,7 +82,7 @@ def collect(dirs, since):
                         if b.get("type") == "tool_result" and b.get("tool_use_id") in pending:
                             st, k = pending.pop(b["tool_use_id"])
                             tool_t[k] += max(ts(e["timestamp"]) - st, 0)
-            rows[typ].append((t1 - t0, sum(tool_t.values()), turns, a.label[:50], a.path.parent.parent.name[:8]))
+            rows[typ].append((t1 - t0 - away, sum(tool_t.values()), turns, a.label[:50], a.path.parent.parent.name[:8], away))
             toolsum[typ].update(tool_t)
     return rows, toolsum
 
@@ -100,13 +102,13 @@ def main():
     rows, toolsum = collect(project_dirs(a.project_dir, all_worktrees=a.project_dir is None), time.time() - a.days * 86400)
 
     print(f"last {a.days:g} days; minutes")
-    print(f"{'agentType':30} {'n':>4} {'median':>7} {'p90':>6} {'max':>6} {'sum':>7} {'tool%':>6}")
+    print(f"{'agentType':30} {'n':>4} {'median':>7} {'p90':>6} {'max':>6} {'sum':>7} {'away':>6} {'tool%':>6}")
     for typ, rs in sorted(rows.items(), key=lambda kv: -sum(r[0] for r in kv[1])):
         walls = sorted(r[0] for r in rs)
         tot = sum(walls)
         tp = sum(r[1] for r in rs) / tot * 100 if tot else 0
         print(f"{typ:30} {len(rs):4} {med(walls)/60:7.1f} {walls[int(len(walls) * 0.9)]/60:6.1f} "
-              f"{walls[-1]/60:6.1f} {tot/60:7.0f} {tp:5.0f}%")
+              f"{walls[-1]/60:6.1f} {tot/60:7.0f} {sum(r[5] for r in rs)/60:6.0f} {tp:5.0f}%")
     for typ in a.detail:
         if typ not in rows:
             continue
@@ -116,7 +118,7 @@ def main():
             print(f"  {k:32} {v/60:7.1f} min  {v/tot*100:5.1f}%")
         print("  longest runs:")
         for r in sorted(rows[typ], reverse=True)[:6]:
-            print(f"   {r[0]/60:6.1f} min  turns={r[2]:3}  tool={r[1]/r[0]*100:3.0f}%  {r[4]} {r[3]}")
+            print(f"   {r[0]/60:6.1f} min  away={r[5]/60:5.0f}  turns={r[2]:3}  tool={r[1]/max(r[0], 1)*100:3.0f}%  {r[4]} {r[3]}")
     return 0
 
 

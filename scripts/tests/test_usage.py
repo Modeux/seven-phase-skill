@@ -288,5 +288,104 @@ class CliTest(unittest.TestCase):
         self.assertEqual(rows["foo"][1:3], ["8", "40"], out)
 
 
+def api_request(ts):
+    return {"type": "api-request", "timestamp": ts}
+
+
+def tool_result(tid, ts, text="ok"):
+    return {"type": "user", "timestamp": ts,
+            "message": {"role": "user", "content": [{"type": "tool_result", "tool_use_id": tid, "content": text}]}}
+
+
+NOTIFY = "[SYSTEM NOTIFICATION - NOT USER INPUT] This is an automated background task notification."
+RESUME = "The coordinator sent a message while you were working: round 2"
+
+
+class AwaySpansTest(unittest.TestCase):
+    """Spans an agent was not working: wall-clock reports subtract them, so a wrong span hides real waiting."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.u = importlib.import_module("_usage")
+
+    def kinds(self, events):
+        return [(round(b - a), k) for a, b, k in self.u.away_spans(events)]
+
+    def test_request_retried_without_a_response_is_stalled(self):
+        self.assertEqual(self.kinds([user("go", iso(3000)), api_request(iso(2990)), api_request(iso(1990)),
+                                     asst("m1", None, iso(1980))]), [(1000, "stalled")])
+
+    def test_request_that_ends_in_api_error_is_stalled(self):
+        self.assertEqual(self.kinds([user("go", iso(3000)), api_request(iso(2990)),
+                                     asst("m1", None, iso(1990), content=[{"type": "text", "text": "API Error: Can't reach the API server"}])]),
+                         [(1000, "stalled")])
+
+    def test_gap_after_api_error_is_stalled_even_with_a_background_job_outstanding(self):
+        self.assertEqual(self.kinds([user("go", iso(3000)),
+                                     asst("m1", None, iso(2999), content=tool_use("b1", "Bash", command="x", run_in_background=True)),
+                                     tool_result("b1", iso(2998)),
+                                     asst("m2", None, iso(2997), content=[{"type": "text", "text": "API Error: Can't reach the API server"}]),
+                                     user(RESUME, iso(997))]), [(2000, "stalled")])
+
+    def test_waiting_for_own_background_job_is_work(self):
+        self.assertEqual(self.kinds([user("go", iso(3000)),
+                                     asst("m1", None, iso(2999), content=tool_use("b1", "Bash", command="x", run_in_background=True)),
+                                     tool_result("b1", iso(2998)), asst("m2", None, iso(2997)), user(NOTIFY, iso(1800))]), [])
+
+    def test_resume_message_after_agent_stopped_is_idle(self):
+        self.assertEqual(self.kinds([user("go", iso(3000)),
+                                     asst("m1", None, iso(2999), content=tool_use("h1", "StructuredOutput")),
+                                     tool_result("h1", iso(2998)), user(RESUME, iso(1000))]), [(1998, "idle")])
+
+    def test_resume_message_while_own_background_job_runs_is_work(self):
+        self.assertEqual(self.kinds([user("go", iso(3000)),
+                                     asst("m1", None, iso(2999), content=tool_use("b1", "Bash", command="x", run_in_background=True)),
+                                     tool_result("b1", iso(2998)), asst("m2", None, iso(2997)), user(RESUME, iso(2000))]), [])
+
+    def test_notice_for_a_non_bash_background_job_is_work(self):
+        self.assertEqual(self.kinds([user("go", iso(3000)),
+                                     asst("m1", None, iso(2999), content=tool_use("w1", "Monitor", command="x")),
+                                     tool_result("w1", iso(2998)), asst("m2", None, iso(2997)), user(NOTIFY, iso(1800))]), [])
+
+    def test_resume_after_agent_died_mid_tool_call_is_idle(self):
+        self.assertEqual(self.kinds([user("go", iso(3000)),
+                                     asst("m1", None, iso(2999), content=tool_use("t1", "Bash", command="go test")),
+                                     user(RESUME, iso(999))]), [(2000, "idle")])
+
+    def test_long_foreground_tool_call_is_work(self):
+        self.assertEqual(self.kinds([user("go", iso(3000)),
+                                     asst("m1", None, iso(2999), content=tool_use("t1", "Bash", command="go test")),
+                                     tool_result("t1", iso(2400)), user(RESUME, iso(2399))]), [])
+
+
+class AwayInReportsTest(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.proj = pathlib.Path(self.tmp.name)
+        # 2000 s of retried requests inside a 2030 s run: 30 s of work.
+        self.records = [user("go", iso(4000)), api_request(iso(3999)), api_request(iso(1999)),
+                        asst("m1", None, iso(1990), content=tool_use("t1", "Bash", command="ls")),
+                        tool_result("t1", iso(1980)), asst("m2", None, iso(1970))]
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def test_wallclock_subtracts_stalls_from_wall_and_reports_them(self):
+        write_agent(self.proj / "sid1", "a1", self.records, {"agentType": "tdd-guide"})
+        out = run("wallclock.py", "--project-dir", str(self.proj), "--days", "1")
+        row = next(line.split() for line in out.splitlines() if line.startswith("tdd-guide"))
+        header = next(line.split() for line in out.splitlines() if line.startswith("agentType"))
+        cols = dict(zip(header, row))
+        self.assertEqual(cols["median"], "0.5", out)
+        self.assertEqual(cols["away"], "33", out)
+
+    def test_uilane_audit_does_not_count_stalls_as_generation(self):
+        write_agent(self.proj / "sid1", "a1", self.records, {"agentType": "ui-lane-reviewer"})
+        out = run("uilane_audit.py", "--project-dir", str(self.proj), "--days", "1")
+        lines = out.splitlines()
+        cols = dict(zip(lines[0].split()[1:], lines[1].split()[2:]))  # `started` prints as date + time
+        self.assertEqual((cols["wall"], cols["away"], cols["gen%"], cols["wait%"]), ("0.5", "33.3", "67", "33"), out)
+
+
 if __name__ == "__main__":
     unittest.main()
