@@ -1,0 +1,15 @@
+agent                                                          n        $  share    $/n  turns first k  last k  effort
+ab995204718791f80 ab-blind-judge-xhigh Blind judge m03 run 3   1     1.12  18.4%   1.12      4       5      86  {'xhigh': 4}
+a75b134bcf270f4a9 ab-blind-judge-xhigh Blind judge m06 run 3   1     0.98  16.1%   0.98      3       5      63  {'xhigh': 3}
+a738edd1da12aa4a0 ab-blind-judge-xhigh Blind judge m02 run 3   1     0.86  14.2%   0.86      3       5      58  {'xhigh': 3}
+a4a685c86859d04ae ab-blind-judge-xhigh Blind judge m05 run 3   1     0.81  13.3%   0.81      3       5      50  {'xhigh': 3}
+a902d35f7da189b29 ab-blind-judge-xhigh Blind judge m04 run 3   1     0.55   9.1%   0.55      3       5      37  {'xhigh': 3}
+a5d023305c66479b7 ab-blind-judge-xhigh Blind judge m10 run 3   1     0.33   5.4%   0.33      3       5      27  {'xhigh': 3}
+adbba2e557d0dda25 ab-blind-judge-xhigh Blind judge m08 run 3   1     0.30   4.9%   0.30      3       5      23  {'xhigh': 3}
+af9f3c29a94f46321 ab-blind-judge-xhigh Blind judge m01 run 3   1     0.28   4.6%   0.28      3       5      22  {'xhigh': 3}
+af528543e8bd07f8e ab-blind-judge-xhigh Blind judge m11 run 3   1     0.28   4.6%   0.28      3       5      21  {'xhigh': 3}
+a631351246bbd3ef7 ab-blind-judge-xhigh Blind judge m09 run 3   1     0.21   3.4%   0.21      3       5      20  {'xhigh': 3}
+a985bad6359bb3e6c ab-blind-judge-xhigh Blind judge m12 run 3   1     0.20   3.3%   0.20      3       5      19  {'xhigh': 3}
+aebbec89705c62fe5 ab-blind-judge-xhigh Blind judge m07 run 3   1     0.16   2.7%   0.16      3       5      15  {'xhigh': 3}
+total $6.08 across 12 agents (/Users/huntwu/.claude/projects/-Users-huntwu-Desktop-deepweave-deepweave)
+data quality: unpriced 0  no_usage 0  no_message_id 0  bad_json 0  no_timestamp 0

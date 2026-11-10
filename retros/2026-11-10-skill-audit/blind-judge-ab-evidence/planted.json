@@ -1,0 +1,160 @@
+{
+ "m07": {
+  "source": "m01",
+  "planted_pair": "P03",
+  "order": [
+   "P13",
+   "P10",
+   "P03",
+   "P04",
+   "P06",
+   "P07"
+  ],
+  "position": 3,
+  "original_side": "right",
+  "planted_side": "left",
+  "base_item_was_side": "left",
+  "level": "明顯",
+  "defect": "moralizing：反應句尾多一句對讀者喊話的提醒",
+  "edits": [
+   [
+    "差点对着屏幕笑出声。",
+    "差点对着屏幕笑出声。也想提醒大家，养猫一定要把毛线团收好，避免猫咪误食。"
+   ]
+  ],
+  "packet_chars": 1957
+ },
+ "m08": {
+  "source": "m02",
+  "planted_pair": "P01",
+  "order": [
+   "P06",
+   "P01",
+   "P20",
+   "P07",
+   "P09",
+   "P12"
+  ],
+  "position": 2,
+  "original_side": "Y",
+  "planted_side": "X",
+  "base_item_was_side": "Y",
+  "level": "中等",
+  "defect": "question_kind=generic：結尾貼著話題的具體問句換成籠統套話",
+  "edits": [
+   [
+    "「淋了多久？」",
+    "「你今天过得怎么样？」"
+   ]
+  ],
+  "packet_chars": 4116
+ },
+ "m09": {
+  "source": "m03",
+  "planted_pair": "P01",
+  "order": [
+   "P48",
+   "P23",
+   "P02",
+   "P01",
+   "P11",
+   "P13"
+  ],
+  "position": 4,
+  "original_side": "X",
+  "planted_side": "Y",
+  "base_item_was_side": "X",
+  "level": "細微",
+  "defect": "接錯：真實時間隔了三天（週一 23:00 → 週四 20:00），回覆卻說「昨天跑了一天」",
+  "edits": [
+   [
+    "腿还酸吗？",
+    "昨天跑了一天，腿还酸吗？"
+   ]
+  ],
+  "packet_chars": 4448
+ },
+ "m10": {
+  "source": "m04",
+  "planted_pair": "P1-mcd-0",
+  "order": [
+   "P1-mcd-3",
+   "P1-mcd-2",
+   "P1-mcd-1",
+   "P1-movie-3",
+   "P1-movie-1",
+   "P1-mcd-0"
+  ],
+  "position": 6,
+  "original_side": "X",
+  "planted_side": "Y",
+  "base_item_was_side": "X",
+  "level": "細微",
+  "defect": "簡體字混入：繁體文裡三個字改成簡體（门／这／还）",
+  "edits": [
+   [
+    "我把門帶上，鑰匙在口袋裡碰得輕響。",
+    "我把门帶上，鑰匙在口袋裡碰得輕響。"
+   ],
+   [
+    "這趟最後一段了。",
+    "这趟最後一段了。"
+   ],
+   [
+    "那罐冰綠茶還留在鞋櫃上",
+    "那罐冰綠茶还留在鞋櫃上"
+   ]
+  ],
+  "packet_chars": 6483
+ },
+ "m11": {
+  "source": "m05",
+  "planted_pair": "S-01",
+  "order": [
+   "S-03",
+   "S-21",
+   "S-22",
+   "S-23",
+   "S-01",
+   "S-11"
+  ],
+  "position": 5,
+  "original_side": "B",
+  "planted_side": "A",
+  "base_item_was_side": "A",
+  "level": "明顯",
+  "defect": "consistent：「海边」的感官句與她的話矛盾（她說風會把頭髮吹得打結）",
+  "edits": [
+   [
+    "感官句：「风把头发吹得打结」",
+    "感官句：「海面平静，一丝风也没有」"
+   ]
+  ],
+  "packet_chars": 2892
+ },
+ "m12": {
+  "source": "m06",
+  "planted_pair": "P1-002",
+  "order": [
+   "P1-002",
+   "P1-025",
+   "P1-009",
+   "P1-014",
+   "P1-017",
+   "P1-031"
+  ],
+  "position": 1,
+  "original_side": "1",
+  "planted_side": "2",
+  "base_item_was_side": "2",
+  "level": "中等",
+  "defect": "said_place：題型 M（對方說過少提的地方）她說出了地名",
+  "edits": [
+   [
+    "「嗯，记得。」",
+    "「嗯，旧物市场，记得。」"
+   ]
+  ],
+  "packet_chars": 2328
+ }
+}

@@ -1,0 +1,167 @@
+== m01
+  r1: pairs=14 tally={'left': 5, 'n/a': 2, 'right': 4, 'tie': 3} format_errors=0
+  r2: pairs=14 tally={'left': 6, 'n/a': 2, 'right': 4, 'tie': 2} format_errors=0
+  r3: pairs=14 tally={'left': 6, 'n/a': 2, 'right': 5, 'tie': 1} format_errors=0
+  r1: effort=['high'] OK model=['claude-opus-5-5'] calls=4 other_files=none
+  r2: effort=['high'] OK model=['claude-opus-5-5'] calls=4 other_files=none
+  r3: effort=['xhigh'] OK model=['claude-opus-5-5'] calls=4 other_files=none
+  r1~r2: comparable=12 disagree=3 (side flips=0) P03(tie/right), P07(right/tie), P09(tie/left)
+  r1~r3: comparable=12 disagree=4 (side flips=0) P03(tie/right), P09(tie/left), P10(tie/right), P12(right/tie)
+  r2~r3: comparable=12 disagree=3 (side flips=0) P07(tie/right), P10(tie/right), P12(right/tie)
+== m02
+  r1: pairs=24 tally={'X': 13, 'Y': 11} format_errors=0
+  r2: pairs=24 tally={'X': 15, 'Y': 9} format_errors=0
+  r3: pairs=24 tally={'X': 13, 'Y': 11} format_errors=0
+  r1: effort=['high'] OK model=['claude-opus-5-5'] calls=4 other_files=none
+  r2: effort=['high'] OK model=['claude-opus-5-5'] calls=4 other_files=none
+  r3: effort=['xhigh'] OK model=['claude-opus-5-5'] calls=4 other_files=none
+  r1~r2: comparable=24 disagree=2 (side flips=2) P04(Y/X), P17(Y/X)
+  r1~r3: comparable=24 disagree=0 (side flips=0) 
+  r2~r3: comparable=24 disagree=2 (side flips=2) P04(X/Y), P17(X/Y)
+== m03
+  r1: pairs=48 tally={'X': 24, 'Y': 17, 'tie': 7} format_errors=0
+  r2: pairs=48 tally={'X': 25, 'Y': 21, 'tie': 2} format_errors=0
+  r3: INVALID JSON (Expecting ',' delimiter: line 41 column 233 (char 9144)); lenient per-line recovery: 48 records, 1 bad line(s)
+  r3: pairs=48 tally={'X': 22, 'Y': 24, 'tie': 2} format_errors=0
+  r1: effort=['high'] OK model=['claude-opus-5-5'] calls=5 other_files=none
+  r2: effort=['high'] OK model=['claude-opus-5-5'] calls=5 other_files=none
+  r3: effort=['xhigh'] OK model=['claude-opus-5-5'] calls=5 other_files=none
+  r1~r2: comparable=48 disagree=10 (side flips=5) P01(tie/X), P03(tie/X), P05(tie/Y), P16(X/Y), P18(tie/Y), P19(X/Y), P31(tie/Y), P34(Y/X), P41(Y/X), P47(X/Y)
+  r1~r3: comparable=48 disagree=10 (side flips=5) P01(tie/X), P03(tie/Y), P05(tie/Y), P18(tie/Y), P31(tie/Y), P34(Y/X), P35(X/Y), P37(X/Y), P38(X/Y), P47(X/Y)
+  r2~r3: comparable=48 disagree=7 (side flips=7) P03(X/Y), P16(Y/X), P19(Y/X), P35(X/Y), P37(X/Y), P38(X/Y), P41(X/Y)
+== m04
+  r1: pairs=8 tally={'X': 2, 'Y': 6} format_errors=0
+  r2: pairs=8 tally={'X': 1, 'Y': 7} format_errors=0
+  r3: pairs=8 tally={'Y': 7, 'tie': 1} format_errors=0
+  r1: effort=['high'] OK model=['claude-opus-5-5'] calls=4 other_files=none
+  r2: effort=['high'] OK model=['claude-opus-5-5'] calls=4 other_files=none
+  r3: effort=['xhigh'] OK model=['claude-opus-5-5'] calls=4 other_files=none
+  r1~r2: comparable=8 disagree=1 (side flips=1) P1-mcd-1(X/Y)
+  r1~r3: comparable=8 disagree=2 (side flips=1) P1-mcd-1(X/tie), P1-movie-1(X/Y)
+  r2~r3: comparable=8 disagree=2 (side flips=1) P1-mcd-1(Y/tie), P1-movie-1(X/Y)
+== m05
+  r1: pairs=24 tally={'A': 9, 'B': 5, 'tie': 10} format_errors=0
+  r2: pairs=24 tally={'A': 7, 'B': 5, 'tie': 12} format_errors=0
+  r3: pairs=24 tally={'A': 10, 'B': 5, 'tie': 9} format_errors=0
+  r1: effort=['high'] OK model=['claude-opus-5-5'] calls=4 other_files=none
+  r2: effort=['high'] OK model=['claude-opus-5-5'] calls=4 other_files=none
+  r3: effort=['xhigh'] OK model=['claude-opus-5-5'] calls=4 other_files=none
+  r1~r2: comparable=24 disagree=2 (side flips=0) S-05(A/tie), S-24(A/tie)
+  r1~r3: comparable=24 disagree=1 (side flips=0) S-06(tie/A)
+  r2~r3: comparable=24 disagree=3 (side flips=0) S-05(tie/A), S-06(tie/A), S-24(tie/A)
+== m06
+  r1: pairs=36 tally={'1': 17, '2': 19} format_errors=0
+  r2: pairs=36 tally={'1': 18, '2': 18} format_errors=0
+  r3: pairs=36 tally={'1': 19, '2': 17} format_errors=0
+  r1: effort=['high'] OK model=['claude-opus-5-5'] calls=4 other_files=none
+  r2: effort=['high'] OK model=['claude-opus-5-5'] calls=4 other_files=none
+  r3: effort=['xhigh'] OK model=['claude-opus-5-5'] calls=4 other_files=none
+  r1~r2: comparable=36 disagree=1 (side flips=1) P1-036(2/1)
+  r1~r3: comparable=36 disagree=2 (side flips=2) P1-019(2/1), P1-029(2/1)
+  r2~r3: comparable=36 disagree=3 (side flips=3) P1-019(2/1), P1-029(2/1), P1-036(1/2)
+== m07
+  r1: pairs=6 tally={'left': 4, 'right': 2} format_errors=0
+  r2: pairs=6 tally={'left': 4, 'right': 2} format_errors=0
+  r3: pairs=6 tally={'left': 4, 'right': 2} format_errors=0
+  r1: effort=['high'] OK model=['claude-opus-5-5'] calls=4 other_files=none
+  r2: effort=['high'] OK model=['claude-opus-5-5'] calls=4 other_files=none
+  r3: effort=['xhigh'] OK model=['claude-opus-5-5'] calls=4 other_files=none
+  r1~r2: comparable=6 disagree=0 (side flips=0) 
+  r1~r3: comparable=6 disagree=0 (side flips=0) 
+  r2~r3: comparable=6 disagree=0 (side flips=0) 
+  PLANTED pair=P03 level=明顯 original_side=right defect=moralizing：反應句尾多一句對讀者喊話的提醒
+   r1: winner=right PICKED-ORIGINAL
+      {"left": {"natural": 2, "in_character": 3, "sanitized_feel": 1, "moralizing": 1}, "right": {"natural": 4, "in_character": 4, "sanitized_feel": 0, "moralizing": 0}, "preference": "right", "note": "兩邊文字幾乎一樣，左邊多了一句「也想提醒大家，养猫一定要把毛线团收好，避免猫咪误食」，是對讀者喊話的安全提醒，破壞角色口吻；右邊沒有這句。"}
+   r2: winner=right PICKED-ORIGINAL
+      {"left": {"natural": 3, "in_character": 3, "sanitized_feel": 1, "moralizing": 1, "evidence": "结尾多出「也想提醒大家，养猫一定要把毛线团收好，避免猫咪误食」，破坏傲娇语气、直接对读者喊话"}, "right": {"natural": 4, "in_character": 4, "sanitized_feel": 0, "moralizing": 0, "evidence": "「嘴上说这猫也太会藏了，心里却软得不行，差点对着屏幕笑出声」，干净收在角色反应"}, "preference": "right", "note": "其余内容完全相同，差别只在一边多了一句安全提醒式的说教"}
+   r3: winner=right PICKED-ORIGINAL
+      {"left": {"natural": 3, "in_character": 3, "sanitized_feel": 1, "moralizing": 1, "evidence": "前半与另一边相同，结尾加「也想提醒大家，养猫一定要把毛线团收好，避免猫咪误食」——对读者喊话的安全提醒，打断傲娇语气"}, "right": {"natural": 4, "in_character": 4, "sanitized_feel": 0, "moralizing": 0, "evidence": "「嘴上说这猫也太会藏了，心里却软得不行，差点对着屏幕笑出声」与「表面嫌吵，被猫一蹭就心软」一致，收在情绪上"}, "preference": "right", "note": "内容几乎相同，差别只在一边多了一句向大家喊话的养猫安全提醒。"}
+== m08
+  r1: pairs=6 tally={'X': 2, 'Y': 4} format_errors=0
+  r2: pairs=6 tally={'X': 2, 'Y': 4} format_errors=0
+  r3: pairs=6 tally={'X': 2, 'Y': 4} format_errors=0
+  r1: effort=['high'] OK model=['claude-opus-5-5'] calls=4 other_files=none
+  r2: effort=['high'] OK model=['claude-opus-5-5'] calls=4 other_files=none
+  r3: effort=['xhigh'] OK model=['claude-opus-5-5'] calls=4 other_files=none
+  r1~r2: comparable=6 disagree=0 (side flips=0) 
+  r1~r3: comparable=6 disagree=0 (side flips=0) 
+  r2~r3: comparable=6 disagree=0 (side flips=0) 
+  PLANTED pair=P01 level=中等 original_side=Y defect=question_kind=generic：結尾貼著話題的具體問句換成籠統套話
+   r1: winner=Y PICKED-ORIGINAL
+      {"pair": 2, "id": "P01", "X": {"focus": 4, "natural": 3, "mentions_own_day": "yes", "handback": "question", "question_count": 1, "question_kind": ["generic"], "interrogating": "no", "notes": "前面毛毯、姜茶照顾很到位，但结尾「你今天过得怎么样？」是套话，和淋雨话题脱节。"}, "Y": {"focus": 5, "natural": 4, "mentions_own_day": "yes", "handback": "question", "question_count": 1, "question_kind": ["concrete"], "interrogating": "no", "notes": "同样的照顾动作，结尾「淋了多久？」紧扣淋雨，简短符合冷淡外壳下的关心；中段「今天在家改了一下午作文」略像插入的交代。"}, "preferred": "Y", "reason": "两则只差最后一句，Y 的问题具体延续淋雨话题，X 的问题籠统。"}
+   r2: winner=Y PICKED-ORIGINAL
+      {"pair": 2, "id": "P01", "X": {"focus": 4, "natural": 3, "mentions_own_day": "yes", "handback": "question", "question_count": 1, "question_kind": ["generic"], "interrogating": "no", "notes": "前面毛毯、姜茶都照顾到淋雨和冷，结尾却是套话「你今天过得怎么样？」，跟淋雨脱节。"}, "Y": {"focus": 5, "natural": 4, "mentions_own_day": "yes", "handback": "question", "question_count": 1, "question_kind": ["concrete"], "interrogating": "no", "notes": "前文跟 X 一样；结尾「淋了多久？」从淋雨直接延伸，简短，也合乎她冷淡的口吻。"}, "preferred": "Y", "reason": "两则只差结尾那一问，Y 的问题紧跟淋雨，X 的是籠統套话。"}
+   r3: winner=Y PICKED-ORIGINAL
+      {"pair": 2, "id": "P01", "X": {"focus": 4, "natural": 3, "mentions_own_day": "yes", "handback": "question", "question_count": 1, "question_kind": ["generic"], "interrogating": "no", "notes": "前段毛毯、「灶上温着姜茶」很好地接住淋雨發冷；但結尾「你今天过得怎么样？」是籠統套話，和剛剛淋雨的照顧場景斷開；「今天在家改了一下午作文，刚开窗想等风带点桂香过来」略像插入說明。"}, "Y": {"focus": 5, "natural": 4, "mentions_own_day": "yes", "handback": "question", "question_count": 1, "question_kind": ["concrete"], "interrogating": "no", "notes": "主體與另一則相同（毛毯、姜茶、雨打梧桐），結尾「淋了多久？」短而具體，順著淋雨延伸，符合她表面冷淡的口氣；同樣有一句略生硬的今日說明。"}, "preferred": "Y", "reason": "兩則只差最後一句，「淋了多久？」貼著用戶剛說的事，「你今天过得怎么样？」是套話且跳題。"}
+== m09
+  r1: pairs=6 tally={'X': 2, 'Y': 4} format_errors=0
+  r2: pairs=6 tally={'X': 2, 'Y': 4} format_errors=0
+  r3: pairs=6 tally={'X': 3, 'Y': 3} format_errors=0
+  r1: effort=['high'] OK model=['claude-opus-5-5'] calls=4 other_files=none
+  r2: effort=['high'] OK model=['claude-opus-5-5'] calls=4 other_files=none
+  r3: effort=['xhigh'] OK model=['claude-opus-5-5'] calls=4 other_files=none
+  r1~r2: comparable=6 disagree=0 (side flips=0) 
+  r1~r3: comparable=6 disagree=1 (side flips=1) P11(Y/X)
+  r2~r3: comparable=6 disagree=1 (side flips=1) P11(Y/X)
+  PLANTED pair=P01 level=細微 original_side=X defect=接錯：真實時間隔了三天（週一 23:00 → 週四 20:00），回覆卻說「昨天跑了一天」
+   r1: winner=X PICKED-ORIGINAL
+      {"pair": "P01", "x_wrong": false, "y_wrong": true, "x_count": false, "y_count": false, "x_monologue": false, "y_monologue": false, "natural": "X", "reason": "兩則幾乎一樣，差別只在 Y 多了「昨天跑了一天」，與隔三天明確矛盾；X 只問「腿还酸吗？」，沒有明確說錯時間"}
+   r2: winner=X PICKED-ORIGINAL
+      {"pair": "P01", "x_wrong": false, "y_wrong": true, "x_count": false, "y_count": false, "x_monologue": false, "y_monologue": false, "natural": "X", "reason": "兩則幾乎一樣，只差 Y 多了「昨天跑了一天」，但其實隔了三天，明確接錯；X 只問「腿还酸吗」，雖然沒察覺隔了很久，但沒有和真實時間矛盾的說法"}
+   r3: winner=X PICKED-ORIGINAL
+      {"pair": "P01", "x_wrong": false, "y_wrong": true, "x_count": false, "y_count": false, "x_monologue": false, "y_monologue": false, "natural": "X", "reason": "兩則只差一句。Y 說「昨天跑了一天，腿还酸吗？」，可實際隔了三天，是明確說錯的時間。X 只問「腿还酸吗？」，三天後這樣問有點怪，但沒有講錯時間。兩則都沒察覺隔了三天。"}
+== m10
+  r1: pairs=6 tally={'X': 3, 'Y': 3} format_errors=0
+  r2: pairs=6 tally={'X': 3, 'Y': 3} format_errors=0
+  r3: pairs=6 tally={'X': 2, 'Y': 4} format_errors=0
+  r1: effort=['high'] OK model=['claude-opus-5-5'] calls=4 other_files=none
+  r2: effort=['high'] OK model=['claude-opus-5-5'] calls=4 other_files=none
+  r3: effort=['xhigh'] OK model=['claude-opus-5-5'] calls=4 other_files=none
+  r1~r2: comparable=6 disagree=2 (side flips=2) P1-mcd-1(Y/X), P1-mcd-3(X/Y)
+  r1~r3: comparable=6 disagree=1 (side flips=1) P1-mcd-3(X/Y)
+  r2~r3: comparable=6 disagree=1 (side flips=1) P1-mcd-1(X/Y)
+  PLANTED pair=P1-mcd-0 level=細微 original_side=X defect=簡體字混入：繁體文裡三個字改成簡體（门／这／还）
+   r1: winner=X PICKED-ORIGINAL
+      {"pair": "P1-mcd-0", "scores_X": {"1": 2, "2": 1, "3": 2, "4": 3, "5": 4, "6": 2}, "scores_Y": {"1": 2, "2": 1, "3": 2, "4": 3, "5": 3, "6": 2}, "winner": "X", "reason": "兩邊內容幾乎一樣，都卡在玄關、樓梯口，沒寫到麥當勞，終點直接拿著紙袋回家，『你說「我也去樓下麥當勞」』也是把按鈕當台詞；差別只在 Y 混入簡體（『我把门帶上』『这趟』『还留在』），所以 X 勝。"}
+   r2: winner=X PICKED-ORIGINAL
+      {"pair": "P1-mcd-0", "scores_X": {"1": 3, "2": 1, "3": 2, "4": 2, "5": 3, "6": 2}, "scores_Y": {"1": 3, "2": 1, "3": 2, "4": 2, "5": 2, "6": 2}, "winner": "X", "reason": "兩版內容幾乎一字不差，只差在 Y 混進簡體字（「我把门帶上」「这趟最後一段了」「冰綠茶还留在」）。兩版都到第 2 段還停在門口跟樓梯口，下一步就已經拎著麥當勞紙袋到家，麥當勞那段完全沒寫，終點還照搬按鈕原句（「你說『我也去樓下麥當勞』」）。"}
+   r3: winner=X PICKED-ORIGINAL
+      {"pair": "P1-mcd-0", "scores_X": {"1": 2, "2": 1, "3": 3, "4": 3, "5": 3, "6": 2}, "scores_Y": {"1": 2, "2": 1, "3": 3, "4": 3, "5": 2, "6": 2}, "winner": "X", "reason": "兩邊內容幾乎逐字相同，Y 混了簡體字（「我把门帶上」「这趟最後一段了」「那罐冰綠茶还留在鞋櫃上」），X 全是繁體。兩邊的共同缺陷：兩段都還停在門口和樓梯口，麥當勞完全沒出現就回家了，終點又把按鈕原句當成台詞（「你說『我也去樓下麥當勞』」）。"}
+== m11
+  r1: pairs=6 tally={'A': 2, 'B': 4} format_errors=0
+  r2: pairs=6 tally={'A': 2, 'B': 4} format_errors=0
+  r3: pairs=6 tally={'A': 2, 'B': 4} format_errors=0
+  r1: effort=['high'] OK model=['claude-opus-5-5'] calls=4 other_files=none
+  r2: effort=['high'] OK model=['claude-opus-5-5'] calls=4 other_files=none
+  r3: effort=['xhigh'] OK model=['claude-opus-5-5'] calls=4 other_files=none
+  r1~r2: comparable=6 disagree=0 (side flips=0) 
+  r1~r3: comparable=6 disagree=0 (side flips=0) 
+  r2~r3: comparable=6 disagree=0 (side flips=0) 
+  PLANTED pair=S-01 level=明顯 original_side=B defect=consistent：「海边」的感官句與她的話矛盾（她說風會把頭髮吹得打結）
+   r1: winner=B PICKED-ORIGINAL
+      {"id": "S-01", "groups": {"A": {"cards": [{"card": "楼下巷口", "sensory": true, "consistent": true, "reads_as_card_line": true, "no_person": true, "script_match": true}, {"card": "海边", "sensory": true, "consistent": false, "reads_as_card_line": true, "no_person": true, "script_match": true}, {"card": "剪刘海", "sensory": true, "consistent": true, "reads_as_card_line": true, "no_person": true, "script_match": true}], "preference_ok": true}, "B": {"cards": [{"card": "楼下巷口", "sensory": true, "consistent": true, "reads_as_card_line": true, "no_person": true, "script_match": true}, {"card": "海边", "sensory": true, "consistent": true, "reads_as_card_line": true, "no_person": true, "script_match": true}, {"card": "剪刘海", "sensory": true, "consistent": true, "reads_as_card_line": true, "no_person": true, "script_match": true}], "preference_ok": true}}, "winner": "B", "reason": "两组只差海边这张。A 写「海面平静，一丝风也没有」，直接违背原文「风会把头发吹得打结」；B 照原文写「风把头发吹得打结」。她说「你选哪个都行」，两组都没标，正确。"}
+   r2: winner=B PICKED-ORIGINAL
+      {"id": "S-01", "groups": {"A": {"cards": [{"card": "楼下巷口", "sensory": true, "consistent": true, "reads_as_card_line": true, "no_person": true, "script_match": true, "quote": "盐酥鸡的油气味"}, {"card": "海边", "sensory": true, "consistent": false, "reads_as_card_line": true, "no_person": true, "script_match": true, "quote": "海面平静，一丝风也没有", "note": "与她说的『风会把头发吹得打结』直接矛盾"}, {"card": "剪刘海", "sensory": true, "consistent": true, "reads_as_card_line": true, "no_person": true, "script_match": true, "quote": "塑料柄沾了糖粉"}], "preference_ok": true, "preference_note": "『你选哪个都行』，没有偏向，没标正确"}, "B": {"cards": [{"card": "楼下巷口", "sensory": true, "consistent": true, "reads_as_card_line": true, "no_person": true, "script_match": true, "quote": "盐酥鸡的油气味"}, {"card": "海边", "sensory": true, "consistent": true, "reads_as_card_line": true, "no_person": true, "script_match": true, "quote": "风把头发吹得打结"}, {"card": "剪刘海", "sensory": true, "consistent": true, "reads_as_card_line": true, "no_person": true, "script_match": true, "quote": "塑料柄沾了糖粉"}], "preference_ok": true}}, "winner": "B", "reason": "其余都相同，只是海边那句：这一组跟原话一致（风把头发吹得打
+   r3: winner=B PICKED-ORIGINAL
+      {"id": "S-01", "groups": {"A": {"cards": [{"card": "楼下巷口", "sensory": true, "consistent": true, "reads_as_card_line": true, "no_person": true, "script_match": true}, {"card": "海边", "sensory": true, "consistent": false, "reads_as_card_line": true, "no_person": true, "script_match": true}, {"card": "剪刘海", "sensory": true, "consistent": true, "reads_as_card_line": true, "no_person": true, "script_match": true}], "preference_ok": true}, "B": {"cards": [{"card": "楼下巷口", "sensory": true, "consistent": true, "reads_as_card_line": true, "no_person": true, "script_match": true}, {"card": "海边", "sensory": true, "consistent": true, "reads_as_card_line": true, "no_person": true, "script_match": true}, {"card": "剪刘海", "sensory": true, "consistent": true, "reads_as_card_line": true, "no_person": true, "script_match": true}], "preference_ok": true}}, "winner": "B", "reason": "两组只差海边卡：A 的「海面平静，一丝风也没有」和她说的「风会把头发吹得打结」正好相反，B 的「风把头发吹得打结」贴合原文；她说「你选哪个都行」，两组都没标，都对（摆剪刀算很弱的在家暗示，不到明显偏向）。"}
+== m12
+  r1: pairs=6 tally={'1': 4, '2': 2} format_errors=0
+  r2: pairs=6 tally={'1': 4, '2': 2} format_errors=0
+  r3: pairs=6 tally={'1': 4, '2': 2} format_errors=0
+  r1: effort=['high'] OK model=['claude-opus-5-5'] calls=4 other_files=none
+  r2: effort=['high'] OK model=['claude-opus-5-5'] calls=4 other_files=none
+  r3: effort=['xhigh'] OK model=['claude-opus-5-5'] calls=4 other_files=none
+  r1~r2: comparable=6 disagree=0 (side flips=0) 
+  r1~r3: comparable=6 disagree=0 (side flips=0) 
+  r2~r3: comparable=6 disagree=0 (side flips=0) 
+  PLANTED pair=P1-002 level=中等 original_side=1 defect=said_place：題型 M（對方說過少提的地方）她說出了地名
+   r1: winner=1 PICKED-ORIGINAL
+      {"id": "P1-002", "type": "M", "r1": {"said_place": false, "asked_retell": false, "fabricated": false, "fabricated_quote": "", "forgot": false, "mechanism": false, "cold": false, "natural": 4}, "r2": {"said_place": true, "asked_retell": false, "fabricated": false, "fabricated_quote": "", "forgot": false, "mechanism": false, "cold": false, "natural": 4}, "prefer": "1", "note": "两则几乎相同，回复 2 多复述了「旧物市场」地名；回复 1 只说「嗯，记得。」简短温和带过。"}
+   r2: winner=1 PICKED-ORIGINAL
+      {"id": "P1-002", "type": "M", "r1": {"said_place": false, "asked_retell": false, "fabricated": false, "fabricated_quote": "", "forgot": false, "mechanism": false, "cold": false, "natural": 4}, "r2": {"said_place": true, "asked_retell": false, "fabricated": false, "fabricated_quote": "", "forgot": false, "mechanism": false, "cold": false, "natural": 4}, "prefer": "1", "note": "两则几乎相同，回复2多了一句「嗯，旧物市场，记得」把少提的地名跟着说出口；回复1只说「嗯，记得。」简短带过"}
+   r3: winner=1 PICKED-ORIGINAL
+      {"id": "P1-002", "type": "M", "r1": {"said_place": false, "asked_retell": false, "fabricated": false, "fabricated_quote": "", "forgot": false, "mechanism": false, "cold": false, "natural": 4}, "r2": {"said_place": true, "asked_retell": false, "fabricated": false, "fabricated_quote": "", "forgot": false, "mechanism": false, "cold": false, "natural": 4}, "prefer": "1", "note": "兩則幾乎相同、都簡短帶過；回覆 2 多說了「旧物市场」地名，回覆 1 只「嗯，记得。」更符合少提。"}
+== replay totals (comparable pairs / disagree / side flips)
+  r1~r2: 19/152 = 12.5% disagree; side flips 9
+  r1~r3: 19/152 = 12.5% disagree; side flips 8
+  r2~r3: 20/152 = 13.2% disagree; side flips 13

@@ -1,0 +1,15 @@
+agent                                                          n        $  share    $/n  turns first k  last k  effort
+a3e092e7e3bd4866a blind-judge Blind judge m03 run 1            1     0.80  20.4%   0.80      4       5      73  {'high': 4}
+aca087e4053ed59c9 blind-judge Blind judge m06 run 1            1     0.57  14.5%   0.57      3       5      46  {'high': 3}
+adcc7a32925f2bd9e blind-judge Blind judge m02 run 1            1     0.56  14.2%   0.56      3       5      46  {'high': 3}
+aaf968bb65f12245f blind-judge Blind judge m05 run 1            1     0.56  14.1%   0.56      3       5      40  {'high': 3}
+a4e9c16a51f43f491 blind-judge Blind judge m04 run 1            1     0.27   6.8%   0.27      3       5      26  {'high': 3}
+af5320fdb557c94aa blind-judge Blind judge m01 run 1            1     0.20   5.0%   0.20      3       5      18  {'high': 3}
+a3337fd42931a7ddd blind-judge Blind judge m10 run 1            1     0.19   4.9%   0.19      3       5      22  {'high': 3}
+acea6a40c81337bf3 blind-judge Blind judge m11 run 1            1     0.18   4.6%   0.18      3       5      17  {'high': 3}
+a4f5bc34454ff881a blind-judge Blind judge m08 run 1            1     0.18   4.5%   0.18      3       5      19  {'high': 3}
+a0042327f25275a6e blind-judge Blind judge m12 run 1            1     0.16   4.0%   0.16      3       5      17  {'high': 3}
+ae88e1790ee8585be blind-judge Blind judge m09 run 1            1     0.15   3.9%   0.15      3       5      18  {'high': 3}
+ae7ecc7aab0dd5c01 blind-judge Blind judge m07 run 1            1     0.12   2.9%   0.12      3       5      13  {'high': 3}
+total $3.94 across 12 agents (/Users/huntwu/.claude/projects/-Users-huntwu-Desktop-deepweave-deepweave)
+data quality: unpriced 0  no_usage 0  no_message_id 0  bad_json 0  no_timestamp 0
