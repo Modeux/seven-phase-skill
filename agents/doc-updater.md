@@ -26,11 +26,7 @@ You are a documentation specialist focused on keeping codemaps and documentation
 
 ## Analysis Commands
 
-```bash
-npx tsx scripts/codemaps/generate.ts    # Generate codemaps
-npx madge --image graph.svg src/        # Dependency graph
-npx jsdoc2md src/**/*.ts                # Extract JSDoc
-```
+There is no generator script to run: a repo that has one names it in the brief. Otherwise build each codemap from the code itself — grep for entry points, routes, workers and exports, then Read by line range — and check every path you write with `ls` or `git ls-files`.
 
 ## Codemap Workflow
 

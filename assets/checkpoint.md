@@ -8,7 +8,7 @@
 5. owner 會直接看到的外部變化（警報文案、面板、價格）要單獨點出來。
 6. **能不能 `/clear`**：每次都一句話明說。能＝本階段結論都在 PROGRESS、下一步只讀任務文件、沒有背景 agent／外審在跑；不能就說卡在哪（例：片 A 還在跑）。同一段對話裡還掛著別的任務（例：另一個任務等 commit）時，建議先在這段對話收掉它，或之後開另一段對話處理，不要帶進下一階段。owner 不要多個任務的 context 混在同一段對話（10-09）。
 
-**第 1、6 階段的摘要**（不停，SKILL.md「Checkpoint 協定」第 7 條）：只寫上面第 1、2 點，最後一句「接著做第 N+1 階段，要停就打字」；不附 `/compact`、不做導讀頁。照舊停的情況才用完整形狀。
+**第 1、6 階段的摘要**（不停，SKILL.md「Checkpoint 協定」第 7 條）：只寫上面第 1、2 點，最後一句「接著做第 N+1 階段，要停就打字」；不附 `/compact`、不做導讀頁。照舊停的情況（含 PROGRESS 開頭分流行寫了「每站都停」）才用完整形狀。
 
 **任務頁**（每次 checkpoint、所有階段）：`python3 ~/.claude/skills/seven-phase/scripts/planview.py <slug>`，回報貼它印的那一行（路徑＋各檔計數）。owner 開 `tmp/progress/<slug>.html`：儀表板、左側目錄、章節可收合、表格固定表頭＋逐欄篩選、mermaid 已渲染。頁是 md 原文的渲染、不是另一份文件：改了任務檔就重跑，不符以 md 為準。第 3／4 階段它印「好讀閘未過」（沒圖、或 PLAN 超過 300 字的行 >5）就還沒到 checkpoint。
 
@@ -16,7 +16,7 @@
 
 **/compact 指令**（一段、可直接貼）：
 ```
-/compact <slug> 第 N 階段已完成（未 commit，改動在主 checkout 工作樹）；真相源 .claude/PRPs/plans/<slug>/{SPEC,PLAN,REVIEW,PROGRESS}.md（<REVIEW／PROGRESS 裡有什麼>；過程產物在 tmp/<slug>/…；<仍存在的 worktree 與何時清>）。下一步 owner 說「繼續」→ 第 N+1 階段：<第一步、要派什麼、要問 owner 什麼>。主 session <模型>、全程禁 commit／push、<專案硬規則一兩條>；compact 後先重新載入 seven-phase skill
+/compact <slug> 第 N 階段已完成（未 commit，改動在主 checkout 工作樹）；真相源 .claude/PRPs/plans/<slug>/{RESEARCH,SPEC,PLAN,REVIEW,PROGRESS}.md＋plan-appendix/（<REVIEW／PROGRESS 裡有什麼>；過程產物在 tmp/<slug>/…；<仍存在的 worktree 與何時清>）。下一步 owner 說「繼續」→ 第 N+1 階段：<第一步、要派什麼、要問 owner 什麼>。主 session <模型>、全程禁 commit／push、<專案硬規則一兩條>；compact 後先重新載入 seven-phase skill
 ```
 
 **或 `/clear` 接續**（`/clear` 不花錢、會重載 CLAUDE.md；前提是本階段結論都已寫進 PROGRESS）：

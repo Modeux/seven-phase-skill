@@ -15,10 +15,10 @@
 ## effort
 - comment-analyzer、go-reviewer、silent-failure-hunter、tdd-guide、typescript-reviewer、python-reviewer＝high；其餘 reviewer 仍 xhigh。由來：10-06 重放 A/B——三路 reviewer 已確認條目零漏、花費 −44%；tdd-guide 兩片（跨層、碰錢＋權限）突變殺傷相同、花費 −37%；ts／python 是 10-16 依下面的擴大判準（`history.md`）。
 - tdd-guide 降檔後唯一看到的退步：照抄任務書的錯前提寫成 INVARIANT。第 6 階段註解 lane 是這類錯的防線，不因小包而省。
-- 擴大判準（10-16 結案）：`laneyield.py` 比 go／silent／comment 三路的獨家發現與確認數有沒有比 10-06 前少（`DATA error` 未清的那份不拿來比）。結果：獨家已確認沒少，但 go／silent 的已確認／包在對照 lane 全升時下降 13–19%（少掉的是別路也抓到的）→ typescript-／python-reviewer 改 high；**database-reviewer 留 xhigh**（小 lane 裡獨家發現率最高、DB 錯最貴、降檔只省約 $20／週）。推理型（lane-reviewer、converge-verifier）、碰錢權限（security-reviewer）、突變（pr-test-analyzer）不在擴大範圍；真瀏覽器（ui-lane-reviewer）10-16 A/B 不過、維持 xhigh：high 把 R9（扣費行亮照對比）寫進「已查證無問題」——拿純白圖當最壞情況卻只在行的自然位置量，沒想到捲回去時行落在只剩薄紗的畫面中段。真瀏覽器 lane 少想一步產出的是錯的放行，不是少一條發現。比較腳本在 repo `tmp/laneyield-cmp/compare.py`（舊 REVIEW 要 `git log --all --full-history` 才找得到，刪除發生在已合併的側分支）。
+- 擴大判準（10-16 結案）：`laneyield.py` 比 go／silent／comment 三路的獨家發現與確認數有沒有比 10-06 前少（`DATA error` 未清的那份不拿來比）。結果：獨家已確認沒少，但 go／silent 的已確認／包在對照 lane 全升時下降 13–19%（少掉的是別路也抓到的）→ typescript-／python-reviewer 改 high；**database-reviewer 留 xhigh**（小 lane 裡獨家發現率最高、DB 錯最貴、降檔只省約 $20／週）。推理型（lane-reviewer、converge-verifier）、碰錢權限（security-reviewer）、突變（pr-test-analyzer）不在擴大範圍；真瀏覽器（ui-lane-reviewer）10-16 A/B 不過、維持 xhigh：high 把 R9（扣費行亮照對比）寫進「已查證無問題」——拿純白圖當最壞情況卻只在行的自然位置量，沒想到捲回去時行落在只剩薄紗的畫面中段。真瀏覽器 lane 少想一步產出的是錯的放行，不是少一條發現。比較腳本當時放在 repo `tmp/`、已被清掉，要重比就拿 `laneyield.py` 的輸出重做（舊 REVIEW 要 `git log --all --full-history` 才找得到，刪除發生在已合併的側分支）。
 - 再做 effort A/B：只在 owner 指定的包跑（並行 session 共用同一份記憶與 skill，「下一個小包」會被多個 session 各自認領；owner 10-07）。另建 `ab-<名>-high.md`（本體逐字相同，只改 name／effort），新檔要到下一回合才載入；不改原檔，並行 session 會在不知情的情況下中招。重放材料＝凍結快照＋原任務書；任務書刪了可以從任一 lane transcript 的 Read 結果逐字還原。xhigh 自己重跑一次當雜訊基準：嚴重度本來就會浮動，比的是有沒有抓到。
 
-## 小包（正式碼 ≤1500 行，且不碰 credits／權限／跨層不變式）：6–8 路
+## 小包（正式碼 ≤1500 行，且不碰 credits／權限／跨層不變式）：必開 6–8 路，條件路另計
 | lane | agent | 何時 |
 |---|---|---|
 | 每個碰到的層一個語言 reviewer | go-／python-／typescript-reviewer | 必開 |
@@ -32,7 +32,7 @@
 | UI/UX | `ui-lane-reviewer`＋瀏覽器截圖（工具白名單、自帶 Playwright server（版本釘住、`--codegen=none`、白名單 14 個瀏覽器工具）取代 plugin 那套；lane-reviewer 已限縮工具、開不了瀏覽器） | 涉 UI 時；驗不了的標「需人工目視」 |
 
 ## 大包或高風險包：完整路數
-小包清單全開，再加：security-reviewer（必開）、影響範圍 lane（所有 caller／呼叫點實讀第三方碼；caller 清單起手用任務書「圖給的起點」節——主 session 派工前跑 `graphify affected "<Func()>" --relation calls` 貼進去，lane 再 grep 取聯集；本包新符號圖裡沒有、只能 grep）、時間與順序 lane（預算鏈、取消語義、視窗邊界、混版時序）、grok、agy；註解 lane 可拆成程式碼註解與文件兩路。任一路跑不了就換一個不同鏡頭替補。
+小包清單全開，再加：security-reviewer（必開）、影響範圍 lane（所有 caller／呼叫點實讀第三方碼；caller 清單起手用任務書「圖給的起點」節——主 session 派工前跑 `graphify affected "<Func()>" --relation calls` 貼進去，lane 再 grep 取聯集；本包新符號圖裡沒有、只能 grep）、時間與順序 lane（預算鏈、取消語義、視窗邊界、混版時序）、grok、agy；註解 lane 可拆成程式碼註解與文件兩路。任一路跑不了就換一個不同鏡頭替補（agy 例外：第 6 階段交 owner 手動跑，`references/external-review.md`「材料包」agy 條）。
 
 ## 收斂驗證
 - 只驗「有爭議／HIGH 以上／需 owner 拍板」的條目：小包 1 路、大包依條目量 2 路起（同層的條目放同一路，例：偵測面、追蹤、單一服務、時間預算）。
@@ -44,8 +44,8 @@
 ## 實作與修復
 - 切片實作（每片一棵私有樹）：
   - `tdd-guide`（high）：所有實作片與修復片。碰錢、權限、owner 拍板語義的紅照舊由主 session 先寫。
-  - tdd 只用 `tdd-guide`：`ab-tdd-guide-v2` 三次 A/B 後 10-13 刪除（owner 定）。前兩次 v2 便宜約 3 成、但漏了「同一行為在多個呼叫點」的守衛；加了「每個呼叫點各一支」後第三次兩臂偵測打平（預登記 19／21、多呼叫點 6／6），v2 反而貴 12%。那句與 testcontainers 契約已搬進 `tdd-guide`，同時拿掉 80% 覆蓋率（綁不存在的 npm 指令）、八項邊界清單與「mock external dependencies」；v2 原文留在 `character-dual-portrait` worktree 的 `tmp/character-dual-portrait/xmut-w4/ab-tdd-guide-v2.recovered.md`。
-  - security 只用 `security-reviewer`：`ab-security-reviewer-v2` 在碰鑽石／18+ 的大包（`character-dual-portrait` 第 6 階段）跑完最後一次兩臂後 10-14 併入原版（owner 定：v2 正文取代原版正文，name／description 不變）。兩臂各 7 條、都抓到兩條最重要的（18禁 job 混版、回填字表），v2 便宜約 15%（$8.21 vs $9.64）；原版獨家 2 LOW、v2 獨家 1 LOW。v2 原文備份在 `character-dual-portrait` worktree 的 `tmp/character-dual-portrait/post/agents-backup/`。多臂比較時合併前仍由主 session 跑交叉突變（同一語義突變、各臂自己的程式碼、`go test -overlay`），不信各臂自報。
+  - tdd 只用 `tdd-guide`：`ab-tdd-guide-v2` 三次 A/B 後 10-13 刪除（owner 定）。前兩次 v2 便宜約 3 成、但漏了「同一行為在多個呼叫點」的守衛；加了「每個呼叫點各一支」後第三次兩臂偵測打平（預登記 19／21、多呼叫點 6／6），v2 反而貴 12%。那句與 testcontainers 契約已搬進 `tdd-guide`，同時拿掉 80% 覆蓋率（綁不存在的 npm 指令）、八項邊界清單與「mock external dependencies」；v2 原文當時留在該任務 worktree 的 `tmp/`，worktree 清掉後沒有留存。
+  - security 只用 `security-reviewer`：`ab-security-reviewer-v2` 在碰鑽石／18+ 的大包（`character-dual-portrait` 第 6 階段）跑完最後一次兩臂後 10-14 併入原版（owner 定：v2 正文取代原版正文，name／description 不變）。兩臂各 7 條、都抓到兩條最重要的（18禁 job 混版、回填字表），v2 便宜約 15%（$8.21 vs $9.64）；原版獨家 2 LOW、v2 獨家 1 LOW。v2 原文的備份同樣隨那棵 worktree 清掉了。多臂比較時合併前仍由主 session 跑交叉突變（同一語義突變、各臂自己的程式碼、`go test -overlay`），不信各臂自報。
 - 文件片：`doc-slice`（high，每句先回程式碼確認）；codemap／README 生成才用 doc-updater。
 - 探索／定位：code-explorer（high）；判斷性探索用 general-purpose／Explore（effort 跟主 session）。
 - 組材料包、批次文字改寫：quick-task（high）。graphify 抽取：quick-task 傳 `model: "sonnet"`，或 agy Flash 細切（repo `docs/graphify.md`）。

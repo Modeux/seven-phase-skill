@@ -151,11 +151,12 @@ scripts/       Helper tools (board, isolated workspaces, review coverage check, 
 evals/         Test cases for the skill itself
 ```
 
-Handy helpers (all use only built-in Python — nothing extra to install — except `run_kit.mjs`, which needs Node):
+Handy helpers (all use only built-in Python — nothing extra to install — except the three browser walk-through files: `run_kit.mjs` and `walk_lib.mjs` need Node and Playwright, and `walk_env.sh` is bash):
 
 | Tool | What it does |
 |---|---|
 | `board.py` | Scans every task and prints the progress board |
+| `planview.py` | Puts one task's SPEC / PLAN / REVIEW / PROGRESS on a single HTML page you can collapse, filter and read diagrams in; `--check` is the diagram gate for SPEC / PLAN |
 | `mkpatch.py` / `mkworktree.py` / `checktree.py` | Snapshot uncommitted changes, open an isolated workspace for reviewers, and confirm afterwards nothing was touched |
 | `merge_back.py` | Move changes from a fix workspace back to the main one |
 | `numstat.py` | Count changed lines of code / tests / docs to decide how many reviewers to send |
@@ -169,7 +170,7 @@ Handy helpers (all use only built-in Python — nothing extra to install — exc
 
 ## Retros and acceptance
 
-- Say 「檢討」 (retro): reviews how recent tasks went — quality, cost, speed — and settles old process-change checks. You don't need it every time; after 5 tasks since the last retro, the board reminds you.
+- Say 「檢討」 (retro): reviews how recent tasks went — quality, cost, speed — and settles old process-change checks. You don't need it every time; once 5 acceptance rows are due, the board reminds you.
 - `ACCEPTANCE.md`: every process change gets one line — "when, how, and what counts as working". When it's due, the board lists it.
 - The board also flags oversized instruction files (over 40KB, or 20%+ longer than at the last retro).
 

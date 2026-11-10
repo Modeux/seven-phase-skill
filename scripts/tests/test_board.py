@@ -130,5 +130,54 @@ class RepoTest(unittest.TestCase):
         self.assertIsNone(rows[".claude/rules/x/new.md"]["head"])
 
 
+class CliTest(unittest.TestCase):
+    """`--help` and a mistyped option must not fall through to a full run, which rewrites board.html and the ledger."""
+
+    def setUp(self):
+        self._tmp = tempfile.TemporaryDirectory()
+        self.repo = pathlib.Path(self._tmp.name).resolve()
+        g(self.repo, "init", "-q", "-b", "dev")
+        task = self.repo / ".claude/PRPs/plans/demo"
+        task.mkdir(parents=True)
+        (task / "PROGRESS.md").write_text("---\nstatus: doing\nnext: x\n---\n# demo\n", encoding="utf-8")
+        g(self.repo, "add", "-A")
+        g(self.repo, "commit", "-q", "-m", "init")
+
+    def tearDown(self):
+        self._tmp.cleanup()
+
+    def run_board(self, *args):
+        script = str(pathlib.Path(__file__).resolve().parents[1] / "board.py")
+        return subprocess.run([sys.executable, script, *args], cwd=self.repo, capture_output=True, text=True)
+
+    def written(self):
+        return sorted(p.name for p in (self.repo / "tmp/progress").glob("*"))
+
+    def test_a_plain_run_writes_the_board(self):
+        # Control: this fixture reaches the write path, so "writes nothing" below is not vacuously true.
+        r = self.run_board()
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertIn("board.html", self.written())
+
+    def test_help_prints_the_usage_and_writes_nothing(self):
+        for flag in ("--help", "-h"):
+            r = self.run_board(flag)
+            self.assertEqual(r.returncode, 0, r.stderr)
+            self.assertIn("--docsize", r.stdout)
+            self.assertIn("--deployed", r.stdout)
+            self.assertEqual(self.written(), [], flag)
+
+    def test_an_unknown_option_exits_2_and_writes_nothing(self):
+        r = self.run_board("--halp")
+        self.assertEqual(r.returncode, 2)
+        self.assertIn("--halp", r.stderr)
+        self.assertEqual(self.written(), [])
+
+    def test_the_session_start_hook_still_runs_when_an_unknown_option_rides_along(self):
+        r = self.run_board("--hook", "session-start", "--halp")
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertIn("hookSpecificOutput", r.stdout)
+
+
 if __name__ == "__main__":
     unittest.main()

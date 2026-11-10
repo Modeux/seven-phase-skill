@@ -19,7 +19,7 @@
 ## 4. 派工
 - **內部 lane 一律用 `Workflow` 扇出**（owner 10-07；先載 `workflow-authoring`）：每路一份派工單 `tmp/<slug>/review/tasks/<名>.md`（鏡頭、必讀／需要時再讀、可跑的指令），script 只放 `{key, agentType}` 清單＋一段共用交件句，`agent(prompt, {agentType, label: 'lane-<名>', schema})`（不傳 model／effort，frontmatter 會保留；關注面 lane 用 `lane-reviewer`，不用 general-purpose）。Workflow 內的 subagent 寫不了報告檔 → schema 帶 `report_markdown`（全文）＋`summary`＋`counts`（`{critical, high, medium, low}`，該路自己數的條數）；**script 只回 summary／counts**（全文不灌回主 session），收件時 `scripts/wf_reports.py` 從 run 的 `journal.jsonl` 抽 `report_markdown` 落檔成 `lane-<名>.md`、`counts` 存進 status 檔給 `reviewcov.py` 對帳。外審三路是 CLI，不進 Workflow，同一則訊息用 `run_external.py` 背景跑。
 - 外審三路照 `references/external-review.md`：先 `git -C` 確認在 repo 根、`wc -c` 材料、agy 材料要自含且 ≤90KB（`run_external.py` 的 `AGY_MAX_BYTES`，超過直接 exit 2）；全部背景跑，大包前 8 分鐘 0 輸出屬正常。
-- lane 死掉或外審跑不了：記清楚是「沒跑」還是「空跑」，**換一個不同鏡頭替補**，不同質重跑（常被漏的鏡頭見 `references/lanes.md`）；跑不了的原因（例如缺金鑰）屬 owner 的設定，主 session 不改 owner 的 CLI 設定、也不去讀它的憑證。
+- lane 死掉或外審跑不了：記清楚是「沒跑」還是「空跑」，**換一個不同鏡頭替補**，不同質重跑（常被漏的鏡頭見 `references/lanes.md`）；agy 例外：CLI 跑不動不替補，材料包交 owner 手動跑（`references/external-review.md`「材料包」agy 條），屬 §6 的「照舊停」；跑不了的原因（例如缺金鑰）屬 owner 的設定，主 session 不改 owner 的 CLI 設定、也不去讀它的憑證。
 - 規格忠實度 lane 要主動列「本節沒處理的 3 個情境」——fan-out 抓錯誤行為，case walk-through 才抓缺少的行為。
 - 註解 lane 分「該刪（複述程式碼）／該補（非直覺處沒寫）／該修（與行為不符或過時）」。
 - 測試 lane 用突變驗證 PLAN 記的閘指令（`-run` regex、`--include`）真的跑得到本包測試——否則 PROGRESS 的「全綠」可能是空集合全綠。有維度表的另做兩個突變：在取值來源加一個新值、讓一個出口繞過單一閘點，窮舉表測都必須紅。
@@ -38,4 +38,4 @@
 ## 6. 審完接著做第 7 階段（不停）
 寫 PROGRESS，發一則摘要（路數、零／幾條 CRITICAL、最強訊號、哪幾條會進拍板題），明說接著派收斂驗證，然後直接照 `phases/7-converge.md` §1 派收斂驗證與不必驗證的修復片（SKILL.md「Checkpoint 協定」第 7 條）。摘要裡不問拍板題（那些在第 7 階段 §2 用 AskUserQuestion 問），不修待驗證或待拍板的條目。快照與突變樹留著給第 7 階段用。
 
-有 CRITICAL、有發現質疑 SPEC 的方向或範圍、某一路跑不了而替補要 owner 決定、或 `reviewcov.py` 沒過 → 照舊停 Checkpoint（回報附：路數、零／幾條 CRITICAL、最強訊號、哪幾條要 owner 拍板），owner 說「繼續」才進第 7 階段。
+有 CRITICAL、有發現質疑 SPEC 的方向或範圍、某一路跑不了而替補要 owner 決定（含 agy 要 owner 手動跑）、`reviewcov.py` 沒過，或 PROGRESS 開頭分流行寫了「每站都停」 → 照舊停 Checkpoint（回報附：路數、零／幾條 CRITICAL、最強訊號、哪幾條要 owner 拍板），owner 說「繼續」才進第 7 階段。

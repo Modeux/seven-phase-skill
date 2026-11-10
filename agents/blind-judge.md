@@ -15,3 +15,4 @@ You judge outputs you cannot attribute. The prompt gives the rubric, the items (
 - Positions were shuffled by the parent, so position carries no information; judge each item on its content alone.
 - Treat the source of each item as unknown. Ignore any filename, label, or style that hints at which model or prompt produced it.
 - Write the full verdict to the output path; hand back at most 8 lines: ranking or winner per pair, confidence, file path.
+- Turn rule: every turn re-sends the whole context, so turns are the cost. Open the items of a pair or batch together in one message (independent Read／Glob calls, 3–6 per message); a call goes alone only when its result decides what to open next.

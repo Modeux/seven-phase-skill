@@ -25,7 +25,7 @@
    - 這裡只修「損失沒止住」和「帶出新損失」兩類，其餘留給修復任務。再改碼就回到本步重審。
 8. **交付並停**：碰到的層跑 targeted＋build。主 checkout 的 `.claude/PRPs/BACKLOG.md`「重要」現在就寫一條：恢復被停用的東西、修復、補完整審查，附 `WHY[<slug>]`。照 Checkpoint 協定停，`status: owner`，`next` 寫等 owner 說 commit。回報 diff 大小、審查結果、部署要點、部署後用哪條查詢確認損失停了。
    - commit、合併 master、部署、合回 dev 都等 owner 說；合回 dev 也要做，因為測試機跑 dev。
-   - commit 形狀照全程規則兩個，程式碼那個的標題含「止血」。commit 完 `status: deploy`，`next` 寫部署要點與確認查詢。
+   - commit 形狀照全程規則兩個，程式碼那個的標題含「止血」。commit 完 `status: deploy`，`next` 寫部署要點與確認查詢，並手動跑一次 `python3 ~/.claude/skills/seven-phase/scripts/board.py`（SKILL.md「Checkpoint 協定」第 1 條：任務目錄可能先被刪，ledger 要先存到部署要點）。
 9. **修復是新任務**：owner 另開時照開工第一步問模型，用新 slug；分支基底看修復要不要單獨上線。根因已知就把 `## 止血` 當 §1–§3 的起點，只補缺的；症狀已被止血擋掉時，用定損紀錄當證據，不必再重現。審查任務書附上止血 commit 的 diff，照修復的規模跑完整路數，流出分析涵蓋這次事故。
 
 ## 1. 定位與重現
@@ -56,6 +56,6 @@ PROGRESS.md `## 診斷` 寫齊五項：症狀與會紅的指令、幅度與範�
 兩條路都一樣：首版修完，重跑會紅的指令與整張觸發表，寫下修後預期與實際，不符就處理完才進審查。
 
 - **精簡路**：照 `phases/lean.md`，§1 只補分流理由與 `## 計畫`，§2 的紅用會紅的指令加上放得下的回歸測試。
-- **完整路**：`## 診斷` 搬進 RESEARCH.md，補 `phases/1-research.md` 第 3、5、6 步（政策出處、挑戰結論、預估規模）；觸發表進 PLAN 的驗收項。階段表第 1 列記「bug 診斷」，照 Checkpoint 協定停，再接第 2 階段。
+- **完整路**：`## 診斷` 搬進 RESEARCH.md，補 `phases/1-research.md` 第 3、5、6 步（政策出處、挑戰結論、預估規模）；觸發表進 PLAN 的驗收項。階段表第 1 列記「bug 診斷」，照 Checkpoint 協定第 7 條接著準備第 2 階段（分流題剛問過；該條列的「照舊停」情況才停）。
 
 **一張單多條**（PM 問題單）：pm-acceptance 已判成非 bug 的條目不進來。整張單一個 slug、一份 PROGRESS，`## 診斷` 每條一小節。每條各跑 §1–§3，同根因合併；重現不了的條目等證據，其他條照走；其餘非 bug 條目不跑診斷，到 §4 一起判。要拆包照 SKILL.md「拆包每一刀寫明換到什麼」。

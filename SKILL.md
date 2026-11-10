@@ -27,7 +27,7 @@ owner 是產品負責人不是工程師。這套流程把方向控制權與 toke
 | 跨任務檢討（owner 說「檢討」） | `phases/retro.md` | `retros/<日期>.md`、`ACCEPTANCE.md` 結案與新列 |
 
 參考檔**用得到時才讀**，開工時不要全讀（評測時多讀兩份參考檔，除了多花 token 沒有好處）：`references/lanes.md`（第 4 階段定路數、第 6／7 階段派工時）、`references/external-review.md`（第 6 階段派外審、大包第 4 階段 PLAN 審查時）、`references/history.md`（想推翻或放寬某條規則時）、`references/project-deepweave.md`（在 deepweave repo 要跑測試、閘或碰 prod 時）。
-範本：`assets/`（審查任務書、PLAN 審查任務書、收斂驗證任務書、修復任務包、checkpoint 回報、走一趟套件）。腳本：`scripts/`（見下）。
+範本：`assets/`（審查任務書、PLAN 審查任務書、合成任務書、收斂驗證任務書、修復任務包、checkpoint 回報、走一趟套件）。腳本：`scripts/`（見下）。
 
 ## 分流：精簡路或完整七階段
 開工判一次（回報的行為 bug 診斷完才判，見 `phases/bug.md`），寫進 PROGRESS.md 開頭。**審查不分流**：兩條路都照「依規模分級」派該派的 reviewer，含外審（owner 10-05、10-06：「唯獨 review 不能省」）。止血 commit 前跑 2 路，完整審查併進後續的修復任務（owner 11-05）。
@@ -48,8 +48,8 @@ owner 吃過「一路衝到底、末端才發現前提錯」的虧，也要自�
 6. **compact 要趁暖、要早**：`/compact` 在 owner 離開**之前**貼（主對話快取 1h，`~/.claude/settings.json` 的 `promptCacheTtl`；用量超額時降為 5m；冷的 compact 會把整段歷史按未快取價重讀），目標 compact 時 context ≤ 200k（10-07 實測中位 358k＝太晚）。回來發現冷了（`/usage` 的 `Prompt cache (main)` 顯示 cold）而且下一階段不需要延續對話 → `/clear` 再讀 PROGRESS，不要 compact；要放棄一條路用 `/rewind`（回到已快取的前綴，比 compact 便宜）。
 7. **第 1、6 階段回報後接著做，有事才停**（owner 11-10：只在 owner 要做決定的地方停）。照第 1 條寫 PROGRESS（`status: doing`）、照第 2 條發一則白話摘要並明說「接著做下一階段，要停就打字」，不附 `/compact`、不等回覆，同一段對話直接往下：
    - **第 1 階段** → 直接準備第 2 階段的簡報（含條件觸發的三取向對照），停在第 2 階段。照舊在第 1 階段結束就停的情況：挑戰結論推翻任務前提或 owner 指定的做法、有 prod 查詢等 owner 核准、預估規模大到要提 ROADMAP 拆任務。
-   - **第 6 階段** → 合成與核對做完（`phases/6-review.md` §5）直接照 `phases/7-converge.md` §1 派收斂驗證與不必驗證的修復片；**checkpoint 移到驗證交件之後**（`phases/7-converge.md` §2）：一則回報放第 6 階段摘要、驗證結果與拍板題，沒有拍板題也停這一次，owner 回覆後才切剩下的修復片。照舊在第 6 階段結束就停的情況：有 CRITICAL、有發現質疑 SPEC 的方向或範圍、某一路跑不了而替補要 owner 決定、`reviewcov.py` 沒過。
-   - owner 開工時說「每站都停」，整個任務照舊每階段停。
+   - **第 6 階段** → 合成與核對做完（`phases/6-review.md` §5）直接照 `phases/7-converge.md` §1 派收斂驗證與不必驗證的修復片；**checkpoint 移到驗證交件之後**（`phases/7-converge.md` §2）：一則回報放第 6 階段摘要、驗證結果與拍板題，沒有拍板題也停這一次，owner 回覆後才切剩下的修復片。照舊在第 6 階段結束就停的情況：有 CRITICAL、有發現質疑 SPEC 的方向或範圍、某一路跑不了而替補要 owner 決定（agy CLI 跑不動一律算：它不換鏡頭、要 owner 手動跑，`references/external-review.md`「材料包」agy 條）、`reviewcov.py` 沒過。
+   - owner 開工時說「每站都停」，整個任務照舊每階段停：當下寫進 PROGRESS.md 開頭的分流行（`分流：完整七階段｜每站都停`），續接的 session 讀到這幾個字就照舊每階段停（`/clear` 的接續句不帶這句話，只有 PROGRESS 帶得過去）。
 
    為什麼：10-10～11-10 這兩站 66 次回覆，owner 帶新指示的只有 2 次，其餘是 `/clear` 後貼接續句；6→7 等待中位 28 分、三成超過 2 小時、31 天合計 89 小時，那段時間機器閒著（`retros/2026-11-10-first-principles.md` §2）。「有事才停」是 owner 追問品質影響後加的：拿掉的是放行，不是煞車。代價 owner 已知：審查後每包約 $15–80 的驗證與修復會在 owner 回覆前派出去。
 
@@ -70,7 +70,7 @@ owner 吃過「一路衝到底、末端才發現前提錯」的虧，也要自�
   格式：每條 `- [ ] **白話標題** — 一句影響。方向：…。出處：\`路徑\` 條目 @<hash>｜狀態：未開／等外部：…／任務：<slug>（進行中）`；出處寫 commit 過的路徑，**不准指向 `tmp/`**（會被清掉）。開成任務就改狀態，做完就刪那一行。看板（`board.py`）只讀這兩組；其他 `## ` 標題底下有條目、或出處指向 `tmp/`，看板會報數。11-10 以前的「其餘」「已知限制」在 `.claude/PRPs/BACKLOG-archive.md`（看板不讀；第 7 階段查「同類以前出現過」時一起 grep）。為什麼：owner push 時會刪任務目錄，所以要有個家（10-07）；但 10-07～11-09 這個家從 146 列漲到 829 列、真正關掉 ≤22%，重要 70 條有 62 條沒開，出處指向 `tmp/` 的路徑 65% 已消失——寫進去不會被做的條目只是庫存，還把重要的埋住（11-10 TPS 檢討）。
 - **排序**：backlog、後續小包與 ROADMAP 依「重要（錢、權限、未成年、全站可用性、資料遺失）＞使用者有感」排（owner 10-06：「優先重要功能跟使用者有感功能，其餘收斂」）。
 - **修→重走的迴圈要停損**（owner 10-19；第 5／7 階段與精簡路的「修片→重走」都適用）：
-  - 走查找到的「低」不開修片：寫進 BACKLOG，或在 checkpoint 交 owner 目視；「中」以上才修。
+  - 走查找到的「低」不開修片：照「backlog 的家」分流（低項屬「其餘」，只留任務記錄、不進 BACKLOG），或在 checkpoint 交 owner 目視；「中」以上才修。
   - 重走只量剛修的條目、沿用既有腳本（套件用 `run_kit.mjs`）；抽樣回歸只在 checkpoint 前跑一次。
   - **修片進場門檻**（「中」以上的行為 bug，第一次修就適用；註解、文件、守衛測試不適用）：派修片前，主 session 把兩樣東西寫進該片 `<片號>-brief.md`（回報的 bug 同樣要這兩樣，診斷時就做，`phases/bug.md` 依編號引用）：
     1. **會紅的指令**：已經跑過、紅在回報的**那個症狀**上（不是附近另一個失敗），附指令與紅的輸出。只有真引擎重現得出來就用真引擎：套件步驟（`run_kit.mjs --steps`）、真執行的 curl／整合測試；走一趟找到的，`ui-lane-reviewer` 交件時已附重現步驟（`assets/walk-kit.md`「repro」）。做不出來就不派修片：寫下試過什麼，向 owner 要能重現的環境或錄下的證據（HAR、log、附時間點的螢幕錄影）。
@@ -80,13 +80,13 @@ owner 吃過「一路衝到底、末端才發現前提錯」的虧，也要自�
   - **同一塊（同一元件或行為）修了兩輪、重走仍冒「中」以上的新 bug＝迴圈**：停開修片；把這塊歷輪的走查發現與量測、相關程式碼、觸發表組成一份證據包（與 reviewer 手上的同一份事實），交 codex／grok／agy 並行討論「做法本身對不對、該換什麼設計、哪些要真引擎測」（`run_external.py`）；收件合成後用 AskUserQuestion 問 owner「採用收斂出的做法（附預估時間）／停損（記 BACKLOG）」，答之前不開下一片。
   - 為什麼：journey-scene-layer 第 5 階段修片 FX3～FX13、重走十輪、每輪約 1 小時，後幾輪的新 bug 都是上一輪修法帶出來的，低項也走完整循環（owner：「我被你的行為卡了好幾小時」「主要重工的浪費」）。進場門檻借自 `mattpocock-skills:diagnosing-bugs`：等修第二次才列觸發表會晚一輪，第一次修就跑過整張表，才擋得到修法在別的觸發情況帶出的新 bug；那份 skill 在 transcript 裡從沒被呼叫過（修片 agent 沒有 Skill 工具），所以要點直接寫進任務包。
 - **改流程就登記驗收**：改本 skill、repo 的 hook／agent 檔／settings，或 CLAUDE.md 結構，同一次就在 `ACCEPTANCE.md`「待驗」加一列（到期日、指令、判準＋基線、出處）；驗收指令不准指向 `tmp/`。看板在 SessionStart 列出到期的列；看到「驗收到期」，在下一次回報時跟 owner 提一句。為什麼：10-17 檢討時，5 筆流程驗收有 2 筆腳本被清掉、2 筆過期沒跑，規則一直加卻不知道哪些有用。
-- **說明檔大小**：看板列出超過 40KB（根 `CLAUDE.md` 12KB、`backend-golang`／`angular-workspace` 母檔 20KB）或比上次檢討長 20% 以上的 CLAUDE.md／`.claude/rules/` 檔。第 7 階段搬耐久結論後跑 `scripts/board.py --docsize`，checkpoint 回報淨增減；把一份推過上限的，同一包內合併改寫或依「全程規則」拆規則檔。為什麼：10-06 瘦身後 11 天，指示檔總量 730KB → 1,119KB，文字規則「合併改寫、不往後追加」沒守住。
+- **說明檔大小**：看板列出超過 40KB（根 `CLAUDE.md` 12KB、`backend-golang`／`angular-workspace` 母檔 20KB）或比上次檢討長 20% 以上（且至少多 2KB）的 CLAUDE.md／`.claude/rules/` 檔。第 7 階段搬耐久結論後跑 `scripts/board.py --docsize`，checkpoint 回報淨增減；把一份推過上限的，同一包內合併改寫或依「全程規則」拆規則檔。為什麼：10-06 瘦身後 11 天，指示檔總量 730KB → 1,119KB，文字規則「合併改寫、不往後追加」沒守住。
 - **graphify 只准查詢**，改完 docs／sql／openapi 只提醒圖過期，沒 owner 指示不跑 `--update`。
 - **prod**：**任何 prod 查詢（DB、Langfuse 等量測 API）都先用 AskUserQuestion 問 owner**，附確切查詢、它要回答什麼、答案會怎麼改變決定；只看聚合數字也一樣要問（owner 09-28 定）。核准後由主 session 跑，subagent 一律禁打。DB 只下 SELECT；Langfuse 額度與 prod 警報輪詢器共用。不讀使用者對話內容、不印任何金鑰。
 
 ## 依規模分級（2026-09-28 owner 定；優先於 history 裡的舊規則）
 在 Plan 階段用 `scripts/numstat.py` 或估算標出「正式程式碼行數（不含測試與文件）＋是否碰錢／權限／跨層不變式」，第 6 階段開工前用實際 diff 再確認一次：
-- **小包**（正式碼 ≤1500 行，且不碰 credits／權限／跨層不變式）：審查 6–8 路、收斂驗證只驗「有爭議／HIGH 以上／需 owner 拍板」的條目 1–2 路。
+- **小包**（正式碼 ≤1500 行，且不碰 credits／權限／跨層不變式）：審查必開 6–8 路（碰到的每一層一個語言 reviewer，加 5 路固定必開），涉 UI、碰使用者輸入時另加條件路（a11y、UI/UX、security，不算在 6–8 內）；收斂驗證只驗「有爭議／HIGH 以上／需 owner 拍板」的條目，1 路。
 - **大包或高風險包**：第 4 階段 checkpoint 前多一輪 PLAN 審查（內部 `lane-reviewer`＋codex＋grok＋agy，見 `phases/4-plan.md`「PLAN 審查」）；第 6 階段完整路數（含 grok／agy 外審）、收斂驗證依條目量分路。
 - 拿不準就往完整走。路數組成見 `references/lanes.md`。
 - **主 session vs subagent**：1–3 檔、內容已確定的小改（照報告改註解、改 SPEC／PLAN）主 session 直接做；彼此獨立的多片、需要大量閱讀而主 session 不必記住的、審查（要新視角）交 subagent。主 session context 已很長時偏向 subagent（每一步都重送整段對話）。
@@ -101,11 +101,11 @@ owner 吃過「一路衝到底、末端才發現前提錯」的虧，也要自�
 - 主 session：簡報、訪談、規劃、委派協調、**親跑測試與閘**、一切最終裁決。subagent 只回結論與證據，**不代表 owner 做任何決定**。
 - subagent 一律 opus-5.5，**effort 只能由 agent frontmatter 決定**（`~/.claude/agents/*.md` 的 `model:`／`effort:`；prompt 寫 effort 是安慰劑；Agent 工具的 `model` 參數勿傳）。
   - **唯一例外：graphify 語意抽取**派 quick-task 時傳 `model: "sonnet"`（Sonnet 5.5 high），或改走 agy `gemini-3.8-flash` 細切；不用 Haiku。配方與量測在 repo `docs/graphify.md`。
-  - **xhigh（要判斷）**：planner、database-reviewer、security-reviewer、pr-test-analyzer、a11y-architect、`lane-reviewer`（關注面 lane）、`ui-lane-reviewer`（真瀏覽器的 UI lane 與走一趟）、`converge-verifier`（收斂驗證）、`blind-judge`（盲評，不載 CLAUDE.md）。
+  - **xhigh（要判斷）**：planner、database-reviewer、security-reviewer、pr-test-analyzer、a11y-architect、`lane-reviewer`（關注面 lane）、`ui-lane-reviewer`（真瀏覽器的 UI lane 與走一趟）、`converge-verifier`（收斂驗證）、`blind-judge`（盲評，不載 CLAUDE.md）、architect、`code-architect`（三取向對照）、code-reviewer、fastapi-reviewer、performance-optimizer。
   - **high（範圍已定，或 A/B／laneyield 證實不掉品質）**：tdd-guide、comment-analyzer、go-reviewer、silent-failure-hunter、typescript-reviewer、python-reviewer（見 `references/lanes.md` §effort）、`doc-slice`（文件片）、doc-updater（codemap／README）、code-explorer、quick-task（graphify 抽取除外，見上）。
   - **內建 agent（general-purpose、Explore、Plan）沒有 frontmatter，effort 跟著主 session 走**：主 session 開 max 它就跑 max，開 medium 就跑 medium。有固定用途的工作一律派上面的專用 agent，general-purpose 只留給不屬於任何一類的雜務。
   - agent 檔改動不必重啟：改既有檔的 frontmatter，下一次派工就生效；新建或刪除的檔，下一個使用者回合才出現在可用清單（同回合派會 not found）；已在跑的那顆維持舊設定跑完。驗證看 `~/.claude/projects/<proj>/<sid>/subagents/*.jsonl` 的 `"model"` 與 `"effort"`。內建 agent 的模型靠 `~/.claude/settings.json` 的 `CLAUDE_CODE_SUBAGENT_MODEL`；`fork` 永遠跑主 session 的模型與 effort。花費用 `scripts/agentcost.py` 量。
-- **派工前確認 agent 的工具集**：comment-analyzer／planner 等沒有 Write（交付要主 session 落檔或改用有 Write 的 agent）；沒 Bash 的跑不了測試；lane-reviewer、quick-task 只有 Read／Write／Bash／Grep／Glob（少背約 15k token 的工具定義），要瀏覽器的派 `ui-lane-reviewer`。有 `tools:` 白名單的 agent 只拿得到列出的工具；11-07 起定義都不列 `LSP`（從工作目錄看被 git 忽略的路徑——`tmp/` 樹、從主 checkout 查 `.claude/worktrees/*`——找引用與跳定義回假的空結果，11-04、11-05 探針），找符號與呼叫點一律 grep 加任務包的 caller 清單；定義都有回合規則（獨立的讀取同一則訊息並行發；每回合重付整段 context，回合數就是錢。11-07 探針：code-explorer 33→18 回合、$ −18%、找到的檔一樣；`scripts/turns.py` 量每回合呼叫數）；每顆都有 `maxTurns`（約 1.3–1.5 × 實測最大回合數，失控保險，到頂會硬停、hand-back 可能不完整）。
+- **派工前確認 agent 的工具集**：comment-analyzer／planner 等沒有 Write（交付要主 session 落檔或改用有 Write 的 agent）；沒 Bash 的跑不了測試；lane-reviewer 只有 Read／Write／Bash／Grep／Glob、quick-task 多一個 Edit（少背約 15k token 的工具定義），要瀏覽器的派 `ui-lane-reviewer`。有 `tools:` 白名單的 agent 只拿得到列出的工具；11-07 起定義都不列 `LSP`（從工作目錄看被 git 忽略的路徑——`tmp/` 樹、從主 checkout 查 `.claude/worktrees/*`——找引用與跳定義回假的空結果，11-04、11-05 探針），找符號與呼叫點一律 grep 加任務包的 caller 清單；定義都有回合規則（獨立的讀取同一則訊息並行發；每回合重付整段 context，回合數就是錢。11-07 探針：code-explorer 33→18 回合、$ −18%、找到的檔一樣；`scripts/turns.py` 量每回合呼叫數）；每顆都有 `maxTurns`（約 1.3–1.5 × 實測最大回合數，失控保險，到頂會硬停、hand-back 可能不完整）。
 - **主 session 的模型與等待**：Fable 每次呼叫約 Opus 5.5 的 3 倍，閒置失效在 700–800k context 一次 $7–10；派出一批要等 10 分鐘以上的 subagent 之前先縮 context（checkpoint ＋ `/compact` 或 `/clear`）；切模型只在 `/clear` 之後（切了就是全量重寫）；effort 在 Fable／Opus 5.5 切換不打斷快取，派工／收件／寫記錄階段可降 `high`。
 - 專案專用 agent 優先於通用 agent；語言專門 reviewer 不能用 general-purpose＋好 prompt 取代（內建清單打的是別的方向）。
 - 委派：自足任務包（目標、輸入路徑、環境規則、交付格式）；**長交付一律寫檔**，hand-back 只要 ≤12 行摘要＋檔案路徑；並行 agent 的中間檔／交付檔名帶片號或 lane 名（共用 scratchpad 會互截）。
@@ -135,9 +135,10 @@ owner 吃過「一路衝到底、末端才發現前提錯」的虧，也要自�
 - `wallclock.py`：每種 subagent 的牆鐘（中位／p90／最大）與時間花在哪類工具；檢討與排程改動的驗收用。牆鐘已扣掉斷線停擺與等續跑的閒置（`away` 欄，`_usage.away_spans`；`uilane_audit.py` 同）。
 - `uilane_audit.py`：`ui-lane-reviewer` 每次的生成／等工具切分（平行呼叫不重算）、腳本重複率、自寫基礎腳本數、等失敗執行的佔比、峰值 context、探針背景／前景數與前景等待、輪詢迴圈等待。
 - `run_kit.mjs`、`walk_lib.mjs`、`walk_env.sh`：走一趟的 runner、共用瀏覽器函式庫、起環境（`assets/walk-kit.md`）。
-- `board.py`：跨任務進度看板（另含「流程」區：`ACCEPTANCE.md` 到期的驗收、到期滿 5 列時提示順便檢討、過大的說明檔；`--docsize` 印每份說明檔的大小與增減）——掃主 checkout 與所有掛分支的 worktree 的 PROGRESS.md，讀 frontmatter、git 狀態當場算，寫 `<主 checkout>/tmp/progress/board.html` 並印摘要；HTML 下半部是 `.claude/PRPs/BACKLOG.md` 的 Backlog 四欄。每次跑都把未完成任務的「下一步」快照進 `tmp/progress/ledger.json`，目錄刪了仍以「目錄已刪・待部署」顯示，owner 說部署完了 → 確認是哪幾個後 `--deployed <slug…|all>` 清掉；`~/.claude/settings.json` 的 SessionStart hook（startup／clear／compact）以 `--hook session-start` 跑它，把摘要注入 context。
+- `board.py`：跨任務進度看板（另含「流程」區：`ACCEPTANCE.md` 到期的驗收、到期滿 5 列時提示順便檢討、過大的說明檔；`--docsize` 印每份說明檔的大小與增減）——掃主 checkout 與所有掛分支的 worktree 的 PROGRESS.md，讀 frontmatter、git 狀態當場算，寫 `<主 checkout>/tmp/progress/board.html` 並印摘要；HTML 下半部是 `.claude/PRPs/BACKLOG.md` 的 Backlog 兩欄（重要／有感）。`-h`／`--help` 只印用法、不寫檔；認不得的旗標 exit 2，不會被當成完整跑。每次跑都把未完成任務的「下一步」快照進 `tmp/progress/ledger.json`，目錄刪了仍以「目錄已刪・待部署」顯示，owner 說部署完了 → 確認是哪幾個後 `--deployed <slug…|all>` 清掉；`~/.claude/settings.json` 的 SessionStart hook（startup／clear／compact）以 `--hook session-start` 跑它，把摘要注入 context。
 - `planview.py`：一個任務的 SPEC／PLAN／REVIEW／PROGRESS md 原文嵌進一頁 HTML（`tmp/progress/<slug>.html`）：儀表板計數（定案、切片、測試、閘、審查地圖、交 owner、圖）、固定目錄、`##` 章節收合、表格固定表頭＋逐欄篩選、mermaid 渲染（marked／mermaid 釘版 CDN，離線顯示原文）；每次 checkpoint 跑、改了任務檔重跑。`plan-appendix/*.md` 一併嵌入、預設收合。`--check <slug>`：SPEC／PLAN 既無 ```mermaid 也無 `無圖：<理由>`，或 PLAN.md 超過 300 字的行 >5，就 exit 1（第 3／4 階段好讀閘）。
-- `taskcost.py`／`laneyield.py`：每個任務、每個階段目錄的花費；每一路審查的獨家發現與花費（調路數、檢討流程前先跑；精簡路讀 PROGRESS.md 的 `## 審查` 表）。`laneyield.py` 依表頭欄名讀地圖與裁決表，讀不懂的資料（認不出的裁決詞、來源不是 lane、編號重複、找不到地圖）一律印成 `DATA error`、不當零；`--no-cost --strict` 是第 7 階段裁決表的格式閘；一份 REVIEW 放多包、各包審查目錄不同時加 `--review-dir '<輪標題字>=tmp/<slug>/review2'`（可重複）。`agentcost.py`／`taskcost.py`／`laneyield.py`／`claudemdcost.py` 共用 `_usage.py`：含 Workflow agent，同一訊息多筆 usage 取各欄最大值，依每筆時間戳過濾，cache write 分 5m／1h 計價；`--all-worktrees` 連 worktree 的 session 一起算。金額是 API 等價、不是帳單，沒有價格的模型列為 unpriced、不算 $0。
+- `taskcost.py`／`laneyield.py`：每個任務、每個階段目錄的花費；每一路審查的獨家發現與花費（調路數、檢討流程前先跑；精簡路讀 PROGRESS.md 的 `## 審查` 表）。`laneyield.py` 依表頭欄名讀地圖與裁決表，讀不懂的資料（認不出的裁決詞、來源不是 lane、編號重複、找不到地圖）一律印成 `DATA error`、不當零；`--no-cost --strict` 是第 7 階段裁決表的格式閘；一份 REVIEW 放多包、各包審查目錄不同時加 `--review-dir '<輪標題字>=tmp/<slug>/review2'`（可重複）。`agentcost.py`／`taskcost.py`／`laneyield.py`／`claudemdcost.py` 共用 `_usage.py`：含 Workflow agent，同一訊息多筆 usage 取各欄最大值，依每筆時間戳過濾，cache write 分 5m／1h 計價；`agentcost.py`／`taskcost.py` 加 `--all-worktrees` 連 worktree 的 session 一起算（`laneyield.py` 本來就掃全部 worktree，`claudemdcost.py` 沒有這個旗標）。金額是 API 等價、不是帳單，沒有價格的模型列為 unpriced、不算 $0。
 - `tx.py`：transcript 查詢（`count`／`list`）：依天數、主 session 或 agent 種類、工具名、input 正規式、result／hook 訊息正規式（`--result-grep`，含 PostToolUse attachment）篩 tool_use，`--by session|agent|tool|day|file` 計數；檢討與驗收要掃 transcript 時用它，不再現寫腳本。
+- `ctxio.py`：什麼進了 context——tool_result 字元依工具、輸出最大的 Bash 指令、Agent 交回與派工訊息的大小；看主 session 或某一種 subagent（`--agent`）。檢討時用它找該改成一行判定、讀窄一點或改成寫檔的地方。
 - `accept.py`：`ACCEPTANCE.md` 驗收 runner：列到期／事件／未到的列，把指令欄裡跑得動的 code span 真跑（`--run`，輸出落 `tmp/accept/<日期>/`）、對著判準印；`--slug <slug>` 代入 `<slug>`／`<任務>`／`<docs(prps) hash>` 佔位符；不可跑與「手動／問 owner」的列成「需人判」清單；有副作用的 span（`rm`、`--apply`、`--deployed`、push／commit）一律不跑。`show <slug> [<檔名>]` 從最新仍含該檔的 `docs(prps)` commit 取回已刪任務目錄的檔。判定仍由主 session 做，不改 ACCEPTANCE.md。
 Bash 一律絕對路徑或 `git -C`／`go test -C`，**不要 `cd`**（工作目錄會殘留，下一個 bridge 或 pathspec 會跑錯樹）。

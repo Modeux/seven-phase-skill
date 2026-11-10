@@ -82,7 +82,7 @@ dbq.py --drop deepweave_x | --list-dbs | --list-fixtures   # --drop 只刪 dbq �
 exit：0 成功；1 SQL 錯、欄位不存在、fixture 核對不符；2 參數錯、Docker 或 DB 不在；3 被安全規則拒絕。fixture 帳號密碼 `deepweave-demo-123`，點數一律走 `point_transactions`。限制：角色資料只驗過詳情 API，首頁不會出現；fixture 用 SQL 寫 `adult_status`，走查中途要改得走 `PUT /me/community/settings/adult-status`。
 
 ## 環境坑
-- repo 有 24 份 `CLAUDE.md`：確認工作樹狀態用不帶 pathspec 的 `git status --porcelain`。
+- repo 各層有二十多份同名的 `CLAUDE.md`：確認工作樹狀態用不帶 pathspec 的 `git status --porcelain`。
 - go-fix hook 只 `gofmt` 剛改的檔，並把該檔「改到的行」上的 go fix 改寫塞進 context（不寫檔）；看到 `[go-fix hook]` 就在同一片裡改掉，別留到收尾。
 - worktree 守衛會擋 shell 變數與命令替換：CLI 橋接／材料包組裝改寫成 `python3 <script>.py`；改既有檔一律 Edit／Write（`.claude/hooks/py-edit-guard.py` 會擋 Python 改檔，Edit 做不到時加 `# allow-py-edit: <理由>`）。該 hook 指令尾的 `; exit 0` 是刻意的：找不到檔時 `python3` exit 2，PreToolUse exit 2＝擋下所有 Bash。`.claude/settings.json` 舊有的 `$TOOL_INPUT` 密鑰 hook 是 owner 10-07 刻意刪的（變數不存在、從未生效；照原 pattern 修好 30 天會擋約 1,035 個正常指令，真正整檔印出密鑰檔只 2 次），別修回來。
 - `rm -rf` 會被權限系統擋：清樹用 `git worktree remove --force`，暫存檔換新名字而不是刪。

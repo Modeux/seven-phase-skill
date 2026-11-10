@@ -13,7 +13,7 @@ Steps: (1) --journal: `wf_reports.py --journal ... --out-dir <review-dir>`; (2) 
 not written its status yet); (3) `reviewcov.py <review-dir> --index <review-dir>/findings-index.md` with the
 --waive／--ack-manual flags; (4) the task file; (5) one line to paste into the Agent call.
 
-Exit: 0 task file written; 1 an internal lane is missing or failed and not waived; 3 an external lane is still
+Exit: 0 task file written; 1 a lane (internal or external) is missing or failed and not waived; 3 an external lane is still
 running (wait for its background notification, or --waive); 2 bad arguments or a tool that would not run.
 On 1／2／3 nothing is written and a task file from an earlier run is removed, so a stale one cannot be dispatched.
 WHY a script: 11-07, 16 reviews — internal lanes done to synthesis started median 6.2 min, 170 min in all, 165 of

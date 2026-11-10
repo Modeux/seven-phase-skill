@@ -9,6 +9,9 @@ writes <main checkout>/tmp/progress/board.html and prints a short summary.
   board.py                        # write HTML, print summary
   board.py --hook session-start   # write HTML, emit SessionStart hook JSON
   board.py --docsize              # size of every CLAUDE.md／.claude/rules file: now, vs HEAD, vs last retro
+  board.py --deployed <slug…|all> # full run that also drops those gone-dir tasks from the ledger (owner said deployed)
+  board.py -h | --help            # this text; writes nothing
+Any other option exits 2 instead of running.
 
 Besides tasks it shows the process items: 驗收到期 (rows of the skill's ACCEPTANCE.md 待驗 whose date
 has come), tasks recorded since the last retro (ACCEPTANCE.md 檢討紀錄), and oversized instruction files.
@@ -670,6 +673,16 @@ def render_backlog(groups):
 
 def main(argv):
     hook = "--hook" in argv
+    # WHY: a full run rewrites board.html and the ledger, so `--help` or a mistyped option must stop here instead of
+    # falling through to one. INVARIANT: the hook path skips this check — a SessionStart hook must never fail.
+    if not hook:
+        if "-h" in argv or "--help" in argv:
+            print((__doc__ or "").strip())
+            return 0
+        unknown = [a for a in argv if a.startswith("-") and a not in ("--deployed", "--docsize")]
+        if unknown:
+            print(f"board.py: unknown option {' '.join(unknown)} (see --help)", file=sys.stderr)
+            return 2
     deployed = argv[argv.index("--deployed") + 1:] if "--deployed" in argv else []
     if "--docsize" in argv:
         main_tree = worktrees(pathlib.Path.cwd())
