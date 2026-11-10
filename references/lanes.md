@@ -52,7 +52,7 @@
 - 三取向架構對照（第 2 階段簡報前，觸發條件見 `phases/2-discuss.md`）：`code-architect`（xhigh）三顆、任務書只差取向一行。
 - 丟棄式原型（第 2／3 階段，觸發條件見 `phases/2-discuss.md` 第 3 步）：general-purpose，照 SKILL.md「硬禁令」不傳 `model`。原型雖然會丟，做工粗糙會讓 owner 因「醜」否決對的方向，做工就是判斷的一部分，不降模型。
 - 真瀏覽器走一趟（第 5／7 階段末）：`ui-lane-reviewer`（xhigh），與全閘同時跑、交件附走一趟套件（`phases/5-implement.md`「主 session 的驗收」、`assets/walk-kit.md`）。不拆給多顆同時走：共用 dev DB 與測試帳號會互踩，每顆都重付起環境與讀碼，還會切斷「重整後狀態」這類跨流程的接縫。
-- 盲評（模型／提示詞探針）：`blind-judge`（xhigh、不載 CLAUDE.md、只有 Read／Write／Glob）；位置由主 session 隨機化後才交給它。
+- 盲評（模型／提示詞探針）：`blind-judge`（high、不載 CLAUDE.md、只有 Read／Write／Glob；xhigh 對照的 A/B 待跑，見 ACCEPTANCE「待驗」）；位置由主 session 隨機化後才交給它。
 
 ## 派工前檢查
 - agent 的工具集（有沒有 Write／Bash；lane-reviewer、quick-task 沒有瀏覽器與 MCP）。
