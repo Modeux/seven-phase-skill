@@ -1,0 +1,61 @@
+phase  ckpt   go  steer clear-go no reply sess end steer % gap med min len med
+    0     0    0      0        2        0        0      0%         0.0       0
+    1    28    2      1       26        0       25     33%         0.8      13
+    2    33    1      4       28        0       28     80%         7.4     120
+    3    31    2      4       32        0       25     67%         3.2      30
+    4    36    2      4       38        1       29     67%         1.3     530
+    5   127   10     53       17       19       45     84%         1.8    1190
+    6    32    1      3       33        1       27     75%         0.9     312
+    7    58   15     22        0        3       18     59%         1.1     711
+
+-- steer samples after phase 1
+   PM回覆 P32刪對話時連影片一起算（我剛看錯，照現在做法就可不用改）  - 影片燈箱的抽屜把手也寫「图片详情」嗎？ 還是統一改成作品詳情 [Image #2] [Image #3
+
+-- steer samples after phase 2
+   BACKLOG.md 檔頭寫它「還在 worktree-together、沒合進 dev，上線前不影響使用者」，這已經過期了，容易讓人低估旅程相關條目。檔頭的 T/ 路徑也指向那條
+   /compact voice-byteplus 第 2 階段進行中（未 commit，worktree voice）；真相源 .claude/PRPs/plans/voice-by
+   /compact voice-byteplus 第 2 階段進行中（未 commit，worktree voice）；真相源 .claude/PRPs/plans/voice-by
+   該怎麼讓使用者知道親密句是可以用更好的模型去產出？ 同時也要等候？
+
+-- steer samples after phase 3
+   {"R11-A-1.wav":{"score":5},"R11-A-2.wav":{"score":5},"R11-A-3.wav":{"score":5},"R11-A-4.wa
+   PM回報的bug有包括在裡面嗎？ 一句話讓我跟PM對齊
+   把spec給grok4.7, codex gpt-6-astra看看
+   sepc寫完好後 請grok, gpt-6-astra一起研究看看 怎麼深化自然感
+
+-- steer samples after phase 4
+   /compact chat-video-publish 第 4 階段：PLAN.md 已定稿（D8–D24、六片三波、測試表 M/C/B/F/G、規則對照 rulesfor --c
+   /compact voice-redesign-first 第 4 階段 PLAN 審查中。真相源：.claude/PRPs/plans/voice-redesign-first/
+   /compact character-intro-page 第 4 階段收尾中（worktree pm-feedback，主 session opus-5.5 全程不換）。真相源：
+   /compact voice-byteplus 第 4 階段進行中（未 commit，worktree voice，已 ff 到 dev 4bc24da3a；任務目錄未追蹤）。真相
+
+-- steer samples after phase 5
+   /compact chat-history-loading 第 5 階段 wave 1：B、F3 已收件通過（各自留在私有樹 tmp/chat-history-loading/im
+   /compact chat-history-loading 第 5 階段 wave 2：wave 1 三片（B／F1／F3）已收件、已 merge_back 合回主樹（40 檔；c
+   /compact character-intro-page 第 5 階段 W4 在跑（worktree pm-feedback）。真相源：.claude/worktrees/pm-
+   /compact journey-process-depth 第 5 階段 W1 進行中。真相源 .claude/PRPs/plans/journey-process-depth/
+   /compact 第 5 階段 W2 進行中。真相源 .claude/PRPs/plans/journey-process-depth/{SPEC,PLAN,PROGRESS}.m
+   /compact journey-process-depth 第 5 階段 W3 進行中。真相源 .claude/PRPs/plans/journey-process-depth/
+   ui-lane-reviewer 也停 明天再跑吧
+   /compact journey-process-depth 第 5 階段 E5。真相源 .claude/PRPs/plans/journey-process-depth/{SPE
+   /compact explore-revamp 第 5 階段進行中（worktree explore-page）。真相源：.claude/PRPs/plans/explore-re
+
+-- steer samples after phase 6
+   /compact journey-choice-grammar 第 6 階段多方審查派工完成、等收件。真相源 .claude/PRPs/plans/journey-choice-g
+   還是幫我試試看gemini-3.8-flash high?
+   /compact journey-entry-and-home 第 6 階段包 1 審查中（10-13 16:05 派出 7 路）。真相源：.claude/PRPs/plans/j
+
+-- steer samples after phase 7
+   /compact chat-history-loading 第 7 階段收斂進行中（主 session opus-5.5）。真相源：.claude/PRPs/plans/chat-
+   /compact chat-history-loading 第 7 階段收斂收尾中（主 session opus-5.5）。真相源：.claude/PRPs/plans/chat-
+   /compact identity-portrait-nsfw-nude 第 7 階段收斂進行中（portrait worktree，主 session opus-5.5，全程禁 
+   /compact age-gate-pm-rules-v2 第 7 階段收斂進行中。真相源：.claude/PRPs/plans/age-gate-pm-rules-v2/{PRO
+   /compact age-gate-pm-rules-v2 第 7 階段收斂：四片修片（FX-sw、FX-char、FX-deriv、FX-fe）全收件合回主樹，全閘對基線零新增（
+   /compact voice-byteplus 第 7 階段修復中（完整七階段，主 session opus-5.5，worktree voice）。真相源：.claude/PRP
+   /compact voice-byteplus 第 7 階段收尾中（完整七階段，主 session opus-5.5，worktree voice）。真相源：.claude/PRP
+   /compact voice-byteplus 第 7 階段收尾（完整七階段，主 session opus-5.5，worktree voice）。真相源：.claude/PRPs
+   /compact pm-feedback-4 第 7 階段收尾中（主 checkout、dev、未 commit）。已完成：owner 拍板（R1 先深色、R3 這包做回前景重讀、
+
+main-session active 5-min bins by local hour (share of all):
+  00:0%  01:0%  02:0%  03:0%  04:0%  05:0%  06:0%  07:1%  08:4%  09:6%  10:4%  11:4%  12:10%  13:8%  14:9%  15:10%  16:9%  17:9%  18:9%  19:4%  20:3%  21:4%  22:3%  23:1%
+  00-08 share 1%   total main-active 201 h

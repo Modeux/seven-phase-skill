@@ -35,7 +35,7 @@
 - intake gate：只有「嚴重技術債」或「潛在 bug 風險」（含跨層漂移、誤導性註解）才進地圖；審美、風格偏好、PLAN「不做清單」裡的東西不進（除非證明本包讓它變糟）。
 - 收件後 lane 報告原文留在 `tmp/`，REVIEW.md 只留地圖與結論。
 
-## 6. 審完不要順手做的事
-不修、不問 owner 第 7 階段的拍板題（那些在第 7 階段用 AskUserQuestion 問）。快照與突變樹留著給第 7 階段用。
+## 6. 審完接著做第 7 階段（不停）
+寫 PROGRESS，發一則摘要（路數、零／幾條 CRITICAL、最強訊號、哪幾條會進拍板題），明說接著派收斂驗證，然後直接照 `phases/7-converge.md` §1 派收斂驗證與不必驗證的修復片（SKILL.md「Checkpoint 協定」第 7 條）。摘要裡不問拍板題（那些在第 7 階段 §2 用 AskUserQuestion 問），不修待驗證或待拍板的條目。快照與突變樹留著給第 7 階段用。
 
-→ Checkpoint（回報附：路數、零／幾條 CRITICAL、最強訊號、哪幾條要 owner 拍板）。
+有 CRITICAL、有發現質疑 SPEC 的方向或範圍、某一路跑不了而替補要 owner 決定、或 `reviewcov.py` 沒過 → 照舊停 Checkpoint（回報附：路數、零／幾條 CRITICAL、最強訊號、哪幾條要 owner 拍板），owner 說「繼續」才進第 7 階段。

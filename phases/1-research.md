@@ -16,4 +16,4 @@
 5. 套 challenge-thinking：以研究發現挑戰任務前提與 owner 預設做法、找更簡或更貼合現有架構的替代方案、標記發現之間的矛盾與風險。**挑戰結論寫進 RESEARCH.md**，每條留一欄「處置：待討論」。
 6. 先在 RESEARCH 標出**預估規模**（正式碼行數量級、是否碰錢／權限／跨層不變式），第 4 階段據此定審查路數。
 
-→ Checkpoint（SKILL.md）。
+→ **不停，接著做第 2 階段**（SKILL.md「Checkpoint 協定」第 7 條）：寫 PROGRESS、發一則研究摘要（最重要的 1–3 件發現、挑戰結論幾條），明說接著準備第 2 階段簡報，不附 `/compact`、不等回覆。挑戰結論推翻任務前提或 owner 指定的做法、有 prod 查詢等 owner 核准、預估規模大到要提 ROADMAP 拆任務 → 照舊停 Checkpoint。

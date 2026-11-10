@@ -1,0 +1,41 @@
+type                                                           n        $  share    $/n  turns first k  last k  effort
+tdd-guide                                                    484  3453.18  32.5%   7.13     77      22     274  {'high': 41431}
+ui-lane-reviewer                                             122  1219.17  11.5%   9.99    114      29     364  {'xhigh': 14995}
+lane-reviewer [wf]                                           112   854.86   8.1%   7.63     87      21     362  {'xhigh': 9546}
+doc-slice                                                    141   607.26   5.7%   4.31     50      22     240  {'high': 7912}
+pr-test-analyzer [wf]                                         47   467.86   4.4%   9.95    111      21     362  {'xhigh': 4664}
+converge-verifier [wf]                                        60   455.56   4.3%   7.59     77      30     351  {'xhigh': 4630}
+converge-verifier                                             56   430.30   4.1%   7.68    106      30     342  {'xhigh': 5761}
+code-explorer                                                120   419.11   3.9%   3.49     49      23     239  {'high': 5913}
+general-purpose                                               49   358.67   3.4%   7.32     75      50     311  {'xhigh': 3133, 'high': 206, 'max': 378}
+comment-analyzer [wf]                                         65   352.60   3.3%   5.42     56      22     348  {'high': 3482}
+lane-reviewer                                                 33   264.97   2.5%   8.03     93      20     402  {'xhigh': 2635}
+planner                                                       18   221.77   2.1%  12.32    116      21     507  {'xhigh': 1864}
+quick-task                                                   318   207.02   1.9%   0.65      7      20      73  {'high': 3783}
+security-reviewer [wf]                                        33   185.94   1.8%   5.63     70      23     299  {'xhigh': 2325}
+ui-lane-reviewer [wf]                                         15   156.04   1.5%  10.40     97      28     375  {'xhigh': 1590}
+database-reviewer [wf]                                        23   142.26   1.3%   6.19     81      23     298  {'xhigh': 1795}
+silent-failure-hunter [wf]                                    44   138.08   1.3%   3.14     46      21     217  {'high': 1894}
+typescript-reviewer [wf]                                      35   135.64   1.3%   3.88     51      23     255  {'high': 1144, 'xhigh': 533}
+blind-judge                                                  180   129.01   1.2%   0.72      4       5      51  {'high': 556, 'xhigh': 291}
+go-reviewer [wf]                                              36   128.53   1.2%   3.57     48      22     236  {'high': 1725}
+code-architect                                                27    97.18   0.9%   3.60     28      20     171  {'xhigh': 1084}
+a11y-architect [wf]                                           12    66.70   0.6%   5.56     57      24     292  {'xhigh': 595}
+fork                                                           8    35.26   0.3%   4.41     48      44     197  {'high': 227, 'xhigh': 202}
+None                                                           3    19.33   0.2%   6.44    106      91     490  {'xhigh': 177, 'high': 106}
+performance-optimizer                                          1    12.54   0.1%  12.54    128      25     412  {'xhigh': 128}
+ab-tdd-guide-v2                                                1    10.04   0.1%  10.04    143      25     419  {'high': 143}
+ab-ui-lane-reviewer-high                                       1     8.36   0.1%   8.36    113      27     344  {'high': 113}
+ab-security-reviewer-v2 [wf]                                   1     8.21   0.1%   8.21     83      25     504  {'xhigh': 83}
+pr-test-analyzer                                               1     6.48   0.1%   6.48     82      20     286  {'xhigh': 82}
+database-reviewer                                              1     6.22   0.1%   6.22     69      21     305  {'xhigh': 69}
+silent-failure-hunter                                          2     4.84   0.0%   2.42     22      20     155  {'high': 43}
+architect                                                      1     3.85   0.0%   3.85     31      19     325  {'xhigh': 31}
+go-reviewer                                                    1     3.84   0.0%   3.84     69      25     187  {'high': 69}
+security-reviewer                                              1     3.44   0.0%   3.44     73      21     229  {'xhigh': 73}
+python-reviewer                                                1     2.88   0.0%   2.88     40      22     158  {'xhigh': 40}
+typescript-reviewer                                            1     0.89   0.0%   0.89     17      22      71  {'high': 17}
+claude-code-guide                                              4     0.00   0.0%   0.00      6      45      87  {'high': 3, 'medium': 28}
+web-fetch                                                     15     0.00   0.0%   0.00      2       5      36  {'medium': 44, 'xhigh': 4}
+total $10617.87 across 2073 agents (18 project dirs)
+data quality: unpriced 79  no_usage 0  no_message_id 0  bad_json 0  no_timestamp 0

@@ -1,0 +1,115 @@
+## 1. comment blocks added to prod .go/.ts/.py
+P0 before the workflow 06-01~09-21: blocks 12119, lines 47839; blocks with WHY/INVARIANT 1 (0%), lines inside them 19 (0%); block length median 3, p90 7, max 75; marked block mean 19.0 lines, unmarked mean 3.9
+P1 workflow 09-22~10-09: blocks 4585, lines 18607; blocks with WHY/INVARIANT 1440 (31%), lines inside them 7422 (40%); block length median 3, p90 8, max 44; marked block mean 5.2 lines, unmarked mean 3.6
+P2 workflow 10-10~11-10: blocks 7665, lines 26319; blocks with WHY/INVARIANT 2459 (32%), lines inside them 11730 (45%); block length median 2, p90 7, max 41; marked block mean 4.8 lines, unmarked mean 2.8
+  sample of 30 unmarked block first lines (of 5206):
+    [1L] // CharacterChatVideo is a completed chat video as the 我的 list reads it.   <- model.go
+    [4L] // WHY the cover is the newest kept trip of the cell that has a   <- service.go
+    [8L] // WHY card by card, the two extras field by field: the row is model output   <- service.go
+    [2L] // buildVoiceAgeJudge is the judge of every design and of an 18+ apply. A server without the client answers 503 on both.   <- wire_voice_director.go
+    [3L] // InsertOpts. WHY the design queue at priority 4: a creator's design runs at priority 1 and waits for at most one of these,   <- model.go
+    [1L] /** null = not kept. */   <- api.types.ts
+    [2L] // WHY judged by what is drawn: rails the 18+ filter empties are not drawn,   <- home-page.ts
+    [1L] // P19: the lines only while the layer that holds them is up.   <- chat-workspace.ts
+    [1L] // nsfwFollowUp creates the 18+ half of a portrait pair; nil creates none.   <- generate_image.go
+    [2L] // PublicDialControl fits net.Dialer.Control. WHY there: it runs after DNS, once per address about to be connected to and again after   <- public_dial.go
+    [6L] /**   <- derivative-create.store.ts
+    [1L] /** The 「回到共同日记」 text link (an operation, so a link — SPEC §8 #20). */   <- journey-album.ts
+    [2L] // WHY the fallback on a required field: a gateway older than this bundle sends no variant, and reading that as detail   <- chat-workspace.store.ts
+    [1L] #!/usr/bin/env python3   <- seed_probe.py
+    [1L] // The refusal first (it answers the press), then the fold hint or, without one, the start-picture note.   <- my-derivatives.ts
+    [2L] * that is still being produced; 44 clears the 43m30s premium envelope and stays   <- derivative-create.store.ts
+    [1L] // WHY the source and not a failure: the voice is fine, and only the nicer audition is missing.   <- generate_voice_design_speech.go
+    [7L] // 這段安排: which leg of a trip she moves first, which leg may take the   <- journey_arrangement.go
+    [2L] // WHY capture, and no preventDefault/stopPropagation: the click that closes the menu still   <- gallery-filter-menu.ts
+    [1L] // classifyNotKept reads why a keep / unkeep matched no row.   <- repository.go
+    [2L] // WHY the pick stays (the sentence tells the visitor to change or remove it) but the   <- derivative-create.store.ts
+    [2L] // planFor asks the same table as a message tap. WHY a read failure lands on home: the audition is free and must still   <- greeting_audition.go
+    [1L] // WHY ?.: jsdom ships no scrollIntoView; the focus below still has to run there.   <- visual-form.ts
+    [2L] // GetBorrowable reads one picture (an image, or a chat video as a start frame)   <- borrow.go
+    [7L] // journeyRevisitHook is the road the pinned trip left untaken: TripHook over   <- wire_journey_recent.go
+    [3L] // BuildSuggestionPromptWithMemories is BuildSuggestionPromptForScript with no   <- prompt_builder_suggestions.go
+    [5L] // WHY director_attempts too: a refused job writes no prompt_logs   <- generate_derivative.go
+    [3L] // WHY only the 18+ half: the general half of a pair may be clothed, and a   <- generate_image.go
+    [1L] // params is nil on the home path, which is what keeps the speech key out of the JSON.   <- speech_plan.go
+    [3L] // portraitInputParams marshals the provider payload — Seedream omits   <- service_start.go
+  sample of 12 marked block first lines:
+    [5L] //   <- wire_director_image_url.go
+    [5L] // WHY: both are written once at creation and never recomputed — ownership is   <- model.go
+    [1L] // INVARIANT: the shared registry. A private one would open a breaker the admin reset cannot see.   <- wire_voice.go
+    [2L] // WHY: cursor_id alone is legal (the page ended on a room with no last_message_at);   <- handler.go
+    [2L] // INVARIANT: the attribute VoiceSpeakerButton's template writes, by this name, when its next press would pay. A template   <- voice-playback-state.ts
+    [2L] // WHY: whoever is still up past midnight mostly counts the new day   <- confirm.go
+    [1L] // INVARIANT[derivative-start-frame-url]: a chat-video parent lends its poster, never its mp4.   <- derivative-create.ts
+    [3L] // INVARIANT: any non-null media_gate withholds every picture and video of the   <- visual-assets-panel.ts
+    [1L] // INVARIANT[derivative-image-inherits-second-ref-nsfw]: the server stores it 18+.   <- derivative-create.store.ts
+    [3L] // INVARIANT[derivative-start-frame-url]: Parent.AssetURL is already the   <- service.go
+    [4L] // INVARIANT: same value as companion crisisCareSuppressionWindowHours and   <- service.go
+    [2L] // INVARIANT: the version and audience literals are the CHECK values of   <- home_rails.go
+
+## 2. source-reading test files at HEAD that did not exist at 09-21
+at HEAD 204 files; new since 09-21: 129 files, 31409 lines
+  name keywords: (other) 64, integration 32, wiring 18, openapi 5, parity 4, lint 2, guard 1, contract 1, migration 1, pin 1
+      291 read backend-golang/cmd/server/voice_speech_migration_integration_test.go
+      422 read backend-golang/cmd/server/derivative_wire_shape_test.go
+      106 read backend-golang/cmd/server/migration_lossy_down_registered_test.go
+      236 read backend-golang/internal/worker/chat_image_cameo_schema_integration_test.go
+      371 read backend-golang/internal/aiclient/carrothub/submit_builders_test.go
+      102 read backend-golang/internal/worker/voice_speech_budget_test.go
+       83 read backend-golang/internal/character/heat_repository_test.go
+      145 ast  backend-golang/cmd/server/wire_text_job_budget_test.go
+       74 read angular-workspace/projects/frontend/src/app/features/chat-workspace/voice-read-order.spec.ts
+      321 read backend-golang/internal/worker/journey_recall_query_integration_test.go
+      277 read angular-workspace/projects/frontend/src/app/features/chat-workspace/chat-toast-desktop-width.spec.ts
+      477 read backend-golang/internal/worker/character_day_opening_test.go
+       85 read backend-golang/internal/sitesettings/chat_image_duo_nsfw_slot_test.go
+       68 ast  backend-golang/internal/worker/journey_note_no_reinjection_c4_test.go
+      241 read backend-golang/internal/worker/summarize_relationship_live_test.go
+      173 read backend-golang/cmd/server/wire_journey_recall_test.go
+       35 read backend-golang/cmd/server/derivative_prompt_logger_wiring_test.go
+       35 read backend-golang/cmd/server/date_confirm_wiring_test.go
+       71 read backend-golang/internal/conversation/opening_suggestions_reply_index_integration_test.go
+       62 read backend-golang/internal/worker/add_memory_profile_parity_test.go
+      169 ast  backend-golang/cmd/server/wire_journey_invite_tx_shape_test.go
+       59 read backend-golang/internal/worker/memory_add_farewell_fallback_pin_test.go
+      158 ast  backend-golang/internal/voice/speech_plan_test.go
+      155 read backend-golang/internal/sitesettings/identity_portrait_slot_test.go
+      400 ast  backend-golang/cmd/server/portrait_age_wiring_test.go
+
+## 3. longest Go functions at HEAD (prod)
+   2739  cmd/server/wire.go  func wireRiver(
+   1945  internal/worker/prompt_assembler.go  func (pa *PromptAssembler) assembleCoreWithOptions(ctx context.Context, opts assembleCoreO
+   1431  cmd/server/routes.go  func setupRouter(pool *pgxpool.Pool, jwtSecret []byte, corsOrigins string, creditSvc *cred
+    775  cmd/server/main.go  func run() error {
+    697  internal/worker/generate_text.go  func (w *GenerateTextWorker) workStreaming(ctx context.Context, job *river.Job[GenerateTex
+    510  internal/worker/summarize_relationship.go  func (w *SummarizeRelationshipWorker) Work(ctx context.Context, job *river.Job[SummarizeRe
+    506  internal/worker/generate_chat_image.go  func (w *ChatImageGenerationWorker) Work(ctx context.Context, job *river.Job[ChatImageGene
+    444  internal/worker/summarize_relationship.go  func (a *ReflectionLedgerAdapter) PersistReflectionRun(ctx context.Context, set Reflection
+    438  internal/worker/generate_derivative.go  func (w *GenerateDerivativeWorker) Work(ctx context.Context, job *river.Job[GenerateDeriva
+    418  internal/derivative/service.go  func (s *Service) Initiate(ctx context.Context, userID string, req CreateRequest) (Work, *
+    392  internal/worker/extract_affinity.go  func (w *ExtractAffinityWorker) Work(ctx context.Context, job *river.Job[ExtractAffinityAr
+    349  cmd/server/wire_workers.go  func wireDerivative(
+    343  internal/worker/chat_video_bridges.go  func (b *ChatVideoVideoBridge) SubmitVideoAndSchedulePoll(ctx context.Context, in ChatVide
+    328  internal/chat/send_shared.go  func (h *Handler) handleSharedSendMessage(
+    323  internal/chat/session_shared.go  func (h *Handler) runSharedSession(ctx context.Context, conn *websocket.Conn, userID strin
+    320  internal/worker/generate_image.go  func (w *GenerateImageWorker) Work(ctx context.Context, job *river.Job[GenerateImageArgs])
+    320  cmd/server/wire_workers.go  func wireTextAndRefundWorkers(
+    314  internal/worker/generate_text.go  func (w *GenerateTextWorker) Work(ctx context.Context, job *river.Job[GenerateTextArgs]) (
+
+## 4. phase-6 snapshot vs committed change (added lines; delta = what review + convergence added)
+  task                         snap prod+ final prod+     d% snap test+ final test+     d%  feat commit
+  age-gate-pm-rules-v2                223         730    227       1338        2570     92  feat(age-gate): PM 18+ 規則表第二版：角色四面對成年全給、工坊對成年開放、換帳
+  character-intro-page              13721       15110     10      22983       28074     22  feat(character-intro): 角色介紹頁照 Figma 改版：作品區、聊天影片可發布
+  character-intro-pm-r2              2273        2851     25       7016        8387     20  feat(derivative): PM 第二輪：聊天圖／聊天影片都能做影片、聊天影片當原视频、介紹
+  chat-history-loading               1753        2352     34       4108        5827     42  feat(chat): 聊天室往上載更早訊息、對話列表伺服器搜尋與翻頁不漏房
+  chat-video-publish                  590         695     18       3899        4893     25  feat(chat-video-publish): 聊天室影像预览的影片也能「发布到画廊」；站台 1
+  db-statement-timeout                425         458      8       1968        2968     51  feat(db): 連線池單支語句 60 秒上限與池滿監看告警
+  expression-reaction-gates           208         239     15        511         697     36  feat(expression-reaction-gates): 買了的反應動畫不再永遠不播；負值臉
+  gallery-generic-plan                 21          29     38         82          90     10  feat(gallery): 熱門列表改走不具名語句，不再被換成 generic plan
+  gated-card-corner-bleed               7          12     71         10           9    -10  fix(frontend): 受閘模糊圖在 iPhone 畫到卡片圓角外
+  home-card-click-gtm                  48          60     25        102         128     25  feat(frontend): 首頁卡片點擊補送 character_card_click 與 li
+  pm-feedback-2                       101         197     95        288         421     46  feat(pm-feedback-2): 動畫歷史卡顯示來源靜態圖、Safari 外觀頁確認框看得到
+  pm-feedback-3                       483         715     48       1086        2706    149  feat(frontend): PM 測試機回報修正：畫廊下拉、手機會員入口、詳情不跳動與頭像
+  pm-feedback-4                       353         632     79       1903        3555     87  feat(frontend,gateway): 18+ 聊天閘改顯示模糊小圖，工坊標出已发布／私人
+  portrait-prompt-revamp             4478        5314     19       9313       12939     39  feat(portrait): 頭像生成擋未成年、背景光線神情跟著角色走、開關開時不再強制全露
+  TOTAL                             24684       29394     19      54607       73264     34

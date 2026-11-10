@@ -2,7 +2,7 @@
 
 [中文](README.md) | **English**
 
-A skill for Claude Code. It breaks "build a feature / fix a bug" into seven steps, and **after every step it stops, tells you what it did, and waits for you to say "continue"**.
+A skill for Claude Code. It breaks "build a feature / fix a bug" into seven steps, and **wherever a decision is yours it stops, tells you what it did, and waits for you to say "continue"**.
 
 > What's a skill? A bundle of instructions. Drop it into the right folder and Claude picks it up on its own whenever it's relevant. You don't memorize any commands — you just ask in plain words.
 
@@ -12,7 +12,7 @@ A skill for Claude Code. It breaks "build a feature / fix a bug" into seven step
 
 Let an AI run from start to finish in one go, and you often end up finding out the direction was wrong from the start — or seeing the code for the first time after it's already committed. This skill keeps you in the driver's seat:
 
-- **It stops after every step**: the AI says what it did, why, and what's next. It only moves when you say "continue".
+- **It stops wherever the decision is yours**: the AI says what it did, why, and what's next. It only moves when you say "continue". After research and after review it only reports and keeps going, unless something serious or a decision for you comes up.
 - **Think first, code later**: look at the current code, discuss with you, nail down the details, write a plan. Only after you approve all four does it write code.
 - **Test first, code second**: it writes a test that fails right now, then the code that makes it pass.
 - **Several reviewers**: when the code is done, several independent reviewers each check one angle (style, security, tests, misleading comments…). All their notes are merged and decided one by one.

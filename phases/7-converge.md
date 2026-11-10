@@ -12,6 +12,8 @@
 ## 2. owner 拍板
 需要拍板的條目用 AskUserQuestion 一次問完（最多 4 題）：每題兩三句白話脈絡、選項寫後果、推薦項排第一、關鍵對比附 preview。依據要來自驗證報告的實測數字，不要用審查 lane 的原始宣稱。
 
+**第 6 階段的 checkpoint 在這裡**（SKILL.md「Checkpoint 協定」第 7 條；第 6 階段因為有事已經停過的不重複）：驗證交件後照 checkpoint 形狀回報——第 6 階段摘要（路數、CRITICAL 數、最強訊號）、驗證結果（confirmed／false positive／unverified 各幾條、推翻了哪些 lane 宣稱）、§1 已先派的修復片在修什麼——再問拍板題。沒有拍板題也停這一次；owner 回覆後才切 §4 剩下的修復片。
+
 ## 3. 裁決落檔
 REVIEW.md 加「第 N 階段收斂裁決」表（標題含「收斂裁決」）：每條一列（編號、裁決、最終嚴重度、依據、處置／修在哪一片）＋名單外交叉發現（併入修復或記錄不修）。裁決欄以 `confirmed`／`confirmed-部分`／`false positive`／`won't fix`／`unverified`／`owner 拍板` 開頭（補充放括號），還沒定的寫 `pending`，修完回填——「修片確認」這類自創詞腳本認不得。宣稱嚴重度留在地圖，「最終嚴重度」欄只在這張表（`laneyield.py` 用它分 R／L），格內只放一個嚴重度字，原值或理由放括號（`LOW（原 HIGH）`）。寫完跑 `scripts/laneyield.py <slug> --no-cost --strict`：未辨認／pending／缺裁決的 R、來源認不出 lane、編號重複都會列出，exit 0 才算表齊。多包任務（同一份 REVIEW.md 有好幾輪、各輪審查目錄不同）每輪各指一個：`--review-dir "包 1=tmp/<slug>/review" --review-dir "包 2=tmp/<slug>/review2"`（等號左邊是該輪標題裡的字）。HIGH 以上的 `unverified` 不得在表裡停著：進 §2 owner 拍板，或寫進 `.claude/PRPs/BACKLOG.md`（附缺的證據與下一步）。UI 純主觀偏好不逕改，單列給 owner 拍板。SPEC／PLAN 依拍板修訂（標「第 7 階段」與日期）。
 **範圍**：本包引入的、擋驗收的、擋安全上線的問題一律處置，包括審查才發現、超出原範圍的；與它同根因、同一刀修得到的既有缺口可併修（寫明哪些是既有的）。與本包無關的既有問題照 SKILL.md「backlog 的家」分三路（重要／有感進 BACKLOG，其餘只留在 REVIEW.md），不併進本包；其中碰重要面（錢、權限、未成年、資料遺失、全站可用性）或最終嚴重度 HIGH 以上的，不能只進 backlog，在 checkpoint 回報逐條點名給 owner。審查前就已 defer 的 MEDIUM／LOW 不重開。

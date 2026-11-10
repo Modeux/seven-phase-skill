@@ -1,0 +1,45 @@
+
+=== P0 before the workflow 06-01~09-21: 894 commits; commits touching prod code 547, of which prod shrank in 59
+  commit types: feat 241, docs 212, (other) 200, fix 165, chore 42, refactor 19, test 8, perf 4
+  kind       files    added  deleted      net  del/add  added per 100 prod+sql
+  prod        5731   272776   100784   171992     0.37                      92
+  sql          485    23510     2325    21185     0.10                       8
+  test        4006   344836    62076   282760     0.18                     116
+  contract     154    18209     2955    15254     0.16                       6
+  rules        595    11741     8913     2828     0.76                       4
+  records     1867   424893   418040     6853     0.98                     143
+  docs         204    11857    14212    -2355     1.20                       4
+  seed           9      858      465      393     0.54                       0
+  other        302    13148    32172   -19024     2.45                       4
+  [prod .go/.ts/.py] added code 150558, comment 47839 (24.1% of non-blank), WHY/INVARIANT lines 1; comment chars/line 64 vs code 35; comment share by chars 37.0%; deleted code 33887, comment 9847
+  [test .go/.ts/.py] added code 262386, comment 34993 (11.8% of non-blank), WHY/INVARIANT lines 0; comment chars/line 67 vs code 40; comment share by chars 18.2%; deleted code 28217, comment 4274
+
+=== P1 workflow 09-22~10-09: 122 commits; commits touching prod code 48, of which prod shrank in 3
+  commit types: docs 63, feat 32, fix 10, (other) 10, chore 6, test 1
+  kind       files    added  deleted      net  del/add  added per 100 prod+sql
+  prod        1111    70463    11505    58958     0.16                      94
+  sql           85     4306      219     4087     0.05                       6
+  test        1352   159573     5156   154417     0.03                     213
+  contract      27     7579     3363     4216     0.44                      10
+  rules        359     9531    11124    -1593     1.17                      13
+  records      400    36076    52661   -16585     1.46                      48
+  docs          31      732      733       -1     1.00                       1
+  seed           0        0        0        0     0.00                       0
+  other         40     2647     2079      568     0.79                       4
+  [prod .go/.ts/.py] added code 38914, comment 18607 (32.3% of non-blank), WHY/INVARIANT lines 1581; comment chars/line 64 vs code 36; comment share by chars 45.9%; deleted code 5840, comment 2729
+  [test .go/.ts/.py] added code 127100, comment 12740 (9.1% of non-blank), WHY/INVARIANT lines 248; comment chars/line 67 vs code 42; comment share by chars 13.9%; deleted code 3734, comment 511
+
+=== P2 workflow 10-10~11-10: 166 commits; commits touching prod code 70, of which prod shrank in 7
+  commit types: docs 80, feat 50, chore 14, fix 11, (other) 6, test 3, refactor 2
+  kind       files    added  deleted      net  del/add  added per 100 prod+sql
+  prod        1704   120612    24675    95937     0.20                      93
+  sql          129     8829     1257     7572     0.14                       7
+  test        2496   371828    87605   284223     0.24                     287
+  contract      36     5853      860     4993     0.15                       5
+  rules        526     4785     4006      779     0.84                       4
+  records      596    57288    54203     3085     0.95                      44
+  docs          53     1507      175     1332     0.12                       1
+  seed           3       19        1       18     0.05                       0
+  other         83     2361       87     2274     0.04                       2
+  [prod .go/.ts/.py] added code 69428, comment 26319 (27.5% of non-blank), WHY/INVARIANT lines 2631; comment chars/line 67 vs code 36; comment share by chars 41.6%; deleted code 10252, comment 4086
+  [test .go/.ts/.py] added code 272876, comment 21037 (7.2% of non-blank), WHY/INVARIANT lines 641; comment chars/line 68 vs code 41; comment share by chars 11.3%; deleted code 38886, comment 3729

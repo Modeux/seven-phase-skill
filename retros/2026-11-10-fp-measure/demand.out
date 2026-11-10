@@ -1,0 +1,6 @@
+  8916  54.4%  新功能（其餘）   top: explore-revamp 1229, age-gate-unify 982, character-intro-page 902, portrait-prompt-revamp 696, voice-byteplus 606
+  4369  26.7%  旅程（旗標未開）   top: journey-revamp 1822, journey-scene-layer 707, journey-entry-and-home 556, journey-choice-grammar 379, journey-diary-redesign 264
+  1229   7.5%  PM 退回   top: character-intro-pm-r2 361, age-gate-pm-rules-v2 266, pm-feedback-3 214, pm-feedback-4 213, pm-feedback-2 91
+  1128   6.9%  流程本身（檢討、工具、探針、未歸屬）   top: (none) 626, pm-acceptance 73, backlog-1109 72, progress 56, pm 48
+   737   4.5%  缺陷／事故／效能修正   top: home-loading-speed 213, message-retention-restore 111, db-statement-timeout 104, expression-reaction-gates 96, breaker-slow-failures 87
+ 16379  total (rows read 120)

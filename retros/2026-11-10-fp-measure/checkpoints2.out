@@ -1,0 +1,36 @@
+phase  ckpt   go  steer clear-go no reply sess end steer % gap med min len med
+    0     0    0      0        2        0        0      0%         0.0       0
+    1    28    2      1       26        0       25     33%         0.8      13
+    2    33    1      4       28        0       28     80%         7.4     120
+    3    31    2      4       32        0       25     67%         3.2      30
+    4    36    2      4       38        1       29     67%         1.3     530
+    5   127   10     53       17       19       45     84%         1.8    1190
+    6    32    1      3       33        1       27     75%         0.9     312
+    7    58   15     22        0        3       18     59%         1.1     711
+
+-- steer samples after phase 1
+
+-- steer samples after phase 2
+
+-- steer samples after phase 3
+
+-- steer samples after phase 4
+
+-- steer samples after phase 5
+
+-- steer samples after phase 6
+
+-- steer samples after phase 7
+
+checkpoint N -> handoff `繼續 <slug> 第 N+1 階段` in a later session (wait before the next phase starts):
+phase    n  med min  p75 min  >2h  >8h   sum h
+    1   25      2.5      5.9    0    0     2.7
+    2   27      1.0      2.2    1    1    92.3
+    3   29      2.4      6.8    2    2   105.9
+    4   32     19.8    107.1    7    5   146.6
+    5   16     20.7    598.6    6    5   175.5
+    6   30     28.4    161.2    9    4    89.1
+
+main-session active 5-min bins by local hour (share of all):
+  00:0%  01:0%  02:0%  03:0%  04:0%  05:0%  06:0%  07:1%  08:4%  09:6%  10:4%  11:4%  12:10%  13:8%  14:9%  15:10%  16:9%  17:9%  18:9%  19:4%  20:3%  21:4%  22:3%  23:1%
+  00-08 share 1%   total main-active 201 h

@@ -1,0 +1,40 @@
+L rows in maps: 572
+  code behaviour / other: 242 (42%)
+  comment / doc wording: 188 (33%)
+  test quality: 98 (17%)
+  touches an important surface (keyword): 97 (17%)
+  a11y / UI detail: 44 (8%)
+verdict rows found for L ids: 535  -> other 298, backlog/record 122, fixed 109, false positive 6
+of the important-surface L rows: other 37, backlog/record 22, fixed 17
+
+sample: 14 L rows that touch an important surface
+  [journey-revamp L14] `journey_stay_taken` 在 socket 收下 frame 時就記，扣點前被伺服器拒絕的、延長段失敗後重按的都算 taken，「declined = offered − taken」因此偏低，甚至可能是負的
+  [portrait-prompt-revamp L3] 免費重試被 422 拒絕時，同一句由面板 alert 播一次，焦點移到 18禁格那句時又唸一次，畫面上也是兩份；而且有 spec 把這個行為釘住
+  [journey-scene-layer L29] 「换我来说…」框無條件拿掉全站 2px 焦點環，只剩 1px 邊框變色 → 疊在亮照片上時看不出焦點在哪（2.4.7）；同包另外兩個欄位都保留了環
+  [pm-feedback-3 L10] 種子把沒人看過的「標記穿衣」頭像放進全年齡首頁欄，也沒查服飾欄；只要有一張畫了裸露，測試機匿名與未成年就看得到。
+  [portrait-prompt-revamp L10] 歷史卡上非現役那一對的免費重試被 422 拒絕後，18禁半格只剩「生成失败」，和一般失敗分不出來。原因只在暫時的 alert 裡，重整後無處可讀；伺服器其實已算好 `AgeBlocked`，卻只拿來算 `retry_eligible`
+  [character-intro-page L17] 介紹頁深連結的 K3 單筆讀取沒有逾時：掛住時 `work=` 留在網址、燈箱不開、也不再讀；任何失敗（含暫時性 5xx）都直接把 `work=` 拿掉不說話；在途時切到別的分頁，聊天圖會被釘到視頻分頁的燈箱
+  [character-intro-page L13] openapi 說 `Character.creator_name` 等四欄「只在擁有者 detail、缺鍵＝未知」，但擁有者 detail 在值為空時也省略這些鍵，照契約會把新 gateway 的空名讀成舊 gateway
+  [journey-scene-layer L31] 下一版給卡加第三個欄位：pin 的字面清單和兩個具名 struct 一起改就綠，但 `parseDests` 的匿名 struct 漏加時，新欄位全站讀成空；T12 的註解也把 `JourneyDest` 當成讀端
+  [portrait-prompt-revamp L23] 免費重試先付費叫判官（在 HTTP 請求內，最長 25 秒），之後才檢查 18禁模型能不能用。`identity_portrait` 格被清空時，每次都先白付一次看圖費，最後還是回 503
+  [portrait-prompt-revamp L17] openapi 對兩個年齡失敗碼一律寫「已退款」，但零元 job 不退款。照契約實作的 client 會宣稱一筆沒發生的退款
+  [age-gate-unify L22] 簽入帳號的年齡答案落地後，角色詳情、我的角色不重讀：部署日年齡不明那批人答「成年」後仍看到找不到或 `age` 遮罩
+  [db-statement-timeout L6] 決議 5 與部署 D4 高估 gateway 端 `57014` 的能見度：付費路徑的 worker 只留 `appErr.Message`，SQLSTATE 被丟掉
+  [age-gate-unify L30] 角色詳情 `readsAsAnonymousAdult` 的 INVARIANT 宣稱涵蓋每個隨觀看者變化的請求輸入，但登出不觸發重讀，登入時讀到的橫幅／影片留在畫面上（被年齡彈窗蓋住）
+  [age-gate-unify L21] 年齡不明橫條只有自己那支讀取能清掉：設定頁等別條路讀到年齡、18+ 已經回來後，橫條仍說「18+ 内容已先隐藏」
+
+sample: 14 other L rows
+  [journey-revamp L10] 終點抽取的欄位級拒絕（her_wish、incident_kind）沒有 log，`extraction written` 只報 shots；runbook 量測時，「抽取失敗」和「沒有插曲」分不開
+  [portrait-prompt-revamp L25] `ops/rollback.sh` 的本包段要求回滾 gateway 時 goose down 判官格的 seed，但前兩次新增設定格寫的是「舊 binary 載得進、不讀，不必 down」，兩者互相矛盾；down 會刪掉後台改過的判官鏈
+  [voice-byteplus L36] 回滾指令 `psql "$DATABASE_URL"` 在 prod 不能直接貼上，最緊張時會連錯或失敗
+  [pm-feedback-3 L3] iPhone 開選單後點頁面空白處可能關不掉，與 SPEC「點外面關閉」不符。
+  [journey-scene-layer L24] 門檻蓋著時 Shift+Tab 到頂列的「‹ 先回到聊天」，焦點環畫在近乎不透明的門檻底下（2.4.11）；計時一到又被拉回 root
+  [character-intro-page L11] openapi `MediaGate` 新句說「唯一例外是歷史卡的 `output_url`」，但 `ManagementVisual.avatar_url`／`video_url` 遮罩時也是 `""`
+  [journey-scene-layer L4] 在家趟已送去做、按「先放着」→ 之後房間被危機鎖 → 卡「回去」開的層只給「不去了」→ 伺服器把該是 `half`／`not_done` 的結局記成 `dropped`
+  [explore-revamp L6] 請求路徑撞上 stale 一律 `InvalidateCharacter`：被取代的那批若是熱度 job 在本次 commit 之後讀的，本來就含這次改動，fallback 反而刪掉已正確發布的那一列（編輯或新上精選的角色會消失幾分鐘）
+  [expression-reaction-gates L2] `_PresetReadOncePerPublish` 註解說「published bin provably preset-independent」，B3 後 neutral 語氣讓 classifier 的 bin 依賴 preset
+  [journey-scene-layer L36] 前端 journey.md 說再去卡的「上次帶回」在 `journeyOffersView` 驗，實際讀點是 host `journeyOfferCards`＋`journeyFinalesByTrip` → 照文件去改的人改不到
+  [pm-feedback-3 L29] BACKLOG 仍把「抽屜組名 画风风格 art_style」列為等 PM 回覆，這包已改掉：有人照這條開小包會發現已做完。
+  [journey-scene-layer L15] 按卡收到 409 `JOURNEY_ALREADY_ACTIVE`，之後的靜默重讀也失敗 → 卡原樣留著，再按又是 409 加靜默，完全沒有回饋
+  [journey-scene-layer L34] 改動函式裡還留著已退役的用詞（取景、row、从家里收起、终点取景）→ 讀者去找不存在的列或按鈕
+  [chat-history-loading L11] 「Reserved for future cursor-based pagination」舊註解已被本包的游標分頁變成過時

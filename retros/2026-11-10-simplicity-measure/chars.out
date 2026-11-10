@@ -1,0 +1,3 @@
+HEAD prod: comment chars 5.70 M, code chars 10.13 M, comment share 36.0%
+HEAD test: comment chars 4.69 M, code chars 27.54 M, comment share 14.6%
+P2 added prod comment blocks 7665 (26319 lines): fixed prefix 2459 (32% blocks, 45% lines); WHY/INVARIANT word without the prefix 2174 (28% blocks, 33% lines); neither 3032 (40% blocks, 22% lines); blocks citing a task code or SPEC/PLAN section 69 (1%)

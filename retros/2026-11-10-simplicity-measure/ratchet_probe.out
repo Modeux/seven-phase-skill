@@ -1,0 +1,33 @@
+commits touching prod .go/.ts/.py: 68
+rule A (file >1000 lines gains >50 net): fired in 28 commits, 81 file-hits, 16858 net lines landed in such files
+   + 3477  angular-workspace/projects/frontend/src/app/features/chat-workspace/chat-workspace.ts
+   + 2097  angular-workspace/projects/frontend/src/app/features/derivative-create/derivative-create.store.ts
+   + 1986  angular-workspace/projects/frontend/src/app/features/chat-workspace/chat-workspace.store.ts
+   + 1044  backend-golang/internal/worker/journey_lane.go
+   + 1035  angular-workspace/projects/frontend/src/app/features/derivative-create/derivative-create.ts
+   +  889  backend-golang/internal/journey/repository.go
+   +  836  angular-workspace/projects/frontend/src/app/features/chat-workspace/journey/journey.feature.ts
+   +  828  backend-golang/internal/worker/extract_affinity.go
+   +  696  backend-golang/internal/journey/service.go
+   +  691  angular-workspace/projects/frontend/src/app/core/api.types.ts
+   +  654  backend-golang/internal/derivative/repository.go
+   +  649  angular-workspace/projects/frontend/src/app/features/character-edit/visual-assets-panel.ts
+   +  535  backend-golang/internal/derivative/service.go
+   +  477  backend-golang/internal/worker/prompt_assembler.go
+   +  273  backend-golang/internal/worker/journey_directive.go
+rule B (Go function crosses 150 lines, or >150 grows by >20): fired in 13 commits, 21 function-hits
+   +  317  internal/worker/prompt_assembler.go  (pa *PromptAssembler) assembleCoreWithOptions
+   +  171  scripts/voice-bakeoff/voice-probe4/main.go  main
+   +  134  cmd/server/wire.go  wireRiver
+   +   67  cmd/server/wire_journey.go  (l journeyRecallLookup) GetJourneyRecall
+   +   57  internal/worker/journey_directive.go  renderLegDirective
+   +   48  internal/visual/management_handler.go  (h *ManagementHandler) generationHistory
+   +   38  internal/worker/generate_derivative.go  (w *GenerateDerivativeWorker) Work
+   +   29  cmd/server/routes.go  setupRouter
+   +   25  internal/worker/generate_image.go  (w *GenerateImageWorker) Work
+   +   24  cmd/server/main.go  run
+   +   21  internal/worker/derivative_finalizer.go  (f *DerivativeFinalizer) FailDerivative
+   +   16  internal/character/service.go  (s *Service) Update
+   +   16  internal/portrait/director.go  (d *PromptDirector) directImageCore
+   +   11  internal/worker/affinity_extractor.go  (e *ConversationAffinityExtractor) Extract
+commits where either rule fires: 28 of 68

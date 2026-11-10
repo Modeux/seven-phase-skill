@@ -1,0 +1,22 @@
+map rows: R (MEDIUM+) 458, L (LOW) 572
+[R] first location kind: prod 247 (54%), (no path) 150 (33%), test 25 (5%), rules 19 (4%), contract 10 (2%), generated 3 (1%), records 3 (1%), docs 1 (0%)
+[R] source lanes: any comment/doc lane 92 (20%), any test lane 80 (17%), only test lanes 64 (14%), only comment/doc lanes 43 (9%)
+[R] rows citing a prod file, by the largest cited file's size at HEAD: <=500 93 (35%), >500 69 (26%), >1000 36 (13%), >2000 69 (26%)
+[L] first location kind: prod 305 (53%), (no path) 180 (31%), rules 32 (6%), test 28 (5%), contract 14 (2%), records 10 (2%), docs 3 (1%)
+[L] source lanes: any comment/doc lane 159 (28%), only comment/doc lanes 142 (25%), any test lane 69 (12%), only test lanes 68 (12%)
+[L] rows citing a prod file, by the largest cited file's size at HEAD: <=500 118 (37%), >500 78 (25%), >1000 41 (13%), >2000 81 (25%)
+changed prod lines 09-22~11-10 by file size at HEAD: <=500 47%, >500 24%, >1000 11%, >2000 18%
+prod LOC at HEAD by file size: <=500 51%, >500 22%, >1000 12%, >2000 15%
+files >1000 lines most cited by findings:
+    34  10498  angular-workspace/projects/frontend/src/app/features/chat-workspace/chat-workspace.ts
+    33   2765  backend-golang/internal/derivative/service.go
+    30   4949  angular-workspace/projects/frontend/src/app/features/derivative-create/derivative-create.store.ts
+    20   1084  backend-golang/internal/derivative/chat_publish.go
+    13   2586  angular-workspace/projects/frontend/src/app/features/chat-workspace/chat-workspace.html
+    13   2242  angular-workspace/projects/frontend/src/app/features/derivative-create/derivative-create.ts
+    13   2084  backend-golang/internal/worker/journey_lane.go
+    11   1092  backend-golang/internal/derivative/model.go
+    11   1881  backend-golang/internal/character/service.go
+     9   1735  backend-golang/internal/journey/service.go
+     7   4756  angular-workspace/projects/frontend/src/app/core/api.types.ts
+     6   2232  backend-golang/cmd/server/routes.go

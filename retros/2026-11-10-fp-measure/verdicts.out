@@ -1,0 +1,22 @@
+task                         rows  fp conf    H   M   L   fixed backlog accept
+age-gate-unify                 69   0   69   10  22  37      53      14      2
+character-intro-page           85   3   82    4  20  58      64      16      2
+character-intro-pm-r2          40   2   38    3  15  20      35       2      1
+chat-history-loading           49   2   47    1  16  30      42       5      0
+chat-image-publish             53   3   50    0   7  43      47       2      1
+chat-video-publish             24   1   23    0   8  15      22       1      0
+db-statement-timeout           39   0   39    0  11  28      30       6      3
+derivative-public-reuse        54   0   54    1  11  42      53       1      0
+explore-revamp                161  13  148    2  33 113     127      17      4
+expression-reaction-gates      17   0   17    0   5  12      13       2      2
+journey-diary-redesign         55   3   52    1  19  32      37      11      4
+journey-revamp                 57   1   56    2  15  39      42      14      0
+journey-scene-layer            74   2   72    1  30  41      62      10      0
+message-retention-restore      26   1   25    0   4  21      22       2      1
+pm-feedback-3                  65   8   57    0  25  32      47       9      1
+pm-feedback-4                  42   1   41    0  13  28      37       4      0
+portrait-prompt-revamp         66   4   62    2  17  43      50       9      3
+voice-byteplus                137   5  132    3  55  74     113      18      1
+TOTAL                        1113  49 1064   30 326 708     896     143     25
+severity x disposition: H:accept=2  H:backlog=5  H:fixed=23  L:accept=49  L:backlog=126  L:fixed=533  M:accept=14  M:backlog=12  M:fixed=300
+TOTAL                        1113  49 1064   30 326 708     856     143     65

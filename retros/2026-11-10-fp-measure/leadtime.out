@@ -1,0 +1,62 @@
+slug                               first  last span d days  act h main h owner  w<10m  w<2h   w>2h sess
+derivative-video-director-quality  10-10 10-13    2.9    4    2.5    2.0     8    0.0   0.3    0.0    6
+life-sense-today                   10-10 10-19    8.9    4    7.2    5.7     6    0.2   0.0    0.0    8
+characterday-probe                 10-10 10-12    1.8    3    3.0    1.7     0    0.0   0.0    0.0    6
+diagrams                           10-11 11-06   26.0   11    4.5    4.5    23    0.7   0.0    0.0   21
+breaker-slow-failures              10-11 10-12    1.1    2    3.8    3.2     3    0.1   0.2    0.0    8
+character-life-sense               10-11 11-09   29.0   12    6.2    6.1    19    0.6   0.0    0.0   27
+life-sense-ask-today               10-11 10-19    8.0    6   11.4    9.3    14    0.3   0.2    0.0   15
+character-dual-portrait            10-12 10-20    7.9    5   12.8    9.8    16    0.1   1.5    0.0   18
+journey-entry-and-home             10-13 10-16    3.1    3   15.9   11.2    13    0.5   1.2    9.1   16
+age-gate-unify                     10-13 10-15    2.0    3   15.2   11.3    22    0.4   2.4   25.7   13
+progress                           10-13 11-10   27.8   15    7.6    7.6    26    0.3   0.2    0.0   39
+portrait-probe                     10-13 10-15    1.9    3    3.6    3.0     2    0.0   0.0    0.0    9
+identity-avatar-and-self-describe  10-13 10-14    1.1    2    6.4    5.8     5    0.1   0.0    0.0   12
+identity-avatar                    10-13 10-15    1.8    3    8.5    6.6     4    0.0   0.2    2.3   10
+journey-research                   10-14 10-16    2.1    2    3.4    3.0     7    0.1   0.0    0.0    7
+journey-choice-grammar             10-14 10-16    1.9    3   13.2   10.2    11    0.4   1.0    0.0   15
+journeychoiceprobe                 10-14 10-16    1.8    3    5.4    2.5     3    0.0   0.3    0.0    8
+nsfw-nude                          10-14 10-15    1.0    2    7.2    5.5     3    0.1   0.8    0.0    7
+identity-portrait-nsfw-nude        10-14 10-15    1.0    2    3.6    3.6     4    0.1   0.3    0.0    7
+chat-time-gap                      10-15 10-16    1.0    2    5.1    4.0     7    0.1   0.0    0.0    8
+pm-acceptance                      10-16 11-07   21.9    7    3.8    3.4     5    0.1   0.0    0.0   11
+derivative-ui-ux                   10-16 10-19    3.0    4   12.3    9.8    17    0.2   2.3    0.0   22
+journey-fun-probe                  10-16 10-20    4.1    3    2.1    2.1     4    0.0   0.0    0.0    8
+journeyfun                         10-16 10-26    9.9    4    2.8    2.8     1    0.0   0.0    0.0   10
+journey-process-depth              10-16 10-26    9.9    4   10.8    8.2    14    0.2   1.6    9.9   14
+journey-ux-overlap                 10-17 10-19    1.9    3    2.5    2.5     9    0.2   1.9    0.0    5
+derivative-public-reuse            10-17 10-25    8.3    4   12.2    8.9     9    0.1   0.0    0.0   15
+journey-scene-layer                10-17 10-20    3.0    4   26.2   12.9    35    0.9   1.8    0.0   13
+chat-image-publish                 10-18 10-28   10.0    4   11.2    7.1     4    0.1   0.2    0.0   12
+pm-feedback-fixes                  10-20 11-04   15.2    3    2.4    1.8     5    0.0   0.3    0.0    6
+age-gate-pm-rules-v2               10-20 11-07   17.9    6    6.8    5.2    11    0.1   0.9    0.0   16
+journey17                          10-20 10-21    0.8    2    3.2    3.1    24    0.6   0.5   12.0    1
+pm-feedback-2                      10-21 11-04   14.0    2    3.1    2.6     7    0.1   0.0    0.0    4
+journey-revamp                     10-21 11-09   19.1   12   50.9   38.2    87    2.1   5.5   13.6   49
+character-intro-page               10-21 11-07   17.0    8   19.2   14.3    21    0.4   1.7    8.6   23
+chat-video-publish                 10-25 11-02    7.7    5    9.6    7.2    14    0.3   0.7    0.0   16
+journeyrevamp                      10-25 11-03    8.4    8    4.2    4.2     4    0.1   0.0    0.0   16
+expression-reaction-gates          10-29 10-30    1.0    2    4.4    2.8     3    0.0   0.0    0.0    9
+explore-revamp                     10-30 11-09   10.0    7   30.9   23.0    40    1.7   3.9    9.0   24
+chat-history-loading               10-30 11-04    5.2    5   13.1    8.8    13    0.4   1.4    0.0   14
+message-retention-restore          10-30 11-05    5.9    4    4.9    4.4    13    0.4   0.2    0.0   13
+character-intro-pm-r2              11-02 11-04    2.0    3    9.9    7.2    15    0.3   0.2    9.4   10
+voice-byteplus                     11-02 11-09    7.4    6   28.6   19.2    68    1.7   8.3   14.4   26
+pm-feedback-3                      11-04 11-07    2.6    4    9.9    6.5    11    0.2   2.3    0.0   11
+db-statement-timeout               11-04 11-07    2.6    3    5.0    4.2     6    0.1   0.8    0.0   10
+portrait-prompt-revamp             11-05 11-09    4.0    3   13.5   11.2    21    0.5   2.6    9.9   14
+journey-diary-redesign             11-06 11-09    3.2    3   12.3    7.3    10    0.1   1.2    0.0   10
+pm-feedback-4                      11-06 11-09    3.0    3   10.5    7.2    19    0.3   1.6    5.9   13
+workflow-tools                     11-06 11-06    0.2    1    2.8    2.0     2    0.0   0.0    0.0    2
+gated-card-corner-bleed            11-07 11-07    0.1    1    2.2    1.5     7    0.3   0.3    0.0    3
+home-loading-speed                 11-09 11-10    0.8    2    8.7    6.2     8    0.1   0.3    0.0   11
+voice-tts2-knobs                   11-09 11-09    0.1    1    2.0    2.0    17    0.5   0.2    0.0    4
+voice-redesign-first               11-09 11-10    0.7    2    5.4    4.4    10    0.3   0.0    2.8    6
+
+tasks >= 2 active h: 53  median span 3.0 d  median active 6.8 h  median active-days 3  median owner msgs 10
+sum active 494 h over sum span 8482 h -> flow efficiency 6%
+
+WIP per day (slugs with >=30 active min): median 6  p90 10  max 12  days 26
+  10-10:3  10-11:5  10-12:8  10-13:8  10-14:10  10-15:10  10-16:12  10-17:10  10-18:5  10-19:3  10-20:5  10-21:5  10-25:3  10-26:4  10-28:3  10-29:3  10-30:8  11-01:4  11-02:10  11-03:4  11-04:8  11-05:7  11-06:12  11-07:6  11-09:9  11-10:3
+active 5-min bins by number of tasks running: 1: 24%  2: 37%  3: 20%  4+: 19%  (machine-active 222 h in 35 d = 6.3 h/day)
+owner gaps: n 1529  median 0.5 min  p75 2.0  p90 9.6 min  sum<10m 27 h  sum 10m-2h 69 h  sum>2h 585 h

@@ -5,7 +5,7 @@ description: owner 的七階段開發工作流（research → 討論 → intervi
 
 # 七階段工作流
 
-owner 是產品負責人不是工程師。這套流程把方向控制權與 token 用量留在 owner 手上：每階段停下來回報、等「繼續」；需求簡單的走精簡路，只在交付時停（見「分流」）。流程規則以本 skill 為準；記憶只放 owner 偏好與進行中任務的狀態。規則看起來多餘時，先讀 `references/history.md` 看它在防什麼。
+owner 是產品負責人不是工程師。這套流程把方向控制權與 token 用量留在 owner 手上：在 owner 要做決定的地方停下來回報、等「繼續」（第 2、3、4、5、7 階段結束，以及第 7 階段收斂驗證交件後；第 1、6 階段回報後接著做，見「Checkpoint 協定」第 7 條）；需求簡單的走精簡路，只在交付時停（見「分流」）。流程規則以本 skill 為準；記憶只放 owner 偏好與進行中任務的狀態。規則看起來多餘時，先讀 `references/history.md` 看它在防什麼。
 
 ## 開工第一步
 1. **問模型**：新任務開工前用 AskUserQuestion 問 owner 要不要 `/model` 切到 fable（或當時更強的模型）當主 session，**問句附成本與判準**：fable 輸入／輸出單價約 opus-5.5 的 2.5 倍，主 session 的輸出大半是思考，換模型會直接放大這筆；官方說 fable 適合目標模糊、找根因、架構決策、長時間自主工作，範圍明確的實作與收斂用 opus-5.5。推薦項依任務類型給。owner 選維持就用當前模型（預設 opus-5.5），**中途不切換**（換模型的下一回合整段重讀、沒有快取）。續接既有任務不必再問。
@@ -38,14 +38,20 @@ owner 是產品負責人不是工程師。這套流程把方向控制權與 toke
 - **完整七階段**：其餘一律。重要功能、要 owner 定方向的使用者有感功能，正是討論與訪談存在的理由——把方向錯誤提前到寫程式之前。
 - 拿不準走完整。精簡路途中撞到上面任一條 → 依 `phases/lean.md`「升級」停下改走完整。
 
-## Checkpoint 協定（完整路每階段結束，硬規則；精簡路只在交付時停，見 `phases/lean.md`）
-owner 吃過「一路衝到底、末端才發現前提錯」的虧，也要自己決定何時 compact——所以每階段都停。
-1. 結論與下一步寫進 PROGRESS.md（階段表那一列＋「## 下一步」＋「## 第 N 階段紀錄」五行：做了什麼／關鍵裁決／紅→綠或證據／閘結果／殘留），**同時改檔頭 frontmatter**：`status`（`owner` 等 owner 拍板／說繼續／commit／push、`doing` 做到一半被打斷、`blocked` 等外部、`deploy` 已 commit 剩部署驗收、`done`）＋`next`（一句話：下一步是什麼、誰要動）；任務住在 worktree 加 `worktree: <名稱>`，多包任務或階段表推不出來時加 `phase:`（如 `第三包 5/7`）。改完跑 `python3 ~/.claude/skills/seven-phase/scripts/board.py` 重算看板，再跑 `scripts/planview.py <slug>` 產任務頁（第 2／3／4 階段另有導讀頁；兩者的形狀見 `assets/checkpoint.md`）。精簡路在建檔與交付時各改一次；owner 說 commit 並 commit 完，改成 `status: deploy`、`next` 寫部署要點。
+## Checkpoint 協定（完整路，硬規則；第 1、6 階段不停，見第 7 條；精簡路只在交付時停，見 `phases/lean.md`）
+owner 吃過「一路衝到底、末端才發現前提錯」的虧，也要自己決定何時 compact——所以 owner 要做決定的地方都停。
+1. 結論與下一步寫進 PROGRESS.md（階段表那一列＋「## 下一步」＋「## 第 N 階段紀錄」五行：做了什麼／關鍵裁決／紅→綠或證據／閘結果／殘留），**同時改檔頭 frontmatter**：`status`（`owner` 等 owner 拍板／說繼續／commit／push、`doing` 做到一半被打斷、`blocked` 等外部、`deploy` 已 commit 剩部署驗收、`done`）＋`next`（一句話：下一步是什麼、誰要動）；任務住在 worktree 加 `worktree: <名稱>`，多包任務或階段表推不出來時加 `phase:`（如 `第三包 5/7`）。改完跑 `scripts/planview.py <slug>` 產任務頁（第 2／3／4 階段另有導讀頁；兩者的形狀見 `assets/checkpoint.md`）。精簡路在建檔與交付時各改一次；owner 說 commit 並 commit 完，改成 `status: deploy`、`next` 寫部署要點，**這一次手動跑 `python3 ~/.claude/skills/seven-phase/scripts/board.py`**（任務目錄可能在下一次開 session 前就被刪，ledger 要先存到部署要點）；其他 checkpoint 不手動跑，看板由 SessionStart hook 在 startup／`/clear`／`/compact` 重算（11-10：主 session 31 天手動跑了 966 次）。
 2. **完全停止**，白話回報：做了什麼、發現什麼、為什麼這樣決定、接下來幹嘛。
 3. 附一段可直接貼的 `/compact <摘要>`（位置、真相源檔、下一步、全程規則），用 `assets/checkpoint.md` 的形狀；**並明說現在能不能 `/clear`**（判準同檔第 6 條；owner 不要多個任務的 context 混在一起）。
-4. **等 owner 說「繼續」**才進下一階段。不得順勢往下做，也不得在回報裡先問下一階段的問題。唯一例外：第 5 階段等走一趟時先寫第 6 階段的任務書與派工單，只寫不派（`phases/5-implement.md`「等走一趟時先備第 6 階段」）。
+4. **等 owner 說「繼續」**才進下一階段。不得順勢往下做，也不得在回報裡先問下一階段的問題。例外兩個：第 5 階段等走一趟時先寫第 6 階段的任務書與派工單，只寫不派（`phases/5-implement.md`「等走一趟時先備第 6 階段」）；第 1、6 階段照第 7 條接著做。
 5. 背景 subagent 在 checkpoint 之後才交件：併進記錄，下一則回覆一句話告知，並給更新版 `/compact`。
 6. **compact 要趁暖、要早**：`/compact` 在 owner 離開**之前**貼（主對話快取 1h，`~/.claude/settings.json` 的 `promptCacheTtl`；用量超額時降為 5m；冷的 compact 會把整段歷史按未快取價重讀），目標 compact 時 context ≤ 200k（10-07 實測中位 358k＝太晚）。回來發現冷了（`/usage` 的 `Prompt cache (main)` 顯示 cold）而且下一階段不需要延續對話 → `/clear` 再讀 PROGRESS，不要 compact；要放棄一條路用 `/rewind`（回到已快取的前綴，比 compact 便宜）。
+7. **第 1、6 階段回報後接著做，有事才停**（owner 11-10：只在 owner 要做決定的地方停）。照第 1 條寫 PROGRESS（`status: doing`）、照第 2 條發一則白話摘要並明說「接著做下一階段，要停就打字」，不附 `/compact`、不等回覆，同一段對話直接往下：
+   - **第 1 階段** → 直接準備第 2 階段的簡報（含條件觸發的三取向對照），停在第 2 階段。照舊在第 1 階段結束就停的情況：挑戰結論推翻任務前提或 owner 指定的做法、有 prod 查詢等 owner 核准、預估規模大到要提 ROADMAP 拆任務。
+   - **第 6 階段** → 合成與核對做完（`phases/6-review.md` §5）直接照 `phases/7-converge.md` §1 派收斂驗證與不必驗證的修復片；**checkpoint 移到驗證交件之後**（`phases/7-converge.md` §2）：一則回報放第 6 階段摘要、驗證結果與拍板題，沒有拍板題也停這一次，owner 回覆後才切剩下的修復片。照舊在第 6 階段結束就停的情況：有 CRITICAL、有發現質疑 SPEC 的方向或範圍、某一路跑不了而替補要 owner 決定、`reviewcov.py` 沒過。
+   - owner 開工時說「每站都停」，整個任務照舊每階段停。
+
+   為什麼：10-10～11-10 這兩站 66 次回覆，owner 帶新指示的只有 2 次，其餘是 `/clear` 後貼接續句；6→7 等待中位 28 分、三成超過 2 小時、31 天合計 89 小時，那段時間機器閒著（`retros/2026-11-10-first-principles.md` §2）。「有事才停」是 owner 追問品質影響後加的：拿掉的是放行，不是煞車。代價 owner 已知：審查後每包約 $15–80 的驗證與修復會在 owner 回覆前派出去。
 
 ## 全程規則
 - **禁 git commit／push**，直到 owner 明說（owner 要在進歷史之前看過整包結果）。commit 形狀＝兩個：`feat(x): ...`（程式碼＋CLAUDE.md／`.claude/rules/`＋契約）與 `docs(prps): <slug> 七階段記錄`（任務目錄）。工作樹常有別人／別任務的已暫存改動：**一律 `git commit --only -F <msg> -- <明確路徑>`**（新檔先 `git add` 那幾個路徑），絕不用裸 `git commit` 或 `git add -A`。push 前 `git fetch` 並確認 ahead-only。
