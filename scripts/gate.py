@@ -17,16 +17,21 @@ go: runs in <T>/backend-golang without GOROOT. --run repeats; `|` inside one --r
     -tags integration and a dockerslot (-timeout 1500s); --all implies it, takes every slot (--max-wait 1800,
     -timeout 2400s, ./...). --tags T passes -tags T to --build or --vet only, to compile files behind other tags.
     --pkg accepts ./internal/x, internal/x, backend-golang/internal/x or an absolute path.
+    An --integ/--all run removes leftover testcontainers before it starts and after it ends, however it ends
+    (line `docker: cleaned N leftover testcontainers`); its own containers count once the go test has exited.
 fe: --include accepts absolute, repo-relative or workspace-relative paths, or a glob under projects/.
 ai: always a throwaway container; never host uv/pytest. --repo owns the shared Linux ai-service/.venv.
-clean-docker: lists testcontainers that are dead/exited or older than 50 minutes; --apply removes them.
+    A stopped run (timeout, signal) removes the container it started; so does a stopped lint batch.
+clean-docker: lists leftover testcontainers (dead/exited, owner gone = the go test that started them has ended, or
+    owner unknown and older than 50 minutes; see _dockerclean.py); --apply removes them. A container whose
+    go test is still alive is never listed.
 lint: golangci-lint in docker on <T>/backend-golang, one dockerslot slot per batch, GOMEMLIMIT/GOGC/--concurrency
     set. --pkg as in go (default ./...). The image defaults to `golangci_lint_image` in <T>/justfile. When a run is
     killed for memory (rc 137, `signal: killed`, `Killed`, `cannot allocate memory`), the first run is re-planned as
     ./cmd/... plus one ./internal/<dir>/... per directory in 4 batches, a later batch is halved, and a single pattern
     that still dies is listed as not finished. A batch past --timeout is not finished. Every batch's output is
     appended to --out after a `=== batch <i>/<n>: <patterns>` line. Line 2 is `clean-docker found=N removed=N`:
-    orphan testcontainers are always listed and removed only with --clean-docker. An issue (typecheck included)
+    leftover testcontainers are always listed and removed only with --clean-docker. An issue (typecheck included)
     whose path starts with an --ignore-prefix (repeatable, replaces the default tmp/, the gitignored probes) never
     counts; --no-ignore counts everything, an empty prefix is a tool error.
     First line: GATE lint <verdict> issues=<new> known=<listed hits> ignored=<n> batches=<finished>/<planned>
@@ -57,7 +62,6 @@ The command line refuses a tree with an unrecovered mutate.py run (exit 2). Impo
 summary dict, raises ToolError and does not make that check; gate.pending_mutation(tree) is that check.
 """
 import argparse
-import datetime
 import json
 import os
 import pathlib
@@ -68,6 +72,9 @@ import subprocess
 import sys
 import time
 
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+import _dockerclean  # noqa: E402
+
 EXIT_MISMATCH = 1
 EXIT_TOOL = 2
 EXIT_NO_TESTS = 3
@@ -76,11 +83,11 @@ EXIT_SLOT = 75
 
 DOCKERSLOT = pathlib.Path(__file__).resolve().parent / "dockerslot.py"
 AI_IMAGE = "ghcr.io/astral-sh/uv:python3.12-bookworm"
-TC_LABEL = "org.testcontainers"
+# WHY: `docker run --rm` removes the container only while its client lives; a client killed at a timeout leaves
+# the container running with nothing pointing at it. The label lets this process find what it started.
+RUN_LABEL = f"seven-phase.gate={os.getpid()}-{time.time_ns()}"
 MUTATE_POINTER = "mutate-journal"
 MUTATE_SCRIPT = pathlib.Path(__file__).resolve().parent / "mutate.py"
-# WHY: older than the longest gate timeout (2400 s), so such a container cannot belong to a live run.
-ORPHAN_AGE_S = 50 * 60
 WALL_DEFAULT_S = 1200
 TERM_GRACE_S = 5
 MAX_LISTED = 20
@@ -778,7 +785,8 @@ def go_argv(ns, tree):
     cmd += [_norm_pkg(backend, tree, p) for p in ns.pkg] or ["./..."]
     if not integ or ns.build or ns.vet:
         return cmd
-    slot = [sys.executable, str(DOCKERSLOT)]
+    # WHY --no-sweep: this process sweeps itself, so the count lands in the summary.
+    slot = [sys.executable, str(DOCKERSLOT), "--no-sweep"]
     if ns.all:
         slot += ["--all", "--max-wait", ns.max_wait or "1800"]
     elif ns.max_wait:
@@ -902,7 +910,7 @@ def _ai_argv(ns, tree, repo):
         "ruff": ["-m", "ruff", "check", "--no-cache", "--output-format=concise"] + (paths or ["app", "tests"]),
         "mypy": ["-m", "mypy"] + (paths or ["app"]),
     }[ns.kind]
-    return ["docker", "run", "--rm", "--network", "none",
+    return ["docker", "run", "--rm", "--label", RUN_LABEL, "--network", "none",
             "-v", f"{ai_dir}:/app:ro", "-v", f"{venv}:/app/.venv:ro", "-w", "/app",
             "-e", "PYTHONDONTWRITEBYTECODE=1", "-e", "LANGFUSE_TRACING_ENABLED=false",
             "-e", "APP_ENV=development", "-e", "MYPY_CACHE_DIR=/tmp/mypy", AI_IMAGE, ".venv/bin/python"] + tool
@@ -952,10 +960,10 @@ def _validate_lint(ns, tree):
 
 def lint_argv(ns, tree, patterns):
     """The full command for one lint batch, dockerslot wrapper included."""
-    cmd = ["docker", "run", "--rm", "-e", f"GOMEMLIMIT={ns.memlimit}", "-e", f"GOGC={ns.gogc}",
+    cmd = ["docker", "run", "--rm", "--label", RUN_LABEL, "-e", f"GOMEMLIMIT={ns.memlimit}", "-e", f"GOGC={ns.gogc}",
            "-v", f"{tree}:/app", "-v", f"{GOLINT_MODCACHE}:/go/pkg/mod", "-w", "/app/backend-golang",
            ns.image, "golangci-lint", "run", "--concurrency", ns.concurrency] + list(patterns)
-    return [sys.executable, str(DOCKERSLOT), "--max-wait", ns.max_wait, "--"] + cmd
+    return [sys.executable, str(DOCKERSLOT), "--no-sweep", "--max-wait", ns.max_wait, "--"] + cmd
 
 
 def _lint_expand(backend, patterns):
@@ -1180,69 +1188,47 @@ def _default_out(tree, mode):
     return p
 
 
-def _docker_rows():
-    fmt = "\t".join(["{{.ID}}", "{{.State}}", "{{.CreatedAt}}", '{{.Label "%s"}}' % TC_LABEL, "{{.Names}}"])
+def _leftovers():
+    """(all labelled rows, the leftovers among them, notes)."""
     try:
-        r = subprocess.run(["docker", "ps", "-a", "--filter", f"label={TC_LABEL}=true", "--format", fmt],
-                           capture_output=True, text=True, timeout=60)
-    except (OSError, subprocess.TimeoutExpired) as e:
-        raise ToolError(f"docker ps failed: {e}")
-    if r.returncode != 0:
-        raise ToolError(f"docker ps failed: {_short((r.stderr or r.stdout).strip())}")
-    rows, now = [], time.time()
-    for line in r.stdout.splitlines():
-        if not line.strip():
-            continue
-        cols = line.split("\t")
-        if len(cols) != 5:
-            raise ToolError(f"unexpected docker ps row: {_short(line)}")
-        cid, state, created, label, name = cols
-        try:
-            when = datetime.datetime.strptime(" ".join(created.split(" ")[:3]), "%Y-%m-%d %H:%M:%S %z").timestamp()
-        except ValueError:
-            raise ToolError(f"unparsable CreatedAt in docker ps row: {_short(line)}")
-        # INVARIANT: re-check the label; removing an unlabelled container would hit the dev stack or another session's services.
-        if label == "true":
-            rows.append({"id": cid, "state": state, "age_s": now - when, "name": name})
-    return rows
+        rows = _dockerclean.rows()
+        found, notes = _dockerclean.split(rows)
+    except _dockerclean.CleanError as e:
+        raise ToolError(str(e))
+    return rows, found, notes
 
 
 def _docker_rm(ids):
-    if not ids:
-        return
     try:
-        r = subprocess.run(["docker", "rm", "-f"] + ids, capture_output=True, text=True, timeout=300)
-    except (OSError, subprocess.TimeoutExpired) as e:
-        raise ToolError(f"docker rm failed: {e}")
-    if r.returncode != 0:
-        raise ToolError(f"docker rm failed: {_short((r.stderr or r.stdout).strip())}")
+        _dockerclean.remove(ids)
+    except _dockerclean.CleanError as e:
+        raise ToolError(str(e))
 
 
-def _clean_finished_containers():
-    """Return (removed count, error text); never raises, a cleanup hiccup must not change a test verdict."""
+def _remove_own_containers():
+    """A note line when a stopped run's container had to be removed, else None; never raises."""
     try:
-        ids = [r["id"] for r in _docker_rows() if r["state"] in ("dead", "exited")]
-        _docker_rm(ids)
-        return len(ids), None
-    except ToolError as e:
-        return 0, str(e)
-
-
-def _orphan_rows():
-    """(all labelled rows, the orphans among them)."""
-    rows = _docker_rows()
-    return rows, [r for r in rows if r["state"] in ("dead", "exited") or r["age_s"] > ORPHAN_AGE_S]
+        r = subprocess.run(["docker", "container", "ls", "-aq", "--filter", f"label={RUN_LABEL}"],
+                           capture_output=True, text=True, timeout=60)
+        ids = r.stdout.split() if r.returncode == 0 else []
+        if not ids:
+            return None
+        _dockerclean.remove(ids)
+        return f"docker: removed {len(ids)} container(s) the stopped run left running"
+    except (OSError, subprocess.TimeoutExpired, _dockerclean.CleanError) as e:
+        return f"docker: could not remove this run's container: {_short(str(e))}"
 
 
 def clean_docker(ns):
-    rows, orphans = _orphan_rows()
+    rows, found, notes = _leftovers()
     if ns.apply:
-        _docker_rm([r["id"] for r in orphans])
-    first = f"GATE clean-docker OK found={len(orphans)} removed={len(orphans) if ns.apply else 0} kept={len(rows) - len(orphans)}"
-    lines = [first] + [f"- {r['id']} {r['state']} age={int(r['age_s'] // 60)}m {r['name']}" for r in orphans[:MAX_LISTED]]
-    if len(orphans) > MAX_LISTED:
-        lines.append(f"... {len(orphans)} total, first {MAX_LISTED} listed")
-    if orphans and not ns.apply:
+        _docker_rm([r["id"] for r in found])
+    first = f"GATE clean-docker OK found={len(found)} removed={len(found) if ns.apply else 0} kept={len(rows) - len(found)}"
+    lines = [first] + [f"- {r['id']} {r['why']} {r['state']} age={int(r['age_s'] // 60)}m {r['name']}" for r in found[:MAX_LISTED]]
+    if len(found) > MAX_LISTED:
+        lines.append(f"... {len(found)} total, first {MAX_LISTED} listed")
+    lines += [f"note: {n}" for n in notes]
+    if found and not ns.apply:
         lines.append("dry run: pass --apply to remove them")
     if ns.out:
         pathlib.Path(ns.out).parent.mkdir(parents=True, exist_ok=True)
@@ -1280,7 +1266,7 @@ def _prepare(ns):
         argv = ["npx", "ng", "build", ns.project]
         return "fe-build", argv, ws, lambda p, rc: parse_plain_build(p, rc, "ng"), _duration_seconds(ns.timeout)
     repo = os.path.realpath(ns.repo)
-    argv = [sys.executable, str(DOCKERSLOT), "--"] + _ai_argv(ns, tree, repo)
+    argv = [sys.executable, str(DOCKERSLOT), "--no-sweep", "--"] + _ai_argv(ns, tree, repo)
     if ns.kind == "pytest":
         return "ai", argv, tree, parse_pytest, _duration_seconds(ns.timeout)
     return f"ai-{ns.kind}", argv, tree, lambda p, rc: parse_lint(p, rc, ns.kind), _duration_seconds(ns.timeout)
@@ -1368,7 +1354,7 @@ def run_gate(argv, check_pending=False):
 def _clean_line(apply):
     """Line 2 of a lint run. Listing always happens; a failure is fatal only when removal was asked for."""
     try:
-        _, orphans = _orphan_rows()
+        _, orphans, _ = _leftovers()
         if apply:
             _docker_rm([r["id"] for r in orphans])
     except ToolError as e:
@@ -1392,6 +1378,7 @@ def _run_lint(ns):
     t0 = time.monotonic()
     queue, sections, batches = [patterns], [], []
     issues, build, notes, unfinished = {}, {}, [], []
+    own_notes = []
     done = failed_leaves = 0
     slot_gave_up = False
     while queue:
@@ -1402,6 +1389,8 @@ def _run_lint(ns):
             continue
         attempt = len(batches) + 1
         rc, stop = _execute(lint_argv(ns, tree, batch), tree, raw, wall)
+        if stop or _died_of_signal(rc):
+            own_notes += [x for x in [_remove_own_containers()] if x]
         text = _read_clean(raw)
         sections.append(f"=== batch {attempt}/{attempt + len(queue)}: {' '.join(batch)}\n{text}")
         record = {"patterns": batch, "rc": rc}
@@ -1487,6 +1476,7 @@ def _run_lint(ns):
         "packages": None, "docker_cleaned": None, "docker_clean_error": None,
         "lint": {"new": new, "known_hits": len(issues) - len(new), "batches_done": done,
                  "batches_total": done + failed_leaves, "runs": batches, "image": ns.image, "clean_docker": clean,
+                 "own_containers": own_notes,
                  "ignored": len(ignored), "ignored_issues": ignored, "ignore_prefixes": list(prefixes)},
         "out": str(out), "seconds": seconds, "cmd": " ".join(shlex.quote(c) for c in first_cmd), "label": ns.label,
     }
@@ -1507,9 +1497,28 @@ def _run_gate(ns):
     out.parent.mkdir(parents=True, exist_ok=True)
     raw = pathlib.Path(str(out) + ".raw")
 
+    docker_tests = ns.mode == "go" and (ns.integ or ns.all) and not (ns.build or ns.vet)
+    cleaned, clean_errs = (0 if docker_tests else None), []
+
+    def sweep():
+        nonlocal cleaned
+        n, err = _dockerclean.sweep_quietly()
+        cleaned += n
+        if err and err not in clean_errs:
+            clean_errs.append(err)
+
+    if docker_tests:
+        sweep()
     t0 = time.monotonic()
-    rc, stop = _execute(cmd, cwd, raw, wall)
+    try:
+        rc, stop = _execute(cmd, cwd, raw, wall)
+    finally:
+        # INVARIANT: on every way out of the run, verdict or not. By now the go test has exited, so the
+        # containers it started have no owner and go with the rest; a cleanup failure never changes the verdict.
+        if docker_tests:
+            sweep()
     seconds = round(time.monotonic() - t0, 1)
+    own_note = _remove_own_containers() if ns.mode == "ai" and (stop or _died_of_signal(rc)) else None
 
     slot_gave_up = False
     if rc == EXIT_SLOT:
@@ -1540,9 +1549,8 @@ def _run_gate(ns):
                 known["absent"], known["unhandled_absent"] = [], []
         verdict = _verdict(res, known)
 
-    cleaned, clean_err = None, None
-    if ns.mode == "go" and (ns.integ or ns.all) and not (ns.build or ns.vet) and not slot_gave_up:
-        cleaned, clean_err = _clean_finished_containers()
+    if own_note:
+        res.notes.append(own_note)
 
     summary = {
         "mode": mode, "tree": tree, "verdict": verdict, "exit": _exit_code(verdict, ns.expect),
@@ -1552,7 +1560,7 @@ def _run_gate(ns):
         "incomplete": res.incomplete, "reasons": res.reasons, "no_tests": res.no_tests, "build": res.build,
         "notes": res.notes, "run_unmatched": res.run_unmatched, "known_red": known, "known_red_file": known_file,
         "packages": res.packages,
-        "docker_cleaned": cleaned, "docker_clean_error": clean_err,
+        "docker_cleaned": cleaned, "docker_clean_error": "; ".join(clean_errs) or None,
         "out": str(out), "seconds": seconds, "cmd": " ".join(shlex.quote(c) for c in cmd), "label": ns.label,
     }
     _write_outputs(out, summary, res, stop)
@@ -1578,7 +1586,7 @@ def _failure_lines(failures, per_failure):
 
 def _render_lint(s):
     x = s["lint"]
-    lines = [_first_line(s), x["clean_docker"]]
+    lines = [_first_line(s), x["clean_docker"]] + x["own_containers"]
     if s["label"]:
         lines.append(f"label: {s['label']}")
     lines += [_short(b) for b in s["build"][:12]]
@@ -1604,7 +1612,7 @@ def render(s):
     if s["label"]:
         lines.append(f"label: {s['label']}")
     if s["docker_cleaned"] is not None:
-        lines.append(f"docker: cleaned {s['docker_cleaned']} dead/exited testcontainers")
+        lines.append(f"docker: cleaned {s['docker_cleaned']} leftover testcontainers")
     if s["docker_clean_error"]:
         lines.append(f"docker: clean failed: {_short(s['docker_clean_error'])}")
     lines += [_short(x) for x in s["build"][:12]]

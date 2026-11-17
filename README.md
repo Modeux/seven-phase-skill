@@ -162,7 +162,8 @@ evals/         測試這個 skill 本身的案例
 | `reviewcov.py` | 確認每個審查員都交件、意見表沒漏 |
 | `run_external.py` | 跑外部 AI 審查（codex／grok／agy） |
 | `run_kit.mjs` | 在瀏覽器裡一口氣跑完「走一趟」的所有步驟、存截圖 |
-| `dockerslot.py` | 吃 Docker 的指令排隊（同時最多 N 條） |
+| `dockerslot.py` | 吃 Docker 的指令排隊（同時最多 N 條），跑前跑後順手清掉殘留的測試容器 |
+| `cleanup.py` | 任務做完的收尾：關掉這個任務開的程式、刪掉它的測試資料庫與暫時工作區，告訴你還有沒有東西沒清 |
 | `agentcost.py`／`taskcost.py`／`laneyield.py`／`claudemdcost.py` | 算花了多少錢：每個小幫手、每個任務、每路審查買到什麼 |
 | `wallclock.py` | 時間都花在哪 |
 

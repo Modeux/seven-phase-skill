@@ -8,16 +8,18 @@
 - `checktree.py`：對 baseline 驗一棵或多棵樹的 sha（不符 exit 1）；清單外的變動另列 warning（`--strict` 才 fail）。`tmp/`、任務目錄與 gitignored 檔不在檢查內，所以它不是「整棵樹沒人寫過」的證明。
 - `merge_back.py`：把工作樹相對快照改過的檔複製回主 checkout。候選＝修復樹與快照兩邊 `git status` 的聯集（改回 HEAD、刪掉快照新檔都抓得到）；兩棵 HEAD 不同、主樹那些檔不等於快照、片與片重疊都會停；刪除只回報不套用；把檔改回 HEAD 一律先停（分不出是刻意還原還是 agent 誤 reset），確認是裁決要的才加 `--allow-revert <片>:<路徑>`；`--only-files F` 要求候選恰等於那份清單，多或少都停（`recv.py` 用它）。
 - `run_external.py`：跑 codex／grok／agy 外審（背景跑，見 `references/external-review.md`）。失敗 exit 非零、舊報告不動，每次寫 `lane-<x>.status.json`。
-- `dockerslot.py`：`-- <cmd>` 拿到全機 N 個槽位之一才跑（預設 3，flock 檔，持有者死掉自動釋放）；`--all` 拿全部且讓後到的排在它後面（全量整合）、`--pool <名> --slots 1`（sqlc）、`--status` 看誰佔著；等超過 `--max-wait`（預設 300 秒）exit 75 並印出持有者。讓 agent 一波派完、只在吃 Docker 的那一刻排隊。
+- `dockerslot.py`：`-- <cmd>` 拿到全機 N 個槽位之一才跑（預設 3，flock 檔，持有者死掉自動釋放）；`--all` 拿全部且讓後到的排在它後面（全量整合）、`--pool <名> --slots 1`（sqlc）、`--status` 看誰佔著；等超過 `--max-wait`（預設 300 秒）exit 75 並印出持有者。讓 agent 一波派完、只在吃 Docker 的那一刻排隊。 預設池裡，拿到槽位後與指令結束後各清一次殘留的 testcontainers（`--no-sweep` 關掉，`gate.py` 自己清所以帶這個旗標）。
 - `synth.py`：第 6 階段合成派工零手工——`wf_reports.py` 落檔、盤點每一路（ok／失敗／缺件／外審還在跑）、`reviewcov.py --index`、照 `assets/synth-brief.md` 產 `synth-task.md`、印派工句；缺件 exit 1、外審未交 exit 3（等背景通知再跑，不 sleep）。
 - `wf_reports.py`：Workflow 扇出（第 6 階段內審、第 7 階段驗證）的報告全文從 run 的 `journal.jsonl` 抽出、依 label 落檔（subagent 在 Workflow 內寫不了檔）；每路寫 status 檔（含 schema 的 `counts`），`tasks/` 有派工單卻沒啟動的列 MISSING。
 - `extract.py`：markdown 依標題或行號逐字切段、附出處。組任務包用下面的 `mkbrief.py`。
 - `mkbrief.py`：一份純文字 manifest 組好每片的 `<片號>-brief.md`（手寫開頭＋逐字摘錄附出處＋該片會載入的規則＋需要時再讀），超過 90KB 沒寫理由就拒絕；`--check` 比對有沒有過期。
 - `mkpacket.py`：一份 manifest 組好外審三份材料包 `packet-{codex,grok,agy}.md`（第 6 階段 diff 審、第 4 階段 PLAN 審）：程式碼摘錄照 PLAN 矩陣（或 `plan-appendix/matrix.md`）機械取、規則只取 PLAN 引到的節，核對摘錄標頭數＝矩陣列數、每份 `wc -c`；agy 超過 `run_external.py` 的 90KB 上限就照 `references/external-review.md` 的階梯自動裁、`agy-split` 依片拆，裁不下 exit 2（檔仍寫出，交 owner 手動跑）。`--check` 只核對不寫檔。
-- `gate.py`：跑閘（Go、Angular、ai-service、Go lint），一行判定，紅、編譯失敗、零支、沒跑完不會被讀成綠；自動讀樹裡的既存紅名單。`lint` 模式跑 golangci 整包：OOM（137）就自動分批到跑完、沒跑完的 pattern 判 INCOMPLETE（不會被讀成綠），既存紅讀 `backend-golang/known-red-golint.txt`（`path :: linter :: message`，不含行號）；`--clean-docker` 先清孤兒 testcontainers。用法與 exit code 見 `references/project-deepweave.md`。
+- `gate.py`：跑閘（Go、Angular、ai-service、Go lint），一行判定，紅、編譯失敗、零支、沒跑完不會被讀成綠；自動讀樹裡的既存紅名單。`lint` 模式跑 golangci 整包：OOM（137）就自動分批到跑完、沒跑完的 pattern 判 INCOMPLETE（不會被讀成綠），既存紅讀 `backend-golang/known-red-golint.txt`（`path :: linter :: message`，不含行號）；`--clean-docker` 先清孤兒 testcontainers。用法與 exit code 見 `references/project-deepweave.md`。 整合測試跑前跑後自動清殘留 testcontainers，`ai`／`lint` 被停掉時回收自己的容器。
 - `mutate.py`：一份 manifest 跑多個突變，判 KILLED／SURVIVED／INVALID（沒編譯過不算殺死）；Go 走 overlay 不碰樹，其他保證還原（kill -9 後 `--recover`）。
 - `recv.py`：收一片交件的機械步驟（交付檔、範圍、閘的覆蓋、跑閘、閘跑的就是要合的、`merge_back`、PROGRESS 骨架、board），不帶 `--apply` 只預演。改 `.go` 自動多跑全 repo vet；主線動了、沒還原的 mutate、新增 skip 都拒收。判斷（紅的原因、偏離、抽突變）仍由主 session 做。用法見 `references/project-deepweave.md`。
 - `dbq.py`：本機 Docker DB 查詢與 clone、`scripts/fixtures/` 固定角色資料；預設唯讀（見 `references/project-deepweave.md`）。
+- `cleanup.py`：任務交付前的收尾清理，一行判定有沒有殘留——停掉這包起的程序（走查的 gateway／ng serve）、刪走查資料庫、移除 `tmp/<slug>/` 下的樹（先存可還原的樹物件）、刪 gateway 執行檔、清殘留測試容器；不帶 `--apply` 只列，`--all` 列出一棵樹底下每個任務的殘留（見 `references/project-deepweave.md`「收尾清理」）。
+- `_dockerclean.py`（共用模組，不直接跑）：殘留 testcontainers 的判法與移除，`gate.py`、`dockerslot.py`、`cleanup.py` 共用。
 - `rulesfor.py`：依 PLAN 檔案矩陣路徑列出命中的 `.claude/rules/` 檔與子目錄 `CLAUDE.md`，產生 `## 規則對照` 骨架（放 `plan-appendix/rules.md`）；`--check <任務目錄>` 會擋缺列，也擋處置不是「套用：」或「不相關：」開頭的（第 4 階段第 11 條）；11-07 前把表寫在 PLAN.md 的舊任務照常檢查。
 - `reviewcov.py`：第 6 階段收件（第 4 階段 PLAN 審查地圖另加 `--plan-tests`：「改 PLAN」要點名 PLAN 裡有的測試編號）。核對預期的每一路都交件（失敗、缺件、空檔、舊報告、標題形狀混雜、`counts` 對不上都擋），每條發現都在去重地圖的「來源」欄或未收錄節、地圖編號不重複、來源不指向不存在的條目（`--ack-manual`／`--waive`／`--section` 見 `phases/6-review.md` §5）；`--index` 產生給合成用的計數表與逐條清單（md＋json）。
 - `claudemdcost.py`：子目錄 CLAUDE.md 與限定範圍規則（讀到才載入）的花費，依檔案彙總、worktree 副本併回原路徑。

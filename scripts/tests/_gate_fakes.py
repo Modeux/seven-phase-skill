@@ -11,6 +11,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import time
 import unittest
 
 SCRIPTS = pathlib.Path(__file__).resolve().parents[1]
@@ -57,6 +58,25 @@ if c.get("kill_self"):
     os.kill(os.getpid(), signal.SIGKILL)
 sys.exit(c.get("rc", 0))
 ''' % sys.executable
+
+
+# A real run, captured 2026-11-17: `go test` pid 90920 started 08:29:35.441 UTC and testcontainers-go 0.41.0
+# labelled its containers with this session id. Pins the scheme independently of the code under test.
+REAL_OWNER_PID = 90920
+REAL_OWNER_LSTART = "Tue Nov 17 08:29:35 2026"
+REAL_SESSION = "ac4a375d05f57136b2c64d009da0cf859211b1a131dc6f07868d3c7cde01fedc"
+PS_INIT = "    1 Thu Jan  1 00:00:00 2026\n"
+PS_OWNER_ALIVE = PS_INIT + f"{REAL_OWNER_PID} {REAL_OWNER_LSTART}\n"
+
+
+def tc_row(cid, state, minutes_ago, label="true", name="c", session="", lang="", version=""):
+    """One `docker ps` row in the format _dockerclean.rows() asks for."""
+    created = time.strftime("%Y-%m-%d %H:%M:%S +0800 CST", time.gmtime(time.time() + 8 * 3600 - minutes_ago * 60))
+    return "\t".join([cid, state, created, label, name, session, lang, version]) + "\n"
+
+
+def go_row(cid, minutes_ago, state="running", version="0.41.0", session=REAL_SESSION):
+    return tc_row(cid, state, minutes_ago, session=session, lang="go", version=version)
 
 
 def fixture_rc(name):
@@ -128,6 +148,17 @@ class Harness(unittest.TestCase):
     def fake(self, **tools):
         self.cfg.update(tools)
         self.write_cfg()
+
+    def fake_ps(self, text):
+        """Replace `ps` for the tools under test; the owner check reads the process table through it."""
+        p = self.bin / "ps"
+        p.write_text(FAKE_SRC, encoding="utf-8")
+        p.chmod(0o755)
+        self.fake(ps={"text": text})
+
+    def removed(self):
+        return sorted(a for c in self.calls("docker") if c["argv"][0] == "rm" for a in c["argv"][1:]
+                      if not a.startswith("-"))
 
     def calls(self, name=None):
         if not self.log_path.exists():

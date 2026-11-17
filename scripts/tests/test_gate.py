@@ -16,7 +16,8 @@ import time
 import unittest
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
-from _gate_fakes import (FIXTURES, GATE, Harness, count_go_events, fixture_rc, go_replay, text_replay)  # noqa: E402
+from _gate_fakes import (FIXTURES, GATE, PS_INIT, PS_OWNER_ALIVE, Harness, count_go_events, fixture_rc,  # noqa: E402
+                         go_replay, go_row, tc_row, text_replay)
 
 LOGGER = "./internal/logger"
 FE_SPEC = "projects/frontend/src/app/site-content.spec.ts"
@@ -669,8 +670,9 @@ class AiTest(Harness):
         self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
         self.assertRegex(r.first, r"^GATE ai GREEN pass=25 fail=0 skip=0 ")
         a = self.calls("docker")[-1]["argv"]
+        self.assertRegex(a[3], r"^seven-phase\.gate=\d+-\d+$")
         self.assertEqual(a, [
-            "run", "--rm", "--network", "none",
+            "run", "--rm", "--label", a[3], "--network", "none",
             "-v", f"{self.tree}/ai-service:/app:ro",
             "-v", f"{self.repo}/ai-service/.venv:/app/.venv:ro",
             "-w", "/app", "-e", "PYTHONDONTWRITEBYTECODE=1", "-e", "LANGFUSE_TRACING_ENABLED=false",
@@ -785,26 +787,11 @@ class AiTest(Harness):
                 self.assertEqual(self.gate("ai", "--tree", self.tree, "--repo", self.repo, "--kind", kind).returncode, 4)
 
 
-def ps_row(cid, state, created, label="true", name="c"):
-    return f"{cid}\t{state}\t{created}\t{label}\t{name}\n"
-
-
-def stamp(minutes_ago):
-    return time.strftime("%Y-%m-%d %H:%M:%S +0800 CST", time.gmtime(time.time() + 8 * 3600 - minutes_ago * 60))
-
-
 class CleanDockerTest(Harness):
     def rows(self):
-        return (ps_row("exited1", "exited", stamp(5)) + ps_row("dead1", "dead", stamp(5))
-                + ps_row("runningyoung", "running", stamp(49)) + ps_row("runningold", "running", stamp(51))
-                + ps_row("createdyoung", "created", stamp(1)))
-
-    def removed(self):
-        ids = []
-        for c in self.calls("docker"):
-            if c["argv"][0] == "rm":
-                ids += [a for a in c["argv"][1:] if not a.startswith("-")]
-        return sorted(ids)
+        return (tc_row("exited1", "exited", 5) + tc_row("dead1", "dead", 5)
+                + tc_row("runningyoung", "running", 49) + tc_row("runningold", "running", 51)
+                + tc_row("createdyoung", "created", 1))
 
     def test_dry_run_lists_and_removes_nothing(self):
         self.fake(docker={"ps": {"text": self.rows()}})
@@ -835,7 +822,7 @@ class CleanDockerTest(Harness):
         self.assertIn("found=0", r.first)
 
     def test_row_without_the_label_is_never_touched(self):
-        self.fake(docker={"ps": {"text": ps_row("devstack", "exited", stamp(500), label="")}})
+        self.fake(docker={"ps": {"text": tc_row("devstack", "exited", 500, label="")}})
         r = self.gate("clean-docker", "--apply")
         self.assertEqual(self.removed(), [])
         self.assertIn("removed=0", r.first)
@@ -843,7 +830,7 @@ class CleanDockerTest(Harness):
     def test_unparsable_row_is_a_tool_error_not_silently_kept(self):
         self.fake(docker={"ps": {"text": "garbage row\n"}})
         self.assertEqual(self.gate("clean-docker").returncode, 2)
-        self.fake(docker={"ps": {"text": ps_row("x", "running", "last tuesday")}})
+        self.fake(docker={"ps": {"text": "x\trunning\tlast tuesday\ttrue\tc\t\t\t\n"}})
         self.assertEqual(self.gate("clean-docker").returncode, 2)
 
     def test_docker_failure_is_a_tool_error(self):
@@ -854,18 +841,58 @@ class CleanDockerTest(Harness):
         self.fake(docker={"ps": {"text": self.rows()}, "rm": {"text": "boom\n", "rc": 1}})
         self.assertEqual(self.gate("clean-docker", "--apply").returncode, 2)
 
-    def test_integ_run_cleans_dead_and_exited_only_and_prints_count(self):
+    def test_rm_also_removes_the_anonymous_volumes(self):
+        self.fake(docker={"ps": {"text": self.rows()}})
+        self.gate("clean-docker", "--apply")
+        rm = [c["argv"] for c in self.calls("docker") if c["argv"][0] == "rm"][0]
+        self.assertIn("-v", rm)
+
+    def test_container_someone_else_is_already_removing_is_not_a_failure(self):
+        for text in ("Error response from daemon: removal of container exited1 is already in progress\n",
+                     "Error response from daemon: No such container: exited1\n"):
+            with self.subTest(text):
+                self.fake(docker={"ps": {"text": self.rows()}, "rm": {"text": text, "rc": 1}})
+                r = self.gate("clean-docker", "--apply")
+                self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+
+    def sweeps_around_the_run(self):
+        """docker subcommands before and after the fake go test, in call order."""
+        log = [json.loads(x) for x in self.log_path.read_text(encoding="utf-8").splitlines()]
+        at = [i for i, c in enumerate(log) if c["name"] == "go"][0]
+        subs = lambda part: [c["argv"][0] for c in part if c["name"] == "docker"]  # noqa: E731
+        return subs(log[:at]), subs(log[at + 1:])
+
+    def test_integ_run_removes_leftovers_before_and_after_and_prints_the_count(self):
         self.fake(go=go_replay("go_green"), docker={"ps": {"text": self.rows()}})
         r = self.gate("go", "--tree", self.tree, "--integ", "--pkg", LOGGER)
         self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
-        self.assertEqual(self.removed(), ["dead1", "exited1"])
-        self.assertIn("2", [ln for ln in r.stdout.splitlines() if "docker" in ln.lower()][0])
-        self.assertEqual(self.summary_of(r)["docker_cleaned"], 2)
+        self.assertEqual(self.sweeps_around_the_run(), (["ps", "rm"], ["ps", "rm"]))
+        # WHY 6: the fake listing never shrinks, so each of the two sweeps removes the same three.
+        self.assertEqual(self.removed(), ["dead1", "dead1", "exited1", "exited1", "runningold", "runningold"])
+        self.assertIn("docker: cleaned 6 leftover testcontainers", r.stdout.splitlines())
+        self.assertEqual(self.summary_of(r)["docker_cleaned"], 6)
 
     def test_integ_run_cleans_even_when_red(self):
         self.fake(go=go_replay("go_red"), docker={"ps": {"text": self.rows()}})
         self.gate("go", "--tree", self.tree, "--integ", "--pkg", LOGGER)
-        self.assertEqual(self.removed(), ["dead1", "exited1"])
+        self.assertEqual(self.sweeps_around_the_run()[1], ["ps", "rm"])
+
+    def test_integ_run_cleans_when_the_slot_never_came(self):
+        holder = subprocess.Popen([sys.executable, str(GATE.parent / "dockerslot.py"), "--no-sweep", "--slots", "1",
+                                   "--", sys.executable, "-c", "import time; time.sleep(30)"], env=self.env)
+        self.addCleanup(holder.wait)
+        self.addCleanup(holder.kill)
+        time.sleep(0.5)
+        self.env["DOCKERSLOT_SLOTS"] = "1"
+        self.fake(go=go_replay("go_green"), docker={"ps": {"text": self.rows()}})
+        r = self.gate("go", "--tree", self.tree, "--integ", "--pkg", LOGGER, "--max-wait", "0.2")
+        self.assertEqual(r.returncode, 75, r.stdout + r.stderr)
+        self.assertEqual([c["argv"][0] for c in self.calls("docker")], ["ps", "rm", "ps", "rm"])
+
+    def test_the_run_takes_its_slot_without_a_second_sweep(self):
+        self.fake(go=go_replay("go_green"), docker={"ps": {"text": ""}})
+        self.gate("go", "--tree", self.tree, "--integ", "--pkg", LOGGER)
+        self.assertEqual([c["argv"][0] for c in self.calls("docker")], ["ps", "ps"])
 
     def test_unit_run_never_touches_docker(self):
         self.fake(go=go_replay("go_green"), docker={"ps": {"text": self.rows()}})
@@ -878,6 +905,90 @@ class CleanDockerTest(Harness):
         self.assertEqual(r.returncode, 0, r.stdout)
         self.assertIn(" GREEN ", r.first)
         self.assertIn("clean", r.stdout.lower())
+
+
+@unittest.skipUnless(sys.platform == "darwin", "the owner check reads the macOS process table")
+class OwnerCheckTest(Harness):
+    def listed(self, rows, ps):
+        self.fake(docker={"ps": {"text": rows}})
+        self.fake_ps(ps)
+        r = self.gate("clean-docker", "--apply")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        return r
+
+    def test_container_of_a_live_go_test_is_kept_whatever_its_age(self):
+        r = self.listed(go_row("young", 1) + go_row("old", 600), PS_OWNER_ALIVE)
+        self.assertEqual(self.removed(), [])
+        self.assertIn("found=0 removed=0 kept=2", r.first)
+
+    def test_container_whose_go_test_has_exited_is_a_leftover_at_once(self):
+        r = self.listed(go_row("young", 1) + go_row("reaper", 1, state="created"), PS_INIT)
+        self.assertEqual(self.removed(), ["reaper", "young"])
+        self.assertIn("- young owner-gone running", r.stdout)
+
+    def test_same_pid_started_at_another_second_is_not_the_owner(self):
+        self.listed(go_row("young", 1), PS_INIT + "90920 Tue Nov 17 08:29:36 2026\n")
+        self.assertEqual(self.removed(), ["young"])
+
+    def test_version_not_checked_against_a_live_run_is_judged_by_age_and_says_so(self):
+        r = self.listed(go_row("young", 1, version="0.42.0") + go_row("old", 51, version="0.42.0"), PS_INIT)
+        self.assertEqual(self.removed(), ["old"])
+        self.assertIn("note: testcontainers-go 0.42.0 is not in VERIFIED_GO", r.stdout)
+
+    def test_session_that_is_not_a_hash_is_judged_by_age(self):
+        self.listed(go_row("young", 1, session="0b0e7a54-11de-4f3a-9a53-5f0c6d1f6a10"), PS_INIT)
+        self.assertEqual(self.removed(), [])
+        self.assertEqual(self.calls("ps"), [])
+
+    def test_other_languages_are_judged_by_age(self):
+        from _gate_fakes import REAL_SESSION
+        self.listed(tc_row("java", "running", 1, session=REAL_SESSION, lang="java", version="0.41.0"), PS_INIT)
+        self.assertEqual(self.removed(), [])
+
+    def test_process_table_that_cannot_be_trusted_removes_nothing_by_owner(self):
+        for ps in ("", f"90920 Tue Nov 17 08:29:35 2026\n", PS_INIT + "garbage row\n"):
+            with self.subTest(ps):
+                r = self.listed(go_row("young", 1) + tc_row("exited1", "exited", 5), ps)
+                self.assertEqual(self.removed()[-1:], ["exited1"])
+                self.assertNotIn("young", self.removed())
+                self.assertIn("note: owner check skipped", r.stdout)
+
+    def test_process_table_is_read_after_the_containers(self):
+        self.listed(go_row("young", 1), PS_INIT)
+        log = [json.loads(x)["name"] for x in self.log_path.read_text(encoding="utf-8").splitlines()]
+        self.assertLess(log.index("docker"), log.index("ps"))
+
+    def test_integ_run_keeps_a_parallel_runs_containers(self):
+        self.fake(go=go_replay("go_green"), docker={"ps": {"text": go_row("theirs", 30) + tc_row("dead1", "dead", 5)}})
+        self.fake_ps(PS_OWNER_ALIVE)
+        r = self.gate("go", "--tree", self.tree, "--integ", "--pkg", LOGGER)
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertEqual(self.removed(), ["dead1", "dead1"])
+
+
+class OwnContainerTest(Harness):
+    def stopped_ai_run(self, container_ls):
+        self.fake(docker={"run": {"sleep": 30}, "container": {"text": container_ls}})
+        return self.gate("ai", "--tree", self.tree, "--repo", self.repo, "--timeout", "1s")
+
+    def test_stopped_ai_run_removes_the_container_it_started(self):
+        r = self.stopped_ai_run("abc123\n")
+        self.assertEqual(r.returncode, 4, r.stdout + r.stderr)
+        ls = [c["argv"] for c in self.calls("docker") if c["argv"][0] == "container"][0]
+        run = [c["argv"] for c in self.calls("docker") if c["argv"][0] == "run"][0]
+        self.assertEqual(ls[ls.index("--filter") + 1], "label=" + run[run.index("--label") + 1])
+        self.assertEqual(self.removed(), ["abc123"])
+        self.assertIn("docker: removed 1 container(s) the stopped run left running", r.stdout)
+
+    def test_stopped_ai_run_whose_container_is_gone_says_nothing(self):
+        r = self.stopped_ai_run("")
+        self.assertEqual(self.removed(), [])
+        self.assertNotIn("docker:", r.stdout)
+
+    def test_finished_ai_run_does_not_look_for_a_container(self):
+        self.fake(docker={"run": text_replay("ai_green")})
+        self.gate("ai", "--tree", self.tree, "--repo", self.repo)
+        self.assertEqual([c["argv"][0] for c in self.calls("docker")], ["run"])
 
 
 ROUTES_SPEC = "projects/frontend/src/app/app.routes.spec.ts"

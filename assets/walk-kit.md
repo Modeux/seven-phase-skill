@@ -62,6 +62,8 @@ const { page, walk, close } = await launch({ kit: '<套件>', round: 'r1' });  /
 
 其他引擎與裝置：`run_kit.mjs --engine webkit`、`--device 'iPhone 14'`（觸控、視窗跟著裝置）。有步驟失敗時，stdout 最後一行是可以直接接回去的 `rerun: --steps a,b`。
 
+**收環境**：任務交付前不必自己跑 `env.sh <輪次> dropdb`，`scripts/cleanup.py`（`phases/7-converge.md` §5）會照每一輪 `run/env.log` 記的 port、樹與資料庫名，連同 `pids/` 一起收掉。所以 `env.log` 與 `pids/` 不要手動刪——刪了它就找不到這包起過什麼。
+
 ## 重走怎麼用（第 5 階段修完重走、第 7 階段收尾）
 0. **硬條件：主 session 派工前**跑 `env.sh <輪次>`，再一次跑完套件（任務書沒有 `<輪次>/run/summary.json` 路徑就不派；agent 不為這一輪新寫 `runN.mjs`——要加的步驟加進套件，算進同一塊的兩輪停損。為什麼：journey-scene-layer 沒用上 runner，第 9、10 輪各自新寫一套腳本；第 11 輪沿用第十輪腳本，20 分鐘重量完）：`node ~/.claude/skills/seven-phase/scripts/run_kit.mjs --kit <套件> --round <輪次> --fingerprint '<本包 DOM 指紋選擇器>' [--steps …|--plan plan.json] [--cfg '{"step-x.js":{…}}']`（exit 0 全過／1 有步驟失敗／2 起環境或指紋失敗——2 就先修環境，不派）。任務書附 `<輪次>/run/summary.json` 路徑、stdout 摘要與修片 diff 的路徑＋`--stat`（不貼全文，agent 用 `grep -n`／`sed -n` 只讀要的 hunk），寫明：**不再用 MCP 逐支重跑套件步驟**；runner 標 PASS 的版面／對比／窄寬步驟仍要看它的截圖（R2-1：腳本過、320 截圖才看到裁切）；截圖一回合並行讀多張。為什麼：14 天 46 次 ui-lane-reviewer，78% 牆鐘是模型回合、中位 102 次幾乎全串行的 request，模型在當 test runner；每支步驟一回合、手改 CFG 又一回合。
 1. 讀 runner 結果，失敗步驟與修片碰到的步驟逐步比對上一輪；需要逐幀 sampler、注入、手動操作的才開 MCP 瀏覽器。

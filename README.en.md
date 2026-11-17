@@ -164,7 +164,8 @@ Handy helpers (all use only built-in Python — nothing extra to install — exc
 | `reviewcov.py` | Check every reviewer turned in their report and nothing was dropped from the table |
 | `run_external.py` | Run the outside AI reviewers (codex / grok / agy) |
 | `run_kit.mjs` | Run every step of a browser walk-through in one go and save screenshots |
-| `dockerslot.py` | Queue Docker-heavy commands (at most N at once) |
+| `dockerslot.py` | Queue Docker-heavy commands (at most N at once) and remove leftover test containers before and after |
+| `cleanup.py` | End-of-task cleanup: stop what the task started, drop its test database and temporary workspaces, and report whether anything is left |
 | `agentcost.py` / `taskcost.py` / `laneyield.py` / `claudemdcost.py` | What things cost: per helper, per task, and what each review lane bought |
 | `wallclock.py` | Where the time went |
 

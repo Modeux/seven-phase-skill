@@ -11,7 +11,7 @@ import time
 import unittest
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
-from _gate_fakes import FIXTURES, GATE, Harness, text_replay  # noqa: E402
+from _gate_fakes import FIXTURES, GATE, Harness, tc_row, text_replay  # noqa: E402
 
 # WHY: the shared fake picks one docker answer per subcommand; batching needs an answer per pattern list,
 # so `run` is matched on the patterns after `--concurrency N` and the rest behaves like the shared fake.
@@ -258,14 +258,15 @@ class LintCommandTest(LintHarness):
         r = self.lint(rules=[dict(GREEN, shell=[sys.executable, str(GATE.parent / "dockerslot.py"), "--status"])])
         self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
         call = self.runs()[-1]
+        self.assertRegex(call["argv"][3], r"^seven-phase\.gate=\d+-\d+$")
         self.assertEqual(call["argv"], [
-            "run", "--rm", "-e", "GOMEMLIMIT=3000MiB", "-e", "GOGC=50",
+            "run", "--rm", "--label", call["argv"][3], "-e", "GOMEMLIMIT=3000MiB", "-e", "GOGC=50",
             "-v", f"{self.tree}:/app", "-v", "deepweave-golangci-modcache:/go/pkg/mod",
             "-w", "/app/backend-golang", "golangci/golangci-lint:v2.14.0",
             "golangci-lint", "run", "--concurrency", "2", "./..."])
         self.assertIn("docker: 1/3 busy", call["shell"])
         cmd = self.summary_of(r)["cmd"]
-        self.assertIn("dockerslot.py --max-wait 1800 -- docker run", cmd)
+        self.assertIn("dockerslot.py --no-sweep --max-wait 1800 -- docker run", cmd)
         self.assertNotIn("--all", cmd)
 
     def test_tuning_flags_reach_the_command(self):
@@ -368,17 +369,9 @@ class LintIgnorePrefixTest(LintHarness):
                 self.assertEqual(self.runs(), [])
 
 
-def ps_row(cid, state, minutes_ago, label="true"):
-    created = time.strftime("%Y-%m-%d %H:%M:%S +0800 CST", time.gmtime(time.time() + 8 * 3600 - minutes_ago * 60))
-    return f"{cid}\t{state}\t{created}\t{label}\tc\n"
-
-
 class LintCleanDockerTest(LintHarness):
     def rows(self):
-        return ps_row("exited1", "exited", 5) + ps_row("old1", "running", 90) + ps_row("young1", "running", 2)
-
-    def removed(self):
-        return sorted(a for c in self.calls("docker") if c["argv"][0] == "rm" for a in c["argv"][1:] if not a.startswith("-"))
+        return tc_row("exited1", "exited", 5) + tc_row("old1", "running", 90) + tc_row("young1", "running", 2)
 
     def test_flag_removes_orphans_before_the_run_and_reports_on_line_two(self):
         self.fake(docker={"ps": {"text": self.rows()}})
@@ -388,6 +381,20 @@ class LintCleanDockerTest(LintHarness):
         self.assertEqual(self.removed(), ["exited1", "old1"])
         subs = [c["argv"][0] for c in self.calls("docker")]
         self.assertLess(subs.index("rm"), subs.index("run"))
+
+    def test_batch_stopped_at_its_timeout_removes_the_container_it_started(self):
+        self.fake(docker={"container": {"text": "abc123\n"}})
+        r = self.lint("--timeout", "1s", rules=[{"text": "", "rc": 0, "sleep": 30}])
+        self.assertEqual(r.returncode, 4, r.stdout + r.stderr)
+        ls = [c["argv"] for c in self.calls("docker") if c["argv"][0] == "container"][0]
+        run = self.runs()[0]["argv"]
+        self.assertEqual(ls[ls.index("--filter") + 1], "label=" + run[run.index("--label") + 1])
+        self.assertEqual(self.removed(), ["abc123"])
+        self.assertIn("docker: removed 1 container(s) the stopped run left running", r.stdout)
+
+    def test_finished_batch_does_not_look_for_a_container(self):
+        self.lint(rules=[GREEN])
+        self.assertEqual([c["argv"][0] for c in self.calls("docker") if c["argv"][0] == "container"], [])
 
     def test_without_the_flag_it_only_lists(self):
         self.fake(docker={"ps": {"text": self.rows()}})

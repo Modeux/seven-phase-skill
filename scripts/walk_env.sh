@@ -153,6 +153,9 @@ done
 if [ -d "$WALK/kit" ]; then
   printf '{"app":"http://localhost:%s","api":"http://localhost:%s","db":"%s"}\n' "$FE_PORT" "$GW_PORT" "$DB" > "$WALK/kit/walk.config.json"
 fi
+# INVARIANT[walk-env-log-format]: cleanup.py finds this walk's servers and database from the next four lines
+# (ENV_SERVER_RE, ENV_DB_RE): keep `<role> http://localhost:<port>`, `tree=` on frontend or gateway, and
+# `database <name> in container <pg>;`.
 say "frontend http://localhost:$FE_PORT tree=$TREE pid=$(listening "$FE_PORT") (log: $RUN/ng-frontend.log)"
 [ -z "$ADMIN_PORT" ] || say "admin    http://localhost:$ADMIN_PORT pid=$(listening "$ADMIN_PORT") (log: $RUN/ng-admin.log)"
 say "gateway  http://localhost:$GW_PORT tree=$TREE health=$(curl -s -o /dev/null -w '%{http_code}' "http://localhost:$GW_PORT/health") (log: $RUN/gateway.log)"

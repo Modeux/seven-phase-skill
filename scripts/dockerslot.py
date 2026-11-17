@@ -9,6 +9,9 @@ Usage:
   python3 dockerslot.py --status                                            # who holds what
 
 Exit code is the command's. 75 = gave up waiting (--max-wait); stderr names the holders.
+In the default pool, leftover testcontainers (see _dockerclean.py) are removed once the slot is held and again when
+the command ends, with one stderr line when any were; the command's own containers count as soon as it has exited.
+A cleanup failure never changes the exit code. --no-sweep turns this off for callers that sweep themselves (gate.py).
 Slots are flock'd files under $DOCKERSLOT_DIR (default ~/.cache/seven-phase/dockerslot); a crashed holder
 releases its slot when its process dies. Slot count: --slots, else $DOCKERSLOT_SLOTS, else 3.
 """
@@ -22,6 +25,10 @@ import subprocess
 import sys
 import time
 
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+import _dockerclean  # noqa: E402
+
+DEFAULT_POOL = "docker"
 # WHY: 3 matches the widest wave that ran integration tests without testcontainers "port not found"
 # flakes or address-pool exhaustion (age-gate-unify verifiers, 10-14). Raise it only after a probe.
 DEFAULT_SLOTS = 3
@@ -112,13 +119,22 @@ def acquire(d, pool, slots, take_all, max_wait, cmd):
             return None
 
 
+def sweep(moment):
+    n, err = _dockerclean.sweep_quietly()
+    if n:
+        print(f"dockerslot: removed {n} leftover testcontainers ({moment} the command)", file=sys.stderr)
+    if err:
+        print(f"dockerslot: container cleanup failed {moment} the command: {err}", file=sys.stderr)
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--pool", default="docker", help="independent slot pool name (default: docker)")
+    ap.add_argument("--pool", default=DEFAULT_POOL, help="independent slot pool name (default: docker)")
     ap.add_argument("--slots", type=int, default=int(os.environ.get("DOCKERSLOT_SLOTS") or DEFAULT_SLOTS))
     ap.add_argument("--all", action="store_true", help="hold every slot of the pool (full integration gate)")
     ap.add_argument("--max-wait", type=float, default=300, help="seconds to wait before exit 75 (default 300)")
     ap.add_argument("--status", action="store_true", help="print current holders and exit")
+    ap.add_argument("--no-sweep", action="store_true", help="do not remove leftover testcontainers before and after")
     ap.add_argument("cmd", nargs=argparse.REMAINDER)
     a = ap.parse_args()
     cmd = a.cmd[1:] if a.cmd[:1] == ["--"] else a.cmd
@@ -144,6 +160,10 @@ def main():
     if waited >= POLL_S:
         print(f"dockerslot: got {'all ' if a.all else ''}{a.pool} slot(s) after {waited:.0f}s", file=sys.stderr)
 
+    # WHY only the default pool: that is where integration tests run; the sqlc pool starts no testcontainers.
+    sweeping = a.pool == DEFAULT_POOL and not a.no_sweep
+    if sweeping:
+        sweep("before")
     child = subprocess.Popen(cmd)
 
     def forward(sig, _frame):
@@ -151,7 +171,13 @@ def main():
 
     for sig in (signal.SIGINT, signal.SIGTERM, signal.SIGHUP):
         signal.signal(sig, forward)
-    rc = child.wait()
+    try:
+        rc = child.wait()
+    finally:
+        # INVARIANT: after the command on every way out, a forwarded signal included. Its own containers are
+        # leftovers by now: the process that owned them has exited.
+        if sweeping:
+            sweep("after")
     return 128 - rc if rc < 0 else rc
 
 

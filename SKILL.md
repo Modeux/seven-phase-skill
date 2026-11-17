@@ -15,6 +15,7 @@ owner 是產品負責人不是工程師。這套流程把方向控制權與 toke
 - **subagent 一律 opus-5.5，effort 只能由 agent frontmatter 決定**（`~/.claude/agents/*.md` 的 `model:`／`effort:`；prompt 寫 effort 是安慰劑；Agent 工具的 `model` 參數勿傳）。分級名單在「模型與 agent」。
   - **唯一例外：graphify 語意抽取**派 quick-task 時傳 `model: "sonnet"`（Sonnet 5.5 high），或改走 agy `gemini-4-hydrogen --effort high` 細切；不用 Haiku。配方與量測在 repo `docs/graphify.md`。
 - **graphify 只准查詢**，改完 docs／sql／openapi 只提醒圖過期，沒 owner 指示不跑 `--update`。
+- **交付前跑 `scripts/cleanup.py --slug <slug> --apply`，`left=0` 才回報**（程序、走查 DB、樹、測試容器；`phases/7-converge.md` §5）。
 
 ## 開工第一步
 1. **問模型**：新任務開工前用 AskUserQuestion 問 owner 要不要 `/model` 切到 fable（或當時更強的模型）當主 session，**問句附成本與判準**：fable 輸入／輸出單價約 opus-5.5 的 2.5 倍，主 session 的輸出大半是思考，換模型會直接放大這筆；官方說 fable 適合目標模糊、找根因、架構決策、長時間自主工作，範圍明確的實作與收斂用 opus-5.5。推薦項依任務類型給。owner 選維持就用當前模型（預設 opus-5.5），**中途不切換**（換模型的下一回合整段重讀、沒有快取）。續接既有任務不必再問。
@@ -121,7 +122,7 @@ commit／push、prod 查詢、fast mode、subagent 模型、graphify 的禁令�
 `scripts/` 每支都有 `--help`（`python3 ~/.claude/skills/seven-phase/scripts/<name>.py --help`），一支一行的用途索引在 `references/scripts.md`。要量、要組包、要收件之前先查有沒有現成的，不要現寫：
 - 規模與樹：`numstat`、`mkpatch`、`mkworktree`、`checktree`、`merge_back`
 - 任務包與審查：`extract`、`mkbrief`、`mkpacket`、`rulesfor`、`run_external`、`synth`、`wf_reports`、`reviewcov`
-- 閘與收件：`gate`、`mutate`、`recv`、`dockerslot`、`dbq`
+- 閘與收件：`gate`、`mutate`、`recv`、`dockerslot`、`dbq`、`cleanup`
 - 走一趟：`run_kit.mjs`、`walk_lib.mjs`、`walk_env.sh`
 - 看板、任務頁、驗收：`board`、`planview`、`accept`
 - 量測（檢討與調路數）：`taskcost`、`agentcost`、`laneyield`、`claudemdcost`、`wallclock`、`uilane_audit`、`turns`、`ctxio`、`tx`

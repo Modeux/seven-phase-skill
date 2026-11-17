@@ -23,6 +23,7 @@
 - 要 owner 取捨的條目：批成一則 AskUserQuestion（推薦項第一），不另開 checkpoint。
 - 有爭議或 HIGH 以上：派 1 路 `converge-verifier`；其餘主 session 邊修邊確認。修復照紅→綠，行為 bug 照 SKILL.md「修片進場門檻」。範圍分流、修後複查與「兩輪不收斂就停」照 `phases/7-converge.md` §3「範圍」與 §4；§3「流出分析」也照做（精簡路常是修已上線的 bug，正是它要問的那一條）。
 - 全閘照 `phases/7-converge.md` §5（對既存紅基線「零新增」）；耐久結論照全程規則搬進子目錄 `CLAUDE.md`／`.claude/rules/`。
+- 交付前照同節「收尾清理」跑 `cleanup.py --slug <slug> --root <樹> --apply`，第一行 `left=0` 才交付，那一行寫進 `## 結果`。
 
 ## 5. 交付（唯一的 checkpoint）
 PROGRESS.md 補 `## 結果`（紅→綠、審查裁決、閘結果、殘留；backlog 照 SKILL.md「backlog 的家」分三路，重要／有感寫進 `.claude/PRPs/BACKLOG.md`，這裡只記各路條數），照 `assets/checkpoint.md` 回報並停。commit 形狀與完整路相同（程式碼一個、`docs(prps)` 一個），等 owner 說。

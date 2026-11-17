@@ -171,7 +171,7 @@ class Base(Harness):
         """A copy of the scripts whose board.py is a fake, so nothing touches the shared board."""
         d = self.tmp / "tools"
         d.mkdir(exist_ok=True)
-        for name in ("recv.py", "gate.py", "merge_back.py", "_common.py", "dockerslot.py"):
+        for name in ("recv.py", "gate.py", "merge_back.py", "_common.py", "dockerslot.py", "_dockerclean.py"):
             shutil.copy2(SCRIPTS / name, d / name)
         (d / "board.py").write_text(source, encoding="utf-8")
         return d / "recv.py"

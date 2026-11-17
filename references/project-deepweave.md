@@ -10,7 +10,7 @@ gate.py go --tree T --all                                      # 全量整合：
 gate.py fe --tree T --project frontend|admin [--include PATH]  # 片收件不帶 --include，跑整包（frontend 約 15,000 支、90–140 秒）
 gate.py fe-build --tree T --project frontend|admin
 gate.py ai --tree T --repo <主 checkout> [--kind pytest|ruff|mypy] [PATH ...]
-gate.py clean-docker [--apply]                                 # 列／清孤兒 testcontainers
+gate.py clean-docker [--apply]                                 # 列／清殘留 testcontainers（平常不必手動跑，見下面「測試容器自動清」）
 gate.py lint --tree T [--pkg ./internal/x/...] [--clean-docker] # Go golangci 整包：OOM 自動分批到跑完，沒跑完＝INCOMPLETE
 共用：--out FILE、--expect red、--known-red FILE、--no-known-red、--label
 ```
@@ -23,6 +23,9 @@ gate.py lint --tree T [--pkg ./internal/x/...] [--clean-docker] # Go golangci �
 - **`--run`** 可重複；同一個 `--run` 裡有 `|` 是工具錯誤，改寫成 `--run A --run B`。只命中被略過的測試、或點名的那支被略過，都是 NO-TESTS；整包閘的部分 skip 仍可綠，只看第一行 `skip=N`。
 - **`--tags`**：`--vet --tags smoke`、`--build --tags smoke` 編譯其他 tag 後面的檔案；其他組合是工具錯誤（`--integ` 有自己的 tag）。
 - 樹上有沒還原的 mutate 時 gate 直接工具錯誤，訊息印 `mutate.py --tree T --recover`。
+- **測試容器自動清**：`gate.py go --integ／--all` 跑前、跑後各清一次殘留的 testcontainers（輸出一行 `docker: cleaned N leftover testcontainers`；被中斷、紅、等不到槽位也照清），自己這次起的在 `go test` 結束的當下就算殘留，不等 Ryuk。`gate.py ai`／`lint` 被逾時或訊號停掉時，回收自己起的那顆容器（`docker run --rm` 的 client 被殺，容器會繼續跑）。`dockerslot.py --` 手包的指令同樣跑前跑後清。
+  - 殘留的判法（`scripts/_dockerclean.py`）：已 dead／exited；或容器標籤上的 session id 對不回任何活著的行程（起它的 `go test` 已結束）；判不了擁有者的才看年齡，超過 50 分鐘算。**對得回活著的 `go test` 就不動，不管多老**——別的 session 正在跑的整合測試不會被清掉。沒標 `org.testcontainers=true` 的容器（dev stack、compose）從不列入。
+  - 擁有者判法只認驗過的 testcontainers-go 版本（`VERIFIED_GO`，目前 0.41.0）與 macOS。repo 升版後 `gate.py clean-docker` 會印 `note: testcontainers-go <版本> is not in VERIFIED_GO`、退回只看年齡；驗法：整合測試正在跑的時候另開一條跑 `gate.py clean-docker`，那次的容器算在 `kept=`（不在 `found=`）才把新版號加進去。
 - worktree 要先 `pnpm install`（缺 node_modules 時工具會印該跑的指令）。
 
 **突變一律走 `mutate.py`，不要手改檔再還原**：
@@ -61,11 +64,23 @@ python3 ~/.claude/skills/seven-phase/scripts/recv.py --slice S1 --tree T --snaps
 - **提示不是拒絕，但一定在 stdout**：改到的測試檔、`這包沒有測試跑到：X`、無閘規則的改動。`--scope` 涵蓋某個深度或副檔名全部路徑（`**/*.go`、`*/*/*/*`）是工具錯誤。
 
 - **ai-service（Python）**：**禁在 host 跑 `uv`／`just test-ai`／host pytest**（會把共用 venv 重建成 macOS 版，容器跑不起來；`gate.py ai` 會擋下並提示）。重建：一次性容器內 `uv sync --frozen`。
-- **Docker 槽位**：`gate.py` 之外吃 Docker 的指令才自己包 `python3 ~/.claude/skills/seven-phase/scripts/dockerslot.py --`（如 `just sqlc` 用 `--pool sqlc --slots 1`）。
+- **Docker 槽位**：`gate.py` 之外吃 Docker 的指令才自己包 `python3 ~/.claude/skills/seven-phase/scripts/dockerslot.py --`（如 `just sqlc` 用 `--pool sqlc --slots 1`）。預設池的指令跑前跑後會自動清殘留測試容器（上面「測試容器自動清」）。
 - **契約**：`npx --yes @redocly/cli lint docs/api-contracts/openapi.yaml`。
 - **lint／audit**：Go lint 一律 `gate.py lint --tree <T> --clean-docker`（不再手打 `just lint-gateway`：Docker VM 7.7GB 下整包常被 OOM 砍，過去每個任務都手寫縮範圍腳本、三個任務以「整包沒跑過」結案；工具 OOM 就分批到跑完，整包 GREEN／RED-KNOWN 才算跑過；`backend-golang/tmp/` 的探針碼自動歸 `ignored=`、不算紅；既存紅名單 `backend-golang/known-red-golint.txt`，11-07 實跑整包 88 秒、正式碼零 issue，所以名單目前不存在＝空）；`bash scripts/audit-pgx-tx-patterns.sh`（既存 (b)×2、(e)×4）；`just fix-go-changed`（**零輸出**才過：這次改到的 Go 行都已是新語法；`--apply` 只套這些 hunk、併進本包；全庫 `just fix-go-check` 在存量清掉前 exit 1 是常態，不當閘）。
 - **Go 探針**：`backend-golang/tmp/` 下的 `.go` 探針會被 `go vet ./...`／`go build ./...` 掃到：探針檔存成 `.go.src`，用 `go test -overlay <json>` 掛進目標套件跑。
 - 判「這條紅是不是我弄的」：`git archive HEAD | tar -x -C <tmp>` 匯出乾淨副本跑同一條；比 stash 安全（stash stack 與所有 worktree 共用）。
+
+## 收尾清理（`scripts/cleanup.py`，任務交付前的硬閘）
+```
+python3 ~/.claude/skills/seven-phase/scripts/cleanup.py --slug S --root <樹>           # 只列：這包還開著、留著什麼
+cleanup.py --slug S --root <樹> --apply                        # 清：程序 → 走查 DB → tmp/<slug>/ 下的樹 → gateway 執行檔與過期 pid 檔 → 殘留測試容器
+cleanup.py --slug S --root <樹> --only procs --apply           # 只收某幾類：procs／dbs／trees／files／containers
+cleanup.py --all --root <樹>                                   # 只列：<樹>/tmp/ 底下每個任務；不能 --apply（別的 session 可能正在做）
+```
+- 第一行 `CLEANUP <slug> OK|LEFT found=N removed=N left=N`，之後每項一行、行尾方括號是處置。exit：0 沒有殘留；1 還有（只列而有東西，或清不掉）；2 工具錯誤。
+- 只認這包自己記下的：`tmp/<slug>/**/pids/*.pid` 裡還活著的程序和它的子程序（程序比 pid 檔新＝pid 被重用，不動）；`run/env.log` 記的 port 上、而且是從那份 log 記的樹在跑的 listener；`env.log`／`kit/walk.config.json` 記的 `deepweave_walk_*` 資料庫（還有連線就留著並報幾條）。共用的 `deepweave`、dev stack、別的任務的東西都碰不到。
+- 樹移除前先存：`tmp/<slug>/cleanup-trees.txt` 每行 `<樹> head=<sha> tree=<sha>`；`git diff <head> <tree>` 看那棵樹改過什麼，`git archive <tree> | tar -x -C <目錄>` 整棵拿回來（git gc 約兩週後回收）。存不了就不刪、列成 `left`。
+- 不歸它管：`dbq.py --clone` 建的資料庫（誰建誰 `dbq.py --drop`）、Docker 網路與 volume（要 owner 決定，別的專案可能在用）、樹上的探針檔（`checktree.py` 的「清單外」）。
 
 ## 本機 DB（`scripts/dbq.py`，不要再手打 `docker exec … psql`）
 預設 `deepweave-postgres`／`deepweave`、**唯讀**（Postgres session 設定擋寫入，exit 3），每個結果上限 50 列，超過會寫明總數與完整檔路徑。工具只連本機 Docker，沒有 host 參數。

@@ -45,7 +45,7 @@ REVIEW.md 加「第 N 階段收斂裁決」表（標題含「收斂裁決」）�
 - 涉 UI：修復後的真瀏覽器走一趟派 `ui-lane-reviewer`，做法同第 5 階段：與全閘同時跑（最後一片合回後就用快照樹派出）、從走一趟套件起手，修過的條目逐條親手重驗（`assets/walk-kit.md`）。
 - 耐久結論搬進子目錄 CLAUDE.md／`.claude/rules/` 之後跑 `python3 ~/.claude/skills/seven-phase/scripts/board.py --docsize`，checkpoint 回報這包讓說明檔淨增減多少（「vs HEAD」欄）；有一份被推過上限的（根 `CLAUDE.md` 12KB、`backend-golang`／`angular-workspace` 母檔 20KB、其餘 40KB），這包內就合併改寫或拆成規則檔（SKILL.md「說明檔大小」）。
 - 確認改動檔集合＝原本的檔＋收斂新增的檔：`checktree.py` 對 baseline，「清單外」warning 就是多出來的檔，逐條確認是收斂新增還是並行 session 的改動，沒有無關檔。
-- 突變紀錄等證據先歸檔到 `tmp/`，再 `git worktree remove --force` 清掉所有審查／修復樹。
+- **收尾清理（硬閘）**：突變紀錄等證據先歸檔到 `tmp/<slug>/`（放在樹外面），再跑 `python3 ~/.claude/skills/seven-phase/scripts/cleanup.py --slug <slug> --root <任務所在的樹> --apply`。它依序停掉這包起的 gateway／ng serve、刪走查資料庫、移除 `tmp/<slug>/` 底下所有審查／修復／走查樹、刪 gateway 執行檔與過期 pid 檔、清殘留測試容器；報告、log、截圖、閘輸出是證據，不刪。第一行 `CLEANUP <slug> OK … left=0` 才算過，這一行貼進 PROGRESS 的閘結果與 checkpoint 回報；`LEFT` 的每一條照它寫的原因處理（資料庫還有別的連線、樹的狀態存不了、git 不認得的樹目錄），處理不了就在回報裡點名。不要再手打 `git worktree remove --force`：工具移除前會把每棵樹的完整狀態存成 git 樹物件（`tmp/<slug>/cleanup-trees.txt`，約兩週內可還原）。owner 之後要再修一輪，`env.sh` 與 `mkworktree.py` 會重建。為什麼：owner 11-17「開發完之後該清理的檔案或程序都要清理掉」；當天盤點，已交付的兩個任務還留著 3 個走查資料庫與 2 份 99MB 的 gateway 執行檔。
 - PROGRESS 寫第 7 階段紀錄與「下一步」（commit 範圍、主樹上不屬於本包的改動、部署後驗收）；backlog 照 SKILL.md「backlog 的家」分三路，重要／有感寫進 `.claude/PRPs/BACKLOG.md`，PROGRESS 只寫一行「backlog：重要 N、有感 N、只留記錄 N」。
 - 記憶只更新「進行中」那一條的狀態，技術結論放子目錄 CLAUDE.md。
 - 本包改了 **docs／templates／`.sql`／`openapi.yaml`／任何 `CLAUDE.md`／`.claude/rules/`** 嗎？有 → checkpoint 總結加一行「graphify 圖已過期（post-commit hook 只刷 AST 層），要不要 `/graphify . --update` 由你決定」；**不自跑 `--update`**（owner 10-05：傘狀全做完才一次更新）。
