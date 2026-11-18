@@ -21,7 +21,7 @@ import time
 sys.path.insert(0, str(pathlib.Path(__file__).parent))
 from _lanes import write_status  # noqa: E402
 
-CODEX_MODEL, CODEX_EFFORT = "gpt-6-sol", "xhigh"
+CODEX_MODEL, CODEX_EFFORT = "gpt-6.2-astra", "xhigh"
 GROK_MODEL = "grok-4.7"
 AGY_MODEL, AGY_EFFORT = "gemini-4-argon", "high"
 # WHY: the CLI waits at most 5 min for the first streamed bytes (hard-coded, no flag), then restarts the
